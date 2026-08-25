@@ -42,6 +42,21 @@ def test_free_with_freemium_passes():
     assert model.pattern is Pattern.FREE
 
 
+def test_free_without_subtype_fails():
+    with pytest.raises(ValidationError):
+        Architecture(**_base_kwargs(pattern=Pattern.FREE, pattern_subtype=None))
+
+
+def test_open_business_model_without_subtype_fails():
+    with pytest.raises(ValidationError):
+        Architecture(
+            **_base_kwargs(
+                pattern=Pattern.OPEN_BUSINESS_MODEL,
+                pattern_subtype=None,
+            )
+        )
+
+
 def test_extra_field_rejected():
     with pytest.raises(ValidationError):
         Architecture(**_base_kwargs(unexpected_field="nope"))

@@ -36,9 +36,10 @@ class Architecture(BaseModel):
     pattern_subtype: PatternSubtype | None = Field(
         default=None,
         description=(
-            "Subtype refining the pattern. Only valid for patterns that "
-            "define subtypes (free, open_business_model); must be null "
-            "for all other patterns."
+            "Subtype refining the pattern. Required for patterns that "
+            "define subtypes (free, open_business_model) — freemium, "
+            "ad-supported, and bait-and-hook are distinct economics and "
+            "must be told apart; must be null for all other patterns."
         ),
     )
     pattern_rationale_uk: str = Field(
@@ -57,8 +58,11 @@ class Architecture(BaseModel):
         allowed = PATTERN_SUBTYPES.get(self.pattern, set())
         if self.pattern_subtype is None:
             if allowed:
-                # subtype is optional even when the pattern defines some
-                return self
+                allowed_values = ", ".join(sorted(s.value for s in allowed))
+                raise ValueError(
+                    f"pattern '{self.pattern.value}' requires a pattern_subtype; "
+                    f"choose one of: {allowed_values}"
+                )
             return self
         if not allowed:
             raise ValueError(

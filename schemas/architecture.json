@@ -84,7 +84,7 @@
         }
       ],
       "default": null,
-      "description": "Subtype refining the pattern. Only valid for patterns that define subtypes (free, open_business_model); must be null for all other patterns."
+      "description": "Subtype refining the pattern. Required for patterns that define subtypes (free, open_business_model) — freemium, ad-supported, and bait-and-hook are distinct economics and must be told apart; must be null for all other patterns."
     }
   },
   "required": [
