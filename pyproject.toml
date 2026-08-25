@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bizstruct-domain"
+version = "0.1.0"
+description = "Shared Pydantic domain model for BizStruct (ML worker, backend API, frontend types)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "pydantic>=2.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bizstruct_domain"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

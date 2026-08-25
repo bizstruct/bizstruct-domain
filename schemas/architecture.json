@@ -1,0 +1,100 @@
+{
+  "$defs": {
+    "Epicenter": {
+      "description": "Epicentres of business model innovation.\n\nOsterwalder & Pigneur, \"Business Model Generation\" — Epicentres of\nBusiness Model Innovation. Exactly 5 canonical values; do not add\ninvented values (e.g. a \"competitor-driven\" epicenter is not part\nof the methodology).",
+      "enum": [
+        "resource_driven",
+        "offer_driven",
+        "customer_driven",
+        "finance_driven",
+        "multiple_epicenter"
+      ],
+      "title": "Epicenter",
+      "type": "string"
+    },
+    "Pattern": {
+      "description": "Business model patterns.\n\nOsterwalder & Pigneur, \"Business Model Generation\" — Part 2,\nPatterns. Exactly 5 canonical values; do not add invented values\n(e.g. \"PAID\" is not part of the methodology).",
+      "enum": [
+        "unbundling",
+        "long_tail",
+        "multi_sided_platform",
+        "free",
+        "open_business_model"
+      ],
+      "title": "Pattern",
+      "type": "string"
+    },
+    "PatternSubtype": {
+      "description": "Subtypes that refine specific patterns.\n\nOnly meaningful in combination with `Pattern.FREE`\n(`freemium`, `ad_supported`, `bait_and_hook`) or\n`Pattern.OPEN_BUSINESS_MODEL` (`outside_in`, `inside_out`).\nSee `PATTERN_SUBTYPES` below for the full mapping.",
+      "enum": [
+        "freemium",
+        "ad_supported",
+        "bait_and_hook",
+        "outside_in",
+        "inside_out"
+      ],
+      "title": "PatternSubtype",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `architecture` stage: epicenter and pattern classification.\n\nDepends on `canvas` in the generation chain — the epicenter names which\npart of the Business Model Canvas is the driver of change, so it cannot\nbe determined before the canvas exists.",
+  "properties": {
+    "epicenter": {
+      "$ref": "#/$defs/Epicenter"
+    },
+    "epicenter_rationale_en": {
+      "description": "Rationale for the chosen epicenter, in English.",
+      "maxLength": 600,
+      "minLength": 40,
+      "title": "Epicenter Rationale En",
+      "type": "string"
+    },
+    "epicenter_rationale_uk": {
+      "description": "Обґрунтування вибору епіцентру українською мовою.",
+      "maxLength": 600,
+      "minLength": 40,
+      "title": "Epicenter Rationale Uk",
+      "type": "string"
+    },
+    "pattern": {
+      "$ref": "#/$defs/Pattern"
+    },
+    "pattern_rationale_en": {
+      "description": "Rationale for the chosen pattern, in English.",
+      "maxLength": 600,
+      "minLength": 40,
+      "title": "Pattern Rationale En",
+      "type": "string"
+    },
+    "pattern_rationale_uk": {
+      "description": "Обґрунтування вибору патерну українською мовою.",
+      "maxLength": 600,
+      "minLength": 40,
+      "title": "Pattern Rationale Uk",
+      "type": "string"
+    },
+    "pattern_subtype": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PatternSubtype"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Subtype refining the pattern. Only valid for patterns that define subtypes (free, open_business_model); must be null for all other patterns."
+    }
+  },
+  "required": [
+    "epicenter",
+    "epicenter_rationale_uk",
+    "epicenter_rationale_en",
+    "pattern",
+    "pattern_rationale_uk",
+    "pattern_rationale_en"
+  ],
+  "title": "Architecture",
+  "type": "object"
+}
