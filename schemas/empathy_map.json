@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "EmpathyItem": {
+      "additionalProperties": false,
+      "description": "One observation within an empathy map section.",
+      "properties": {
+        "id": {
+          "description": "1-based position within its section.",
+          "title": "Id",
+          "type": "integer"
+        },
+        "text_en": {
+          "maxLength": 200,
+          "minLength": 10,
+          "title": "Text En",
+          "type": "string"
+        },
+        "text_uk": {
+          "maxLength": 200,
+          "minLength": 10,
+          "title": "Text Uk",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text_uk",
+        "text_en"
+      ],
+      "title": "EmpathyItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `empathy_map` stage: the first block generated, with no\nprior context — see bizstruct_domain.chain.STAGES.",
+  "properties": {
+    "does": {
+      "items": {
+        "$ref": "#/$defs/EmpathyItem"
+      },
+      "maxItems": 6,
+      "minItems": 3,
+      "title": "Does",
+      "type": "array"
+    },
+    "feels": {
+      "items": {
+        "$ref": "#/$defs/EmpathyItem"
+      },
+      "maxItems": 6,
+      "minItems": 3,
+      "title": "Feels",
+      "type": "array"
+    },
+    "gains": {
+      "items": {
+        "$ref": "#/$defs/EmpathyItem"
+      },
+      "maxItems": 6,
+      "minItems": 3,
+      "title": "Gains",
+      "type": "array"
+    },
+    "pains": {
+      "items": {
+        "$ref": "#/$defs/EmpathyItem"
+      },
+      "maxItems": 6,
+      "minItems": 3,
+      "title": "Pains",
+      "type": "array"
+    },
+    "says": {
+      "items": {
+        "$ref": "#/$defs/EmpathyItem"
+      },
+      "maxItems": 6,
+      "minItems": 3,
+      "title": "Says",
+      "type": "array"
+    },
+    "thinks": {
+      "items": {
+        "$ref": "#/$defs/EmpathyItem"
+      },
+      "maxItems": 6,
+      "minItems": 3,
+      "title": "Thinks",
+      "type": "array"
+    }
+  },
+  "required": [
+    "says",
+    "thinks",
+    "does",
+    "feels",
+    "pains",
+    "gains"
+  ],
+  "title": "EmpathyMap",
+  "type": "object"
+}

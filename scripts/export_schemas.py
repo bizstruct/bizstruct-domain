@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from bizstruct_domain.blocks.architecture import Architecture
+from bizstruct_domain.blocks.empathy_map import EmpathyMap
 from bizstruct_domain.chain import STAGES
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -18,6 +19,7 @@ SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 BLOCK_MODELS = {
     "architecture": Architecture,
+    "empathy_map": EmpathyMap,
 }
 
 

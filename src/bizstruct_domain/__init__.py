@@ -7,6 +7,7 @@ consumers (bizstruct-ml, bizstruct-be) can `import bizstruct_domain as bd`.
 from bizstruct_domain import enums
 from bizstruct_domain.chain import STAGES, Stage, StageMode, stages_for_mode, topological_order
 from bizstruct_domain.blocks.architecture import Architecture
+from bizstruct_domain.blocks.empathy_map import EmpathyMap
 
 __all__ = [
     "enums",
@@ -16,6 +17,7 @@ __all__ = [
     "stages_for_mode",
     "topological_order",
     "Architecture",
+    "EmpathyMap",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
