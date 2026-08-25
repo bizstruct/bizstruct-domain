@@ -12,6 +12,7 @@ from bizstruct_domain.blocks.scenario import Scenario
 from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypothesis, Hypotheses
 from bizstruct_domain.blocks.models_options import BusinessModelOption, ModelsOptions
+from bizstruct_domain.blocks.canvas import CanvasCard, Canvas, CanvasGenerated
 from bizstruct_domain.validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
@@ -29,8 +30,11 @@ __all__ = [
     "Hypotheses",
     "BusinessModelOption",
     "ModelsOptions",
+    "CanvasCard",
+    "Canvas",
+    "CanvasGenerated",
     "FieldFeedback",
     "ValidateModelResult",
 ]
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"

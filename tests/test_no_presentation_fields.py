@@ -38,6 +38,7 @@ from bizstruct_domain.blocks.scenario import Scenario
 from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypotheses
 from bizstruct_domain.blocks.models_options import ModelsOptions
+from bizstruct_domain.blocks.canvas import CanvasGenerated
 
 BLACKLIST = {
     "color", "colour", "icon", "highlight", "initials", "variant",
@@ -52,6 +53,9 @@ BLOCK_MODELS: dict[str, type[BaseModel]] = {
     "pitch": Pitch,
     "hypotheses": Hypotheses,
     "models_options": ModelsOptions,
+    # CanvasGenerated, not Canvas — same fields, checking the stricter
+    # subclass covers the base class's fields too.
+    "canvas": CanvasGenerated,
 }
 
 

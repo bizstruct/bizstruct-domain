@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "CanvasCard": {
+      "additionalProperties": false,
+      "description": "A single card within one Business Model Canvas section.",
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "is_ai_generated": {
+          "default": true,
+          "description": "True if the LLM generated this card. Must be set to False whenever a user adds a card or edits an existing one's text.",
+          "title": "Is Ai Generated",
+          "type": "boolean"
+        },
+        "text": {
+          "maxLength": 200,
+          "minLength": 5,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "CanvasCard",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The nine Business Model Canvas sections, as persisted and edited via\nCRUD. No per-section cardinality constraint — see module docstring.",
+  "properties": {
+    "channels": {
+      "items": {
+        "$ref": "#/$defs/CanvasCard"
+      },
+      "title": "Channels",
+      "type": "array"
+    },
+    "cost_structure": {
+      "items": {
+        "$ref": "#/$defs/CanvasCard"
+      },
+      "title": "Cost Structure",
+      "type": "array"
+    },
+    "customer_relationships": {
+      "items": {
+        "$ref": "#/$defs/CanvasCard"
+      },
+      "title": "Customer Relationships",
+      "type": "array"
+    },
+    "customer_segments": {
+      "items": {
+        "$ref": "#/$defs/CanvasCard"
+      },
+      "title": "Customer Segments",
+      "type": "array"
+    },
+    "key_activities": {
+      "items": {
+        "$ref": "#/$defs/CanvasCard"
+      },
+      "title": "Key Activities",
+      "type": "array"
+    },
+    "key_partners": {
+      "items": {
+        "$ref": "#/$defs/CanvasCard"
+      },
+      "title": "Key Partners",
+      "type": "array"
+    },
+    "key_resources": {
+      "items": {
+        "$ref": "#/$defs/CanvasCard"
+      },
+      "title": "Key Resources",
+      "type": "array"
+    },
+    "revenue_streams": {
+      "items": {
+        "$ref": "#/$defs/CanvasCard"
+      },
+      "title": "Revenue Streams",
+      "type": "array"
+    },
+    "value_propositions": {
+      "items": {
+        "$ref": "#/$defs/CanvasCard"
+      },
+      "title": "Value Propositions",
+      "type": "array"
+    }
+  },
+  "title": "Canvas",
+  "type": "object"
+}

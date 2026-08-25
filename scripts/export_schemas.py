@@ -16,6 +16,7 @@ from bizstruct_domain.blocks.scenario import Scenario
 from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypotheses
 from bizstruct_domain.blocks.models_options import ModelsOptions
+from bizstruct_domain.blocks.canvas import Canvas
 from bizstruct_domain.validate_model import ValidateModelResult
 from bizstruct_domain.chain import STAGES
 
@@ -29,6 +30,13 @@ BLOCK_MODELS = {
     "pitch": Pitch,
     "hypotheses": Hypotheses,
     "models_options": ModelsOptions,
+    # The persisted/CRUD shape (no per-section card-count constraint) — what
+    # the frontend actually reads and writes. CanvasGenerated (2-4 cards per
+    # section, generation-time only) isn't exported: it's an internal
+    # contract between bizstruct-ml and bizstruct-be's hook, both of which
+    # import it directly from this package rather than through the JSON
+    # Schema sync.
+    "canvas": Canvas,
 }
 
 # Not a chain stage (not in STAGES) — a side-channel task result. Exported
