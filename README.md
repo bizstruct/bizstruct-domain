@@ -1,0 +1,1 @@
+# bizstruct-domain
