@@ -1,0 +1,184 @@
+{
+  "$defs": {
+    "MetricValue": {
+      "additionalProperties": false,
+      "properties": {
+        "label_en": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Label En",
+          "type": "string"
+        },
+        "label_uk": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Label Uk",
+          "type": "string"
+        },
+        "value_en": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Value En",
+          "type": "string"
+        },
+        "value_uk": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Value Uk",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value_uk",
+        "value_en",
+        "label_uk",
+        "label_en"
+      ],
+      "title": "MetricValue",
+      "type": "object"
+    },
+    "Persona": {
+      "additionalProperties": false,
+      "description": "The protagonist of the scenario — should be the same persona as the\nproject's `empathy_map`, not a newly invented one.",
+      "properties": {
+        "name_en": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Name En",
+          "type": "string"
+        },
+        "name_uk": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Name Uk",
+          "type": "string"
+        },
+        "pain_point_en": {
+          "maxLength": 300,
+          "minLength": 10,
+          "title": "Pain Point En",
+          "type": "string"
+        },
+        "pain_point_uk": {
+          "maxLength": 300,
+          "minLength": 10,
+          "title": "Pain Point Uk",
+          "type": "string"
+        },
+        "role_en": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Role En",
+          "type": "string"
+        },
+        "role_uk": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Role Uk",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name_uk",
+        "name_en",
+        "role_uk",
+        "role_en",
+        "pain_point_uk",
+        "pain_point_en"
+      ],
+      "title": "Persona",
+      "type": "object"
+    },
+    "ScenarioMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "$ref": "#/$defs/MetricValue"
+        },
+        "before": {
+          "$ref": "#/$defs/MetricValue"
+        }
+      },
+      "required": [
+        "before",
+        "after"
+      ],
+      "title": "ScenarioMetrics",
+      "type": "object"
+    },
+    "TimelineStep": {
+      "additionalProperties": false,
+      "description": "One step of the persona's journey.\n\n`icon_key` must match `step_type` per `_STEP_ICON` — validated on the\nparent `Scenario`, since that's where the full ordered list is known.",
+      "properties": {
+        "icon_key": {
+          "enum": [
+            "calendar",
+            "target",
+            "zap",
+            "check-circle",
+            "trending-up"
+          ],
+          "title": "Icon Key",
+          "type": "string"
+        },
+        "step_type": {
+          "enum": [
+            "context",
+            "goal",
+            "action",
+            "result",
+            "impact"
+          ],
+          "title": "Step Type",
+          "type": "string"
+        },
+        "text_en": {
+          "maxLength": 300,
+          "minLength": 10,
+          "title": "Text En",
+          "type": "string"
+        },
+        "text_uk": {
+          "maxLength": 300,
+          "minLength": 10,
+          "title": "Text Uk",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step_type",
+        "icon_key",
+        "text_uk",
+        "text_en"
+      ],
+      "title": "TimelineStep",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `scenario` stage: a before/after user journey.",
+  "properties": {
+    "metrics": {
+      "$ref": "#/$defs/ScenarioMetrics"
+    },
+    "persona": {
+      "$ref": "#/$defs/Persona"
+    },
+    "timeline": {
+      "items": {
+        "$ref": "#/$defs/TimelineStep"
+      },
+      "maxItems": 5,
+      "minItems": 5,
+      "title": "Timeline",
+      "type": "array"
+    }
+  },
+  "required": [
+    "persona",
+    "timeline",
+    "metrics"
+  ],
+  "title": "Scenario",
+  "type": "object"
+}
