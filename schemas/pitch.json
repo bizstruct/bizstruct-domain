@@ -1,0 +1,130 @@
+{
+  "$defs": {
+    "CustomerSlide": {
+      "additionalProperties": false,
+      "properties": {
+        "content_en": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Content En",
+          "type": "string"
+        },
+        "content_uk": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Content Uk",
+          "type": "string"
+        },
+        "headline_en": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Headline En",
+          "type": "string"
+        },
+        "headline_uk": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Headline Uk",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "opening",
+            "empathy",
+            "transformation",
+            "social_proof",
+            "invitation"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "headline_uk",
+        "headline_en",
+        "content_uk",
+        "content_en"
+      ],
+      "title": "CustomerSlide",
+      "type": "object"
+    },
+    "InvestorSlide": {
+      "additionalProperties": false,
+      "properties": {
+        "content_en": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Content En",
+          "type": "string"
+        },
+        "content_uk": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Content Uk",
+          "type": "string"
+        },
+        "headline_en": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Headline En",
+          "type": "string"
+        },
+        "headline_uk": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Headline Uk",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "hook",
+            "problem",
+            "solution",
+            "traction",
+            "ask"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "headline_uk",
+        "headline_en",
+        "content_uk",
+        "content_en"
+      ],
+      "title": "InvestorSlide",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `pitch` stage: investor and customer decks.",
+  "properties": {
+    "customer": {
+      "items": {
+        "$ref": "#/$defs/CustomerSlide"
+      },
+      "maxItems": 5,
+      "minItems": 5,
+      "title": "Customer",
+      "type": "array"
+    },
+    "investor": {
+      "items": {
+        "$ref": "#/$defs/InvestorSlide"
+      },
+      "maxItems": 5,
+      "minItems": 5,
+      "title": "Investor",
+      "type": "array"
+    }
+  },
+  "required": [
+    "investor",
+    "customer"
+  ],
+  "title": "Pitch",
+  "type": "object"
+}

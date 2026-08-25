@@ -9,6 +9,7 @@ from bizstruct_domain.chain import STAGES, Stage, StageMode, stages_for_mode, to
 from bizstruct_domain.blocks.architecture import Architecture
 from bizstruct_domain.blocks.empathy_map import EmpathyMap
 from bizstruct_domain.blocks.scenario import Scenario
+from bizstruct_domain.blocks.pitch import Pitch
 
 __all__ = [
     "enums",
@@ -20,6 +21,7 @@ __all__ = [
     "Architecture",
     "EmpathyMap",
     "Scenario",
+    "Pitch",
 ]
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
