@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "Hypothesis": {
+      "additionalProperties": false,
+      "description": "One testable assumption behind the business model.",
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/HypothesisCategory"
+        },
+        "id": {
+          "description": "Format H<group>.<index>, e.g. H1.1 — group number matches the quadrant number (q1 -> H1.x).",
+          "pattern": "^H\\d+\\.\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "quadrant": {
+          "$ref": "#/$defs/Quadrant",
+          "description": "Importance x uncertainty quadrant for prioritization — see bizstruct_domain.enums.Quadrant for the full axis definition. q1: high importance/high uncertainty (test first); q2: high importance/low uncertainty; q3: low importance/high uncertainty; q4: low importance/low uncertainty."
+        },
+        "text": {
+          "description": "A falsifiable statement, specific enough that a concrete result would prove it wrong — must include a number, metric, or percentage.",
+          "maxLength": 300,
+          "minLength": 15,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "category",
+        "quadrant"
+      ],
+      "title": "Hypothesis",
+      "type": "object"
+    },
+    "HypothesisCategory": {
+      "description": "Testing Business Ideas risk categories: Desirability / Viability / Feasibility.",
+      "enum": [
+        "desirability",
+        "viability",
+        "feasibility"
+      ],
+      "title": "HypothesisCategory",
+      "type": "string"
+    },
+    "Quadrant": {
+      "description": "Hypothesis prioritization matrix: importance x uncertainty.\n\nADR-decided semantics (see docs/adr/0001-generation-stages.md context\nfor how hypotheses feed into the chain):\n\n- Q1: high importance, high uncertainty — test first.\n- Q2: high importance, low uncertainty.\n- Q3: low importance, high uncertainty.\n- Q4: low importance, low uncertainty.",
+      "enum": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "title": "Quadrant",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `hypotheses` stage.",
+  "properties": {
+    "hypotheses": {
+      "items": {
+        "$ref": "#/$defs/Hypothesis"
+      },
+      "minItems": 5,
+      "title": "Hypotheses",
+      "type": "array"
+    }
+  },
+  "required": [
+    "hypotheses"
+  ],
+  "title": "Hypotheses",
+  "type": "object"
+}

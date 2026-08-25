@@ -10,6 +10,7 @@ from bizstruct_domain.blocks.architecture import Architecture
 from bizstruct_domain.blocks.empathy_map import EmpathyMap
 from bizstruct_domain.blocks.scenario import Scenario
 from bizstruct_domain.blocks.pitch import Pitch
+from bizstruct_domain.blocks.hypotheses import Hypothesis, Hypotheses
 
 __all__ = [
     "enums",
@@ -22,6 +23,8 @@ __all__ = [
     "EmpathyMap",
     "Scenario",
     "Pitch",
+    "Hypothesis",
+    "Hypotheses",
 ]
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"

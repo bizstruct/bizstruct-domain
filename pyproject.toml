@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bizstruct-domain"
-version = "0.4.0"
+version = "0.5.0"
 description = "Shared Pydantic domain model for BizStruct (ML worker, backend API, frontend types)"
 readme = "README.md"
 requires-python = ">=3.11"

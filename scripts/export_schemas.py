@@ -14,6 +14,7 @@ from bizstruct_domain.blocks.architecture import Architecture
 from bizstruct_domain.blocks.empathy_map import EmpathyMap
 from bizstruct_domain.blocks.scenario import Scenario
 from bizstruct_domain.blocks.pitch import Pitch
+from bizstruct_domain.blocks.hypotheses import Hypotheses
 from bizstruct_domain.chain import STAGES
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -24,6 +25,7 @@ BLOCK_MODELS = {
     "empathy_map": EmpathyMap,
     "scenario": Scenario,
     "pitch": Pitch,
+    "hypotheses": Hypotheses,
 }
 
 
