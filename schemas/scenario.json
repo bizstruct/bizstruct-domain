@@ -108,19 +108,8 @@
     },
     "TimelineStep": {
       "additionalProperties": false,
-      "description": "One step of the persona's journey.\n\n`icon_key` must match `step_type` per `_STEP_ICON` — validated on the\nparent `Scenario`, since that's where the full ordered list is known.",
+      "description": "One step of the persona's journey.",
       "properties": {
-        "icon_key": {
-          "enum": [
-            "calendar",
-            "target",
-            "zap",
-            "check-circle",
-            "trending-up"
-          ],
-          "title": "Icon Key",
-          "type": "string"
-        },
         "step_type": {
           "enum": [
             "context",
@@ -147,7 +136,6 @@
       },
       "required": [
         "step_type",
-        "icon_key",
         "text_uk",
         "text_en"
       ],

@@ -15,6 +15,8 @@ from bizstruct_domain.blocks.empathy_map import EmpathyMap
 from bizstruct_domain.blocks.scenario import Scenario
 from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypotheses
+from bizstruct_domain.blocks.models_options import ModelsOptions
+from bizstruct_domain.validate_model import ValidateModelResult
 from bizstruct_domain.chain import STAGES
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -26,6 +28,13 @@ BLOCK_MODELS = {
     "scenario": Scenario,
     "pitch": Pitch,
     "hypotheses": Hypotheses,
+    "models_options": ModelsOptions,
+}
+
+# Not a chain stage (not in STAGES) — a side-channel task result. Exported
+# the same way so bizstruct-fe can generate types for it too.
+NON_BLOCK_MODELS = {
+    "validate_model": ValidateModelResult,
 }
 
 
@@ -37,7 +46,7 @@ def _write_json(path: Path, data: object) -> None:
 def main() -> None:
     SCHEMAS_DIR.mkdir(parents=True, exist_ok=True)
 
-    for name, model in BLOCK_MODELS.items():
+    for name, model in {**BLOCK_MODELS, **NON_BLOCK_MODELS}.items():
         schema = model.model_json_schema()
         _write_json(SCHEMAS_DIR / f"{name}.json", schema)
         print(f"wrote schemas/{name}.json")

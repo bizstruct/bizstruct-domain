@@ -20,7 +20,7 @@ class StageMode(str, Enum):
 class Stage(BaseModel):
     """A single step of the business-model generation pipeline."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     id: str
     title_uk: str

@@ -1,0 +1,130 @@
+{
+  "$defs": {
+    "BusinessModelOption": {
+      "additionalProperties": false,
+      "description": "One candidate business model for the idea.",
+      "properties": {
+        "audience": {
+          "description": "Target customer segment for this option.",
+          "maxLength": 200,
+          "minLength": 3,
+          "title": "Audience",
+          "type": "string"
+        },
+        "description": {
+          "description": "What the model is and why it fits the idea's audience.",
+          "maxLength": 600,
+          "minLength": 20,
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "key_metric": {
+          "description": "The primary success metric for this monetization type, e.g. MRR/NRR for subscription, GMV/take rate for a marketplace, ACV for retainer_plus_saas.",
+          "maxLength": 100,
+          "minLength": 2,
+          "title": "Key Metric",
+          "type": "string"
+        },
+        "monetization": {
+          "$ref": "#/$defs/MonetizationType"
+        },
+        "score": {
+          "description": "Viability score for this option.",
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "integer"
+        },
+        "score_rationale": {
+          "description": "Why this score — what specifically makes the model strong or weak, not just a restatement of the number.",
+          "maxLength": 400,
+          "minLength": 15,
+          "title": "Score Rationale",
+          "type": "string"
+        },
+        "time_to_value": {
+          "description": "How long before the customer sees the first result, e.g. '30 minutes', '2 weeks'.",
+          "maxLength": 100,
+          "minLength": 2,
+          "title": "Time To Value",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 120,
+          "minLength": 3,
+          "title": "Title",
+          "type": "string"
+        },
+        "value_proposition": {
+          "maxLength": 200,
+          "minLength": 10,
+          "title": "Value Proposition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "audience",
+        "value_proposition",
+        "description",
+        "monetization",
+        "key_metric",
+        "time_to_value",
+        "score",
+        "score_rationale"
+      ],
+      "title": "BusinessModelOption",
+      "type": "object"
+    },
+    "MonetizationType": {
+      "description": "How a business model option makes money.",
+      "enum": [
+        "subscription",
+        "transaction_fee",
+        "retainer_plus_saas",
+        "advertising",
+        "licensing",
+        "marketplace_take_rate"
+      ],
+      "title": "MonetizationType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `models_options` stage: exactly 3 candidate business\nmodels, with at most one selected.",
+  "properties": {
+    "options": {
+      "items": {
+        "$ref": "#/$defs/BusinessModelOption"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Options",
+      "type": "array"
+    },
+    "selected_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Id"
+    }
+  },
+  "required": [
+    "options"
+  ],
+  "title": "ModelsOptions",
+  "type": "object"
+}

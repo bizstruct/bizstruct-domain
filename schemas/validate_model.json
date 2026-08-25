@@ -1,0 +1,95 @@
+{
+  "$defs": {
+    "FieldFeedback": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "maxLength": 400,
+          "minLength": 5,
+          "title": "Comment",
+          "type": "string"
+        },
+        "field": {
+          "enum": [
+            "title",
+            "audience",
+            "value_proposition",
+            "description"
+          ],
+          "title": "Field",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "weak",
+            "invalid"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "suggestion": {
+          "anyOf": [
+            {
+              "maxLength": 400,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suggestion"
+        }
+      },
+      "required": [
+        "field",
+        "status",
+        "comment"
+      ],
+      "title": "FieldFeedback",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `validate_model` side-channel task.",
+  "properties": {
+    "fields": {
+      "items": {
+        "$ref": "#/$defs/FieldFeedback"
+      },
+      "minItems": 1,
+      "title": "Fields",
+      "type": "array"
+    },
+    "score": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Score",
+      "type": "integer"
+    },
+    "status": {
+      "enum": [
+        "valid",
+        "needs_revision",
+        "invalid"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "summary": {
+      "maxLength": 500,
+      "minLength": 10,
+      "title": "Summary",
+      "type": "string"
+    }
+  },
+  "required": [
+    "status",
+    "score",
+    "summary",
+    "fields"
+  ],
+  "title": "ValidateModelResult",
+  "type": "object"
+}

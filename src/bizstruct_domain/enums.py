@@ -123,6 +123,17 @@ class PitchAudience(str, Enum):
     CUSTOMER = "customer"
 
 
+class MonetizationType(str, Enum):
+    """How a business model option makes money."""
+
+    SUBSCRIPTION = "subscription"
+    TRANSACTION_FEE = "transaction_fee"
+    RETAINER_PLUS_SAAS = "retainer_plus_saas"
+    ADVERTISING = "advertising"
+    LICENSING = "licensing"
+    MARKETPLACE_TAKE_RATE = "marketplace_take_rate"
+
+
 class CanvasSection(str, Enum):
     """The nine building blocks of the Business Model Canvas."""
 

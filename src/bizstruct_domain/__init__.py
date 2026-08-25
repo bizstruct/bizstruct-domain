@@ -11,6 +11,8 @@ from bizstruct_domain.blocks.empathy_map import EmpathyMap
 from bizstruct_domain.blocks.scenario import Scenario
 from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypothesis, Hypotheses
+from bizstruct_domain.blocks.models_options import BusinessModelOption, ModelsOptions
+from bizstruct_domain.validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
     "enums",
@@ -25,6 +27,10 @@ __all__ = [
     "Pitch",
     "Hypothesis",
     "Hypotheses",
+    "BusinessModelOption",
+    "ModelsOptions",
+    "FieldFeedback",
+    "ValidateModelResult",
 ]
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"

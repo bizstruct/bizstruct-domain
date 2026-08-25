@@ -3,13 +3,7 @@ from pydantic import ValidationError
 
 from bizstruct_domain.blocks.scenario import Scenario, TimelineStep
 
-_STEPS = [
-    ("context", "calendar"),
-    ("goal", "target"),
-    ("action", "zap"),
-    ("result", "check-circle"),
-    ("impact", "trending-up"),
-]
+_STEPS = ["context", "goal", "action", "result", "impact"]
 
 
 def _persona(**overrides) -> dict:
@@ -29,11 +23,10 @@ def _timeline(steps=_STEPS) -> list[dict]:
     return [
         {
             "step_type": step_type,
-            "icon_key": icon_key,
             "text_uk": f"Достатньо довгий текст кроку {step_type} українською",
             "text_en": f"A sufficiently long step text for {step_type} in English",
         }
-        for step_type, icon_key in steps
+        for step_type in steps
     ]
 
 
@@ -62,29 +55,20 @@ def test_wrong_step_order_rejected():
         Scenario(**_valid_kwargs(timeline=_timeline(shuffled)))
 
 
-def test_mismatched_icon_for_step_type_rejected():
-    # icon_key/step_type consistency is validated on Scenario (it needs the
-    # full ordered list), not on TimelineStep in isolation — see its docstring.
-    steps = _timeline()
-    steps[0]["icon_key"] = "zap"
-    with pytest.raises(ValidationError):
-        Scenario(**_valid_kwargs(timeline=steps))
-
-
 def test_too_few_timeline_steps_rejected():
     with pytest.raises(ValidationError):
         Scenario(**_valid_kwargs(timeline=_timeline(_STEPS[:4])))
 
 
 def test_too_many_timeline_steps_rejected():
-    extra = _STEPS + [("impact", "trending-up")]
+    extra = _STEPS + ["impact"]
     with pytest.raises(ValidationError):
         Scenario(**_valid_kwargs(timeline=_timeline(extra)))
 
 
 def test_short_step_text_rejected():
     with pytest.raises(ValidationError):
-        TimelineStep(step_type="context", icon_key="calendar", text_uk="ok", text_en="A sufficiently long text in English")
+        TimelineStep(step_type="context", text_uk="ok", text_en="A sufficiently long text in English")
 
 
 def test_extra_field_on_scenario_rejected():
@@ -99,3 +83,17 @@ def test_highlight_field_does_not_exist():
     assert not hasattr(model.timeline[0], "highlight")
     with pytest.raises(ValidationError):
         Scenario(**_valid_kwargs(timeline=[{**step, "highlight": True} for step in _timeline()]))
+
+
+def test_icon_key_field_does_not_exist():
+    """icon_key was 100% derivable from step_type — presentation data, not
+    domain data. Consumers pick their own icon per step_type client-side."""
+    model = Scenario(**_valid_kwargs())
+    assert not hasattr(model.timeline[0], "icon_key")
+    with pytest.raises(ValidationError):
+        TimelineStep(
+            step_type="context",
+            icon_key="calendar",
+            text_uk="Достатньо довгий текст кроку context українською",
+            text_en="A sufficiently long step text for context in English",
+        )

@@ -6,6 +6,12 @@ field (`_uk`/`_en` suffixes), not a `{uk: {...}, en: {...}}` wrapper.
 `highlight` (which timeline steps get visually emphasized) is deliberately
 NOT part of this model — it's presentation logic, not domain data. The
 frontend derives it from `step_type` (highlight `action` and `result`).
+
+Likewise, this model does NOT carry an icon field for timeline steps.
+icon_key used to be stored here, but it was 100% derivable from step_type
+(a fixed step_type -> icon mapping, enforced by a validator so the LLM
+couldn't drift the two apart) — pure presentation data that added nothing
+domain-specific. Consumers pick their own icon per step_type client-side.
 """
 
 from typing import Literal
@@ -13,18 +19,10 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 StepType = Literal["context", "goal", "action", "result", "impact"]
-IconKey = Literal["calendar", "target", "zap", "check-circle", "trending-up"]
 
-# Fixed order and icon per step — enforced by the validator below, so the
-# frontend can render the timeline in this order without re-sorting.
+# Fixed order — enforced by the validator below, so the frontend can render
+# the timeline in this order without re-sorting.
 _STEP_ORDER: tuple[StepType, ...] = ("context", "goal", "action", "result", "impact")
-_STEP_ICON: dict[StepType, IconKey] = {
-    "context": "calendar",
-    "goal": "target",
-    "action": "zap",
-    "result": "check-circle",
-    "impact": "trending-up",
-}
 
 
 class Persona(BaseModel):
@@ -42,16 +40,11 @@ class Persona(BaseModel):
 
 
 class TimelineStep(BaseModel):
-    """One step of the persona's journey.
-
-    `icon_key` must match `step_type` per `_STEP_ICON` — validated on the
-    parent `Scenario`, since that's where the full ordered list is known.
-    """
+    """One step of the persona's journey."""
 
     model_config = ConfigDict(extra="forbid")
 
     step_type: StepType
-    icon_key: IconKey
     text_uk: str = Field(min_length=10, max_length=300)
     text_en: str = Field(min_length=10, max_length=300)
 
@@ -88,11 +81,4 @@ class Scenario(BaseModel):
             raise ValueError(
                 f"timeline steps must be in order {_STEP_ORDER}, got {actual}"
             )
-        for step in self.timeline:
-            expected_icon = _STEP_ICON[step.step_type]
-            if step.icon_key != expected_icon:
-                raise ValueError(
-                    f"step_type '{step.step_type}' requires icon_key "
-                    f"'{expected_icon}', got '{step.icon_key}'"
-                )
         return self
