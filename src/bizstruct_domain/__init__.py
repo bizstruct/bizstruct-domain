@@ -13,6 +13,7 @@ from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypothesis, Hypotheses
 from bizstruct_domain.blocks.models_options import BusinessModelOption, ModelsOptions
 from bizstruct_domain.blocks.canvas import CanvasCard, Canvas, CanvasGenerated
+from bizstruct_domain.blocks.what_if import ERRCMove, WhatIfAlternative, WhatIf, WhatIfGenerated
 from bizstruct_domain.validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
@@ -33,8 +34,12 @@ __all__ = [
     "CanvasCard",
     "Canvas",
     "CanvasGenerated",
+    "ERRCMove",
+    "WhatIfAlternative",
+    "WhatIf",
+    "WhatIfGenerated",
     "FieldFeedback",
     "ValidateModelResult",
 ]
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"

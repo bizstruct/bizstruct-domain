@@ -1,8 +1,9 @@
 """Guards against presentation/UI concerns leaking into domain models.
 
 Three times running, an ML generator produced a UI-presentation attribute
-alongside domain data: colors/icons in what_if (still unfixed), `highlight`
-in scenario, `initials` in scenario. Each was caught by hand, after the
+alongside domain data: colors/icons in what_if (now fixed — see
+blocks/what_if.py's module docstring), `highlight` in scenario, `initials`
+in scenario. Each was caught by hand, after the
 fact, once someone noticed the frontend had to derive the same thing anyway.
 This test makes that class of defect fail automatically instead: it walks
 every field of every block model (recursing into nested domain models) and
@@ -39,6 +40,7 @@ from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypotheses
 from bizstruct_domain.blocks.models_options import ModelsOptions
 from bizstruct_domain.blocks.canvas import CanvasGenerated
+from bizstruct_domain.blocks.what_if import WhatIfGenerated
 
 BLACKLIST = {
     "color", "colour", "icon", "highlight", "initials", "variant",
@@ -56,6 +58,7 @@ BLOCK_MODELS: dict[str, type[BaseModel]] = {
     # CanvasGenerated, not Canvas — same fields, checking the stricter
     # subclass covers the base class's fields too.
     "canvas": CanvasGenerated,
+    "what_if": WhatIfGenerated,
 }
 
 
