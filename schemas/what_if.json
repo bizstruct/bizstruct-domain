@@ -1,0 +1,184 @@
+{
+  "$defs": {
+    "CanvasSection": {
+      "description": "The nine building blocks of the Business Model Canvas.",
+      "enum": [
+        "key_partners",
+        "key_activities",
+        "key_resources",
+        "value_propositions",
+        "customer_relationships",
+        "channels",
+        "customer_segments",
+        "cost_structure",
+        "revenue_streams"
+      ],
+      "title": "CanvasSection",
+      "type": "string"
+    },
+    "ERRCAction": {
+      "description": "Blue Ocean Strategy ERRC grid actions.\n\n`raise` is a reserved Python keyword, so the member name is `RAISE_`\nwhile the serialized value stays the plain string \"raise\".",
+      "enum": [
+        "eliminate",
+        "reduce",
+        "raise",
+        "create"
+      ],
+      "title": "ERRCAction",
+      "type": "string"
+    },
+    "ERRCMove": {
+      "additionalProperties": false,
+      "description": "A single ERRC action against one canvas section.\n\n`target` always identifies what the move is about, but what it means\ndepends on `action`:\n- eliminate: the exact `text` of the existing card in `target_section`\n  to remove. `new_text` must be absent.\n- reduce / raise: the exact `text` of the existing card in\n  `target_section` being scaled back/up. `new_text` is required — the\n  card's replacement text after the move (there is no way to\n  \"reduce\"/\"raise\" a card without saying what it now reads).\n- create: the proposed new card's text. `new_text` must be absent.\n\nThis is deliberately a text match on `target`, not a UUID reference —\nsee bizstruct-be's application endpoint for how an unresolved match is\nhandled (never a silent best-effort guess).",
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/ERRCAction"
+        },
+        "new_text": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required for reduce/raise (the card's text after the move); must be omitted for eliminate/create.",
+          "title": "New Text"
+        },
+        "rationale_en": {
+          "maxLength": 400,
+          "minLength": 10,
+          "title": "Rationale En",
+          "type": "string"
+        },
+        "rationale_uk": {
+          "maxLength": 400,
+          "minLength": 10,
+          "title": "Rationale Uk",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 200,
+          "minLength": 5,
+          "title": "Target",
+          "type": "string"
+        },
+        "target_section": {
+          "$ref": "#/$defs/CanvasSection",
+          "description": "Which canvas section this move acts on. Required for all four actions — this is what makes a move concrete instead of a vague statement of intent."
+        }
+      },
+      "required": [
+        "action",
+        "target_section",
+        "target",
+        "rationale_uk",
+        "rationale_en"
+      ],
+      "title": "ERRCMove",
+      "type": "object"
+    },
+    "WhatIfAlternative": {
+      "additionalProperties": false,
+      "description": "One ERRC-grid alternative business model built from the project's canvas.",
+      "properties": {
+        "expected_impact_en": {
+          "maxLength": 200,
+          "minLength": 5,
+          "title": "Expected Impact En",
+          "type": "string"
+        },
+        "expected_impact_uk": {
+          "maxLength": 200,
+          "minLength": 5,
+          "title": "Expected Impact Uk",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "moves": {
+          "items": {
+            "$ref": "#/$defs/ERRCMove"
+          },
+          "maxItems": 6,
+          "minItems": 3,
+          "title": "Moves",
+          "type": "array"
+        },
+        "premise_en": {
+          "maxLength": 200,
+          "minLength": 5,
+          "title": "Premise En",
+          "type": "string"
+        },
+        "premise_uk": {
+          "maxLength": 200,
+          "minLength": 5,
+          "title": "Premise Uk",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/WhatIfStatus",
+          "default": "draft"
+        },
+        "title_en": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Title En",
+          "type": "string"
+        },
+        "title_uk": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Title Uk",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title_uk",
+        "title_en",
+        "premise_uk",
+        "premise_en",
+        "moves",
+        "expected_impact_uk",
+        "expected_impact_en"
+      ],
+      "title": "WhatIfAlternative",
+      "type": "object"
+    },
+    "WhatIfStatus": {
+      "description": "Lifecycle status of a what-if (ERRC) alternative.",
+      "enum": [
+        "draft",
+        "applied"
+      ],
+      "title": "WhatIfStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The persisted/CRUD shape: exactly three ERRC alternatives, at most one\n`applied` (the user's own choice — see module docstring).",
+  "properties": {
+    "alternatives": {
+      "items": {
+        "$ref": "#/$defs/WhatIfAlternative"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Alternatives",
+      "type": "array"
+    }
+  },
+  "required": [
+    "alternatives"
+  ],
+  "title": "WhatIf",
+  "type": "object"
+}

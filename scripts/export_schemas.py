@@ -17,6 +17,7 @@ from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypotheses
 from bizstruct_domain.blocks.models_options import ModelsOptions
 from bizstruct_domain.blocks.canvas import Canvas
+from bizstruct_domain.blocks.what_if import WhatIf
 from bizstruct_domain.validate_model import ValidateModelResult
 from bizstruct_domain.chain import STAGES
 
@@ -37,6 +38,10 @@ BLOCK_MODELS = {
     # import it directly from this package rather than through the JSON
     # Schema sync.
     "canvas": Canvas,
+    # The persisted/CRUD shape, same reasoning as canvas above —
+    # WhatIfGenerated (generation-time, all-draft) isn't exported; it's an
+    # internal bizstruct-ml/bizstruct-be contract imported directly.
+    "what_if": WhatIf,
 }
 
 # Not a chain stage (not in STAGES) — a side-channel task result. Exported
