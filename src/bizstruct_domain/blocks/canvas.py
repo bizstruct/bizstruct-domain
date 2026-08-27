@@ -26,12 +26,20 @@ cardinality rules:
 
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
-_CARD_TEXT_KWARGS = dict(min_length=5, max_length=200)
+from bizstruct_domain.sanitize import SanitizedModel
+
+# Measured against experiments/results/ (4 models x 5 ideas): at
+# max_length=200, revenue_streams and value_propositions cards were
+# truncated mid-word 10-13% of the time (other sections' cards run
+# naturally shorter and weren't affected) — raised with modest headroom
+# rather than per-section, since all nine sections share this constant.
+# See the data-quality brief's part D and the task summary.
+_CARD_TEXT_KWARGS = dict(min_length=5, max_length=260)
 
 
-class CanvasCard(BaseModel):
+class CanvasCard(SanitizedModel):
     """A single card within one Business Model Canvas section."""
 
     model_config = ConfigDict(extra="forbid")
@@ -45,7 +53,7 @@ class CanvasCard(BaseModel):
     )
 
 
-class Canvas(BaseModel):
+class Canvas(SanitizedModel):
     """The nine Business Model Canvas sections, as persisted and edited via
     CRUD. No per-section cardinality constraint — see module docstring."""
 

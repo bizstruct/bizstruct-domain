@@ -11,7 +11,9 @@ wrapper.
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
+
+from bizstruct_domain.sanitize import SanitizedModel
 
 InvestorSlideType = Literal["hook", "problem", "solution", "traction", "ask"]
 CustomerSlideType = Literal["opening", "empathy", "transformation", "social_proof", "invitation"]
@@ -24,7 +26,7 @@ _CUSTOMER_ORDER: tuple[CustomerSlideType, ...] = (
 )
 
 
-class InvestorSlide(BaseModel):
+class InvestorSlide(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     type: InvestorSlideType
@@ -34,7 +36,7 @@ class InvestorSlide(BaseModel):
     content_en: str = Field(min_length=1, max_length=400)
 
 
-class CustomerSlide(BaseModel):
+class CustomerSlide(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     type: CustomerSlideType
@@ -44,7 +46,7 @@ class CustomerSlide(BaseModel):
     content_en: str = Field(min_length=1, max_length=400)
 
 
-class Pitch(BaseModel):
+class Pitch(SanitizedModel):
     """Output of the `pitch` stage: investor and customer decks."""
 
     model_config = ConfigDict(extra="forbid")

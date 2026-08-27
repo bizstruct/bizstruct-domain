@@ -6,10 +6,12 @@ a `{uk: {...}, en: {...}}` wrapper — see `blocks.architecture` for the same
 convention and its rationale.
 """
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
+
+from bizstruct_domain.sanitize import SanitizedModel
 
 
-class EmpathyItem(BaseModel):
+class EmpathyItem(SanitizedModel):
     """One observation within an empathy map section."""
 
     model_config = ConfigDict(extra="forbid")
@@ -19,7 +21,7 @@ class EmpathyItem(BaseModel):
     text_en: str = Field(min_length=10, max_length=200)
 
 
-class EmpathyMap(BaseModel):
+class EmpathyMap(SanitizedModel):
     """Output of the `empathy_map` stage: the first block generated, with no
     prior context — see bizstruct_domain.chain.STAGES.
     """

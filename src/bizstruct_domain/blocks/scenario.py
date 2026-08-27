@@ -16,7 +16,9 @@ domain-specific. Consumers pick their own icon per step_type client-side.
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
+
+from bizstruct_domain.sanitize import SanitizedModel
 
 StepType = Literal["context", "goal", "action", "result", "impact"]
 
@@ -25,7 +27,7 @@ StepType = Literal["context", "goal", "action", "result", "impact"]
 _STEP_ORDER: tuple[StepType, ...] = ("context", "goal", "action", "result", "impact")
 
 
-class Persona(BaseModel):
+class Persona(SanitizedModel):
     """The protagonist of the scenario — should be the same persona as the
     project's `empathy_map`, not a newly invented one."""
 
@@ -39,7 +41,7 @@ class Persona(BaseModel):
     pain_point_en: str = Field(min_length=10, max_length=300)
 
 
-class TimelineStep(BaseModel):
+class TimelineStep(SanitizedModel):
     """One step of the persona's journey."""
 
     model_config = ConfigDict(extra="forbid")
@@ -49,7 +51,7 @@ class TimelineStep(BaseModel):
     text_en: str = Field(min_length=10, max_length=300)
 
 
-class MetricValue(BaseModel):
+class MetricValue(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     value_uk: str = Field(min_length=1, max_length=100)
@@ -58,14 +60,14 @@ class MetricValue(BaseModel):
     label_en: str = Field(min_length=1, max_length=150)
 
 
-class ScenarioMetrics(BaseModel):
+class ScenarioMetrics(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     before: MetricValue
     after: MetricValue
 
 
-class Scenario(BaseModel):
+class Scenario(SanitizedModel):
     """Output of the `scenario` stage: a before/after user journey."""
 
     model_config = ConfigDict(extra="forbid")

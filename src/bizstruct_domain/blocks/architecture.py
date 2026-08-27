@@ -6,12 +6,21 @@ Innovation) and by its dominant pattern (same book, Part 2 — Patterns),
 with bilingual rationale for each choice.
 """
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from bizstruct_domain.enums import PATTERN_SUBTYPES, Epicenter, Pattern, PatternSubtype
+from bizstruct_domain.sanitize import SanitizedModel
+
+# Measured against experiments/results/ (4 models x 5 ideas): at
+# max_length=600, pattern_rationale_uk/en were truncated mid-word 35-40%
+# of the time, epicenter_rationale_uk/en 10-15% — raised with headroom for
+# both pairs uniformly rather than per-field, since they share the same
+# "justify a classification choice" shape. See the data-quality brief's
+# part D and the task summary.
+_RATIONALE_KWARGS = dict(min_length=40, max_length=750)
 
 
-class Architecture(BaseModel):
+class Architecture(SanitizedModel):
     """Output of the `architecture` stage: epicenter and pattern classification.
 
     Depends on `canvas` in the generation chain — the epicenter names which
@@ -23,13 +32,11 @@ class Architecture(BaseModel):
 
     epicenter: Epicenter
     epicenter_rationale_uk: str = Field(
-        min_length=40,
-        max_length=600,
+        **_RATIONALE_KWARGS,
         description="Обґрунтування вибору епіцентру українською мовою.",
     )
     epicenter_rationale_en: str = Field(
-        min_length=40,
-        max_length=600,
+        **_RATIONALE_KWARGS,
         description="Rationale for the chosen epicenter, in English.",
     )
     pattern: Pattern
@@ -43,13 +50,11 @@ class Architecture(BaseModel):
         ),
     )
     pattern_rationale_uk: str = Field(
-        min_length=40,
-        max_length=600,
+        **_RATIONALE_KWARGS,
         description="Обґрунтування вибору патерну українською мовою.",
     )
     pattern_rationale_en: str = Field(
-        min_length=40,
-        max_length=600,
+        **_RATIONALE_KWARGS,
         description="Rationale for the chosen pattern, in English.",
     )
 

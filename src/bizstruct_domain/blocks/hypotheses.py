@@ -8,12 +8,13 @@ via a cross-field validator — it previously lived only in bizstruct-ml's
 postprocessing, so bizstruct-be could persist a set missing a category.
 """
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from bizstruct_domain.enums import HypothesisCategory, Quadrant
+from bizstruct_domain.sanitize import SanitizedModel
 
 
-class Hypothesis(BaseModel):
+class Hypothesis(SanitizedModel):
     """One testable assumption behind the business model."""
 
     model_config = ConfigDict(extra="forbid")
@@ -24,7 +25,11 @@ class Hypothesis(BaseModel):
     )
     text: str = Field(
         min_length=15,
-        max_length=300,
+        # Measured against experiments/results/ (4 models x 5 ideas): at
+        # max_length=300, truncated mid-word 10% of the time — a falsifiable
+        # statement with a specific number/metric sometimes needs slightly
+        # more room. See data-quality brief part D.
+        max_length=360,
         description=(
             "A falsifiable statement, specific enough that a concrete result would "
             "prove it wrong — must include a number, metric, or percentage."
@@ -42,7 +47,7 @@ class Hypothesis(BaseModel):
     )
 
 
-class Hypotheses(BaseModel):
+class Hypotheses(SanitizedModel):
     """Output of the `hypotheses` stage."""
 
     model_config = ConfigDict(extra="forbid")

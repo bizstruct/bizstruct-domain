@@ -16,14 +16,16 @@ backend, so its critique has no context beyond the four fields it's given.
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
+
+from bizstruct_domain.sanitize import SanitizedModel
 
 ValidatedField = Literal["title", "audience", "value_proposition", "description"]
 FieldStatus = Literal["ok", "weak", "invalid"]
 ValidationStatus = Literal["valid", "needs_revision", "invalid"]
 
 
-class FieldFeedback(BaseModel):
+class FieldFeedback(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     field: ValidatedField
@@ -32,7 +34,7 @@ class FieldFeedback(BaseModel):
     suggestion: str | None = Field(default=None, max_length=400)
 
 
-class ValidateModelResult(BaseModel):
+class ValidateModelResult(SanitizedModel):
     """Output of the `validate_model` side-channel task."""
 
     model_config = ConfigDict(extra="forbid")
