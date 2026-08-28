@@ -14,10 +14,12 @@ from bizstruct_domain.blocks.hypotheses import Hypothesis, Hypotheses
 from bizstruct_domain.blocks.models_options import BusinessModelOption, ModelsOptions
 from bizstruct_domain.blocks.canvas import CanvasCard, Canvas, CanvasGenerated
 from bizstruct_domain.blocks.what_if import ERRCMove, WhatIfAlternative, WhatIf, WhatIfGenerated
+from bizstruct_domain.sanitize import SanitizedModel
 from bizstruct_domain.validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
     "enums",
+    "SanitizedModel",
     "STAGES",
     "Stage",
     "StageMode",
@@ -42,4 +44,4 @@ __all__ = [
     "ValidateModelResult",
 ]
 
-__version__ = "0.8.1"
+__version__ = "0.9.0"

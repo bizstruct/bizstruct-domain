@@ -1,7 +1,10 @@
 """Output model for the `scenario` generation stage.
 
-A before/after user-journey scenario for a concrete persona. Bilingual per
-field (`_uk`/`_en` suffixes), not a `{uk: {...}, en: {...}}` wrapper.
+A before/after user-journey scenario for a concrete persona.
+
+Single language per project (see data-quality brief part E / ADR-0006) —
+each text field is one field, not a `_uk`/`_en` pair. Language is a
+property of the project; this model doesn't carry it.
 
 `highlight` (which timeline steps get visually emphasized) is deliberately
 NOT part of this model — it's presentation logic, not domain data. The
@@ -16,7 +19,9 @@ domain-specific. Consumers pick their own icon per step_type client-side.
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
+
+from bizstruct_domain.sanitize import SanitizedModel
 
 StepType = Literal["context", "goal", "action", "result", "impact"]
 
@@ -25,47 +30,41 @@ StepType = Literal["context", "goal", "action", "result", "impact"]
 _STEP_ORDER: tuple[StepType, ...] = ("context", "goal", "action", "result", "impact")
 
 
-class Persona(BaseModel):
+class Persona(SanitizedModel):
     """The protagonist of the scenario — should be the same persona as the
     project's `empathy_map`, not a newly invented one."""
 
     model_config = ConfigDict(extra="forbid")
 
-    name_uk: str = Field(min_length=1, max_length=100)
-    name_en: str = Field(min_length=1, max_length=100)
-    role_uk: str = Field(min_length=1, max_length=150)
-    role_en: str = Field(min_length=1, max_length=150)
-    pain_point_uk: str = Field(min_length=10, max_length=300)
-    pain_point_en: str = Field(min_length=10, max_length=300)
+    name: str = Field(min_length=1, max_length=100)
+    role: str = Field(min_length=1, max_length=150)
+    pain_point: str = Field(min_length=10, max_length=300)
 
 
-class TimelineStep(BaseModel):
+class TimelineStep(SanitizedModel):
     """One step of the persona's journey."""
 
     model_config = ConfigDict(extra="forbid")
 
     step_type: StepType
-    text_uk: str = Field(min_length=10, max_length=300)
-    text_en: str = Field(min_length=10, max_length=300)
+    text: str = Field(min_length=10, max_length=300)
 
 
-class MetricValue(BaseModel):
+class MetricValue(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
-    value_uk: str = Field(min_length=1, max_length=100)
-    value_en: str = Field(min_length=1, max_length=100)
-    label_uk: str = Field(min_length=1, max_length=150)
-    label_en: str = Field(min_length=1, max_length=150)
+    value: str = Field(min_length=1, max_length=100)
+    label: str = Field(min_length=1, max_length=150)
 
 
-class ScenarioMetrics(BaseModel):
+class ScenarioMetrics(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     before: MetricValue
     after: MetricValue
 
 
-class Scenario(BaseModel):
+class Scenario(SanitizedModel):
     """Output of the `scenario` stage: a before/after user journey."""
 
     model_config = ConfigDict(extra="forbid")

@@ -18,18 +18,31 @@ finite enum.
 
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from bizstruct_domain.enums import CanvasSection, ERRCAction, WhatIfStatus
+from bizstruct_domain.sanitize import SanitizedModel
 
+# `target` matches an existing canvas card's exact text (see ERRCMove's
+# docstring) — kept aligned with CanvasCard.text's own max_length.
 _TEXT = dict(min_length=5, max_length=200)
+# premise/expected_impact are short prose (a few sentences), not a text
+# match. Measured against experiments/results/ (4 models x 5 ideas, when
+# these were still _uk/_en pairs): at max_length=200 these were truncated
+# mid-word 93-97% (premise) and 53-57% (expected_impact) of the time — not
+# an occasional overflow but the field's normal case. Raised with
+# headroom; see the data-quality brief's part D and the task summary for
+# the measured rates this was calibrated against. `rationale` (ERRCMove,
+# 400 already) showed no truncation at all, which is the reference point
+# for how much room prose actually needs here.
+_TEXT_LONG = dict(min_length=5, max_length=320)
 _RATIONALE = dict(min_length=10, max_length=400)
 _MIN_MOVES = 3
 _MAX_MOVES = 6
 _MIN_ACTIONS_COVERED = 3
 
 
-class ERRCMove(BaseModel):
+class ERRCMove(SanitizedModel):
     """A single ERRC action against one canvas section.
 
     `target` always identifies what the move is about, but what it means
@@ -58,12 +71,14 @@ class ERRCMove(BaseModel):
     target: str = Field(**_TEXT)
     new_text: str | None = Field(
         default=None,
-        max_length=200,
+        # Kept aligned with CanvasCard.text's own max_length (this becomes
+        # a card's text) — raised alongside it; see canvas.py's
+        # _CARD_TEXT_KWARGS for the same measured-truncation rationale.
+        max_length=260,
         description="Required for reduce/raise (the card's text after the "
         "move); must be omitted for eliminate/create.",
     )
-    rationale_uk: str = Field(**_RATIONALE)
-    rationale_en: str = Field(**_RATIONALE)
+    rationale: str = Field(**_RATIONALE)
 
     @model_validator(mode="after")
     def _validate_new_text_by_action(self) -> "ERRCMove":
@@ -75,19 +90,16 @@ class ERRCMove(BaseModel):
         return self
 
 
-class WhatIfAlternative(BaseModel):
+class WhatIfAlternative(SanitizedModel):
     """One ERRC-grid alternative business model built from the project's canvas."""
 
     model_config = ConfigDict(extra="forbid")
 
     id: UUID
-    title_uk: str = Field(min_length=1, max_length=150)
-    title_en: str = Field(min_length=1, max_length=150)
-    premise_uk: str = Field(**_TEXT)
-    premise_en: str = Field(**_TEXT)
+    title: str = Field(min_length=1, max_length=150)
+    premise: str = Field(**_TEXT_LONG)
     moves: list[ERRCMove] = Field(min_length=_MIN_MOVES, max_length=_MAX_MOVES)
-    expected_impact_uk: str = Field(**_TEXT)
-    expected_impact_en: str = Field(**_TEXT)
+    expected_impact: str = Field(**_TEXT_LONG)
     status: WhatIfStatus = WhatIfStatus.DRAFT
 
     @model_validator(mode="after")
@@ -103,7 +115,7 @@ class WhatIfAlternative(BaseModel):
         return self
 
 
-class WhatIf(BaseModel):
+class WhatIf(SanitizedModel):
     """The persisted/CRUD shape: exactly three ERRC alternatives, at most one
     `applied` (the user's own choice — see module docstring)."""
 

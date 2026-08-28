@@ -3,28 +3,16 @@
     "CustomerSlide": {
       "additionalProperties": false,
       "properties": {
-        "content_en": {
+        "content": {
           "maxLength": 400,
           "minLength": 1,
-          "title": "Content En",
+          "title": "Content",
           "type": "string"
         },
-        "content_uk": {
-          "maxLength": 400,
-          "minLength": 1,
-          "title": "Content Uk",
-          "type": "string"
-        },
-        "headline_en": {
+        "headline": {
           "maxLength": 80,
           "minLength": 1,
-          "title": "Headline En",
-          "type": "string"
-        },
-        "headline_uk": {
-          "maxLength": 80,
-          "minLength": 1,
-          "title": "Headline Uk",
+          "title": "Headline",
           "type": "string"
         },
         "type": {
@@ -41,10 +29,8 @@
       },
       "required": [
         "type",
-        "headline_uk",
-        "headline_en",
-        "content_uk",
-        "content_en"
+        "headline",
+        "content"
       ],
       "title": "CustomerSlide",
       "type": "object"
@@ -52,28 +38,16 @@
     "InvestorSlide": {
       "additionalProperties": false,
       "properties": {
-        "content_en": {
+        "content": {
           "maxLength": 400,
           "minLength": 1,
-          "title": "Content En",
+          "title": "Content",
           "type": "string"
         },
-        "content_uk": {
-          "maxLength": 400,
-          "minLength": 1,
-          "title": "Content Uk",
-          "type": "string"
-        },
-        "headline_en": {
+        "headline": {
           "maxLength": 80,
           "minLength": 1,
-          "title": "Headline En",
-          "type": "string"
-        },
-        "headline_uk": {
-          "maxLength": 80,
-          "minLength": 1,
-          "title": "Headline Uk",
+          "title": "Headline",
           "type": "string"
         },
         "type": {
@@ -90,10 +64,8 @@
       },
       "required": [
         "type",
-        "headline_uk",
-        "headline_en",
-        "content_uk",
-        "content_en"
+        "headline",
+        "content"
       ],
       "title": "InvestorSlide",
       "type": "object"

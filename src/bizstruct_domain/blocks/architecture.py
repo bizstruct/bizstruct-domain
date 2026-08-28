@@ -3,15 +3,29 @@
 Classifies a business model by its epicenter of innovation (Osterwalder &
 Pigneur, "Business Model Generation" — Epicentres of Business Model
 Innovation) and by its dominant pattern (same book, Part 2 — Patterns),
-with bilingual rationale for each choice.
+with a rationale for each choice.
+
+Single language per project (see data-quality brief part E / ADR-0006) —
+`epicenter_rationale`/`pattern_rationale` are one field each, not `_uk`/
+`_en` pairs. Language is a property of the project, decided by
+bizstruct-be and passed to bizstruct-ml; this model doesn't carry it.
 """
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from bizstruct_domain.enums import PATTERN_SUBTYPES, Epicenter, Pattern, PatternSubtype
+from bizstruct_domain.sanitize import SanitizedModel
+
+# Measured against experiments/results/ (4 models x 5 ideas): at
+# max_length=600, pattern_rationale was truncated mid-word 35-40% of the
+# time, epicenter_rationale 10-15% — raised with headroom for both
+# uniformly rather than per-field, since they share the same "justify a
+# classification choice" shape. See the data-quality brief's part D and
+# the task summary.
+_RATIONALE_KWARGS = dict(min_length=40, max_length=750)
 
 
-class Architecture(BaseModel):
+class Architecture(SanitizedModel):
     """Output of the `architecture` stage: epicenter and pattern classification.
 
     Depends on `canvas` in the generation chain — the epicenter names which
@@ -22,15 +36,9 @@ class Architecture(BaseModel):
     model_config = ConfigDict(extra="forbid", use_enum_values=False)
 
     epicenter: Epicenter
-    epicenter_rationale_uk: str = Field(
-        min_length=40,
-        max_length=600,
-        description="Обґрунтування вибору епіцентру українською мовою.",
-    )
-    epicenter_rationale_en: str = Field(
-        min_length=40,
-        max_length=600,
-        description="Rationale for the chosen epicenter, in English.",
+    epicenter_rationale: str = Field(
+        **_RATIONALE_KWARGS,
+        description="Rationale for the chosen epicenter, in the project's language.",
     )
     pattern: Pattern
     pattern_subtype: PatternSubtype | None = Field(
@@ -42,15 +50,9 @@ class Architecture(BaseModel):
             "must be told apart; must be null for all other patterns."
         ),
     )
-    pattern_rationale_uk: str = Field(
-        min_length=40,
-        max_length=600,
-        description="Обґрунтування вибору патерну українською мовою.",
-    )
-    pattern_rationale_en: str = Field(
-        min_length=40,
-        max_length=600,
-        description="Rationale for the chosen pattern, in English.",
+    pattern_rationale: str = Field(
+        **_RATIONALE_KWARGS,
+        description="Rationale for the chosen pattern, in the project's language.",
     )
 
     @model_validator(mode="after")

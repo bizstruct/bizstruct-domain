@@ -17,12 +17,13 @@ model existed.
 
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from bizstruct_domain.enums import MonetizationType
+from bizstruct_domain.sanitize import SanitizedModel
 
 
-class BusinessModelOption(BaseModel):
+class BusinessModelOption(SanitizedModel):
     """One candidate business model for the idea."""
 
     model_config = ConfigDict(extra="forbid")
@@ -44,7 +45,12 @@ class BusinessModelOption(BaseModel):
     )
     time_to_value: str = Field(
         min_length=2,
-        max_length=100,
+        # Measured against experiments/results/ (4 models x 5 ideas): at
+        # max_length=100, truncated mid-word 27% of the time — the model
+        # tends to add brief justification beyond just a duration. Raised
+        # with headroom rather than trying to force a bare-duration answer
+        # via prompting (out of scope here — see data-quality brief part D).
+        max_length=160,
         description="How long before the customer sees the first result, e.g. '30 minutes', '2 weeks'.",
     )
     score: int = Field(ge=0, le=100, description="Viability score for this option.")
@@ -55,7 +61,7 @@ class BusinessModelOption(BaseModel):
     )
 
 
-class ModelsOptions(BaseModel):
+class ModelsOptions(SanitizedModel):
     """Output of the `models_options` stage: exactly 3 candidate business
     models, with at most one selected."""
 

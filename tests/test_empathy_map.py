@@ -7,8 +7,7 @@ from bizstruct_domain.blocks.empathy_map import EmpathyItem, EmpathyMap
 def _item(i: int) -> dict:
     return {
         "id": i,
-        "text_uk": f"Достатньо довгий пункт українською номер {i}",
-        "text_en": f"A sufficiently long item in English number {i}",
+        "text": f"A sufficiently long item in English number {i}",
     }
 
 
@@ -43,7 +42,7 @@ def test_six_items_is_allowed():
 
 def test_short_item_text_rejected():
     with pytest.raises(ValidationError):
-        EmpathyItem(id=1, text_uk="ok", text_en="A sufficiently long item in English.")
+        EmpathyItem(id=1, text="ok")
 
 
 def test_extra_field_rejected():
