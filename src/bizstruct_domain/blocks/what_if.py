@@ -27,14 +27,14 @@ from bizstruct_domain.sanitize import SanitizedModel
 # docstring) — kept aligned with CanvasCard.text's own max_length.
 _TEXT = dict(min_length=5, max_length=200)
 # premise/expected_impact are short prose (a few sentences), not a text
-# match. Measured against experiments/results/ (4 models x 5 ideas): at
-# max_length=200 these were truncated mid-word 93-97% (premise) and
-# 53-57% (expected_impact) of the time — not an occasional overflow but
-# the field's normal case. Raised with headroom; see the data-quality
-# brief's part D and the task summary for the measured rates this was
-# calibrated against. rationale_uk/en (ERRCMove, 400 already) showed no
-# truncation at all, which is the reference point for how much room
-# prose actually needs here.
+# match. Measured against experiments/results/ (4 models x 5 ideas, when
+# these were still _uk/_en pairs): at max_length=200 these were truncated
+# mid-word 93-97% (premise) and 53-57% (expected_impact) of the time — not
+# an occasional overflow but the field's normal case. Raised with
+# headroom; see the data-quality brief's part D and the task summary for
+# the measured rates this was calibrated against. `rationale` (ERRCMove,
+# 400 already) showed no truncation at all, which is the reference point
+# for how much room prose actually needs here.
 _TEXT_LONG = dict(min_length=5, max_length=320)
 _RATIONALE = dict(min_length=10, max_length=400)
 _MIN_MOVES = 3
@@ -78,8 +78,7 @@ class ERRCMove(SanitizedModel):
         description="Required for reduce/raise (the card's text after the "
         "move); must be omitted for eliminate/create.",
     )
-    rationale_uk: str = Field(**_RATIONALE)
-    rationale_en: str = Field(**_RATIONALE)
+    rationale: str = Field(**_RATIONALE)
 
     @model_validator(mode="after")
     def _validate_new_text_by_action(self) -> "ERRCMove":
@@ -97,13 +96,10 @@ class WhatIfAlternative(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     id: UUID
-    title_uk: str = Field(min_length=1, max_length=150)
-    title_en: str = Field(min_length=1, max_length=150)
-    premise_uk: str = Field(**_TEXT_LONG)
-    premise_en: str = Field(**_TEXT_LONG)
+    title: str = Field(min_length=1, max_length=150)
+    premise: str = Field(**_TEXT_LONG)
     moves: list[ERRCMove] = Field(min_length=_MIN_MOVES, max_length=_MAX_MOVES)
-    expected_impact_uk: str = Field(**_TEXT_LONG)
-    expected_impact_en: str = Field(**_TEXT_LONG)
+    expected_impact: str = Field(**_TEXT_LONG)
     status: WhatIfStatus = WhatIfStatus.DRAFT
 
     @model_validator(mode="after")

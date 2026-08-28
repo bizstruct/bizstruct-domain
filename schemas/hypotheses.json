@@ -19,7 +19,7 @@
         },
         "text": {
           "description": "A falsifiable statement, specific enough that a concrete result would prove it wrong — must include a number, metric, or percentage.",
-          "maxLength": 300,
+          "maxLength": 360,
           "minLength": 15,
           "title": "Text",
           "type": "string"

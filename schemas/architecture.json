@@ -43,35 +43,21 @@
     "epicenter": {
       "$ref": "#/$defs/Epicenter"
     },
-    "epicenter_rationale_en": {
-      "description": "Rationale for the chosen epicenter, in English.",
-      "maxLength": 600,
+    "epicenter_rationale": {
+      "description": "Rationale for the chosen epicenter, in the project's language.",
+      "maxLength": 750,
       "minLength": 40,
-      "title": "Epicenter Rationale En",
-      "type": "string"
-    },
-    "epicenter_rationale_uk": {
-      "description": "Обґрунтування вибору епіцентру українською мовою.",
-      "maxLength": 600,
-      "minLength": 40,
-      "title": "Epicenter Rationale Uk",
+      "title": "Epicenter Rationale",
       "type": "string"
     },
     "pattern": {
       "$ref": "#/$defs/Pattern"
     },
-    "pattern_rationale_en": {
-      "description": "Rationale for the chosen pattern, in English.",
-      "maxLength": 600,
+    "pattern_rationale": {
+      "description": "Rationale for the chosen pattern, in the project's language.",
+      "maxLength": 750,
       "minLength": 40,
-      "title": "Pattern Rationale En",
-      "type": "string"
-    },
-    "pattern_rationale_uk": {
-      "description": "Обґрунтування вибору патерну українською мовою.",
-      "maxLength": 600,
-      "minLength": 40,
-      "title": "Pattern Rationale Uk",
+      "title": "Pattern Rationale",
       "type": "string"
     },
     "pattern_subtype": {
@@ -89,11 +75,9 @@
   },
   "required": [
     "epicenter",
-    "epicenter_rationale_uk",
-    "epicenter_rationale_en",
+    "epicenter_rationale",
     "pattern",
-    "pattern_rationale_uk",
-    "pattern_rationale_en"
+    "pattern_rationale"
   ],
   "title": "Architecture",
   "type": "object"

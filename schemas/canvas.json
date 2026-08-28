@@ -16,7 +16,7 @@
           "type": "boolean"
         },
         "text": {
-          "maxLength": 200,
+          "maxLength": 260,
           "minLength": 5,
           "title": "Text",
           "type": "string"

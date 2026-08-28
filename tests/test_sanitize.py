@@ -41,41 +41,37 @@ def test_strip_control_chars_noop_on_clean_text():
 
 
 def test_nul_byte_stripped_from_direct_field():
-    item = EmpathyItem(id=1, text_uk="Достатньо довгий текст\x00 з нулем", text_en="Sufficiently long text\x00 with a nul")
-    assert "\x00" not in item.text_uk
-    assert "\x00" not in item.text_en
-    assert item.text_uk == "Достатньо довгий текст з нулем"
+    item = EmpathyItem(id=1, text="Sufficiently long text\x00 with a nul")
+    assert "\x00" not in item.text
+    assert item.text == "Sufficiently long text with a nul"
 
 
 def test_newline_not_stripped_from_direct_field():
-    text_uk = "Перший рядок\nдругий рядок довшого опису"
-    item = EmpathyItem(id=1, text_uk=text_uk, text_en="A two-line description\nsecond line here for length")
-    assert item.text_uk == text_uk
+    text = "A two-line description\nsecond line here for length"
+    item = EmpathyItem(id=1, text=text)
+    assert item.text == text
 
 
 # ── SanitizedModel: nested models and lists of models ────────────────────
 
 
-def _item(i: int, *, nul_in: str | None = None) -> dict:
-    text_uk = f"Достатньо довгий пункт українською номер {i}"
-    text_en = f"A sufficiently long item in English number {i}"
-    if nul_in == "uk":
-        text_uk = text_uk[:5] + "\x00" + text_uk[5:]
-    if nul_in == "en":
-        text_en = text_en[:5] + "\x00" + text_en[5:]
-    return {"id": i, "text_uk": text_uk, "text_en": text_en}
+def _item(i: int, *, nul: bool = False) -> dict:
+    text = f"A sufficiently long item in English number {i}"
+    if nul:
+        text = text[:5] + "\x00" + text[5:]
+    return {"id": i, "text": text}
 
 
 def test_nul_byte_stripped_inside_nested_list_of_models():
     kwargs = {
-        section: [_item(1, nul_in="uk"), _item(2, nul_in="en"), _item(3)]
+        section: [_item(1, nul=True), _item(2, nul=True), _item(3)]
         for section in ("says", "thinks", "does", "feels", "pains", "gains")
     }
     model = EmpathyMap(**kwargs)
-    assert "\x00" not in model.says[0].text_uk
-    assert "\x00" not in model.says[1].text_en
+    assert "\x00" not in model.says[0].text
+    assert "\x00" not in model.says[1].text
     # untouched item still intact
-    assert model.says[2].text_uk == _item(3)["text_uk"]
+    assert model.says[2].text == _item(3)["text"]
 
 
 # ── Sanitization happens before min_length is checked ────────────────────
@@ -89,17 +85,17 @@ def test_sanitize_runs_before_min_length_check():
     raw = "a" + "\x00" * 9
     assert len(raw) == 10
     with pytest.raises(ValidationError):
-        EmpathyItem(id=1, text_uk=raw, text_en="A sufficiently long item in English, unaffected")
+        EmpathyItem(id=1, text=raw)
 
 
 def test_sanitize_then_min_length_pass_when_cleaned_text_is_long_enough():
     # Raw length is inflated by NUL bytes but the real content alone
     # already clears min_length=10 once they're stripped.
-    raw = "Досить довгий\x00\x00\x00 текст"
+    raw = "Sufficiently long\x00\x00\x00 text"
     cleaned = strip_control_chars(raw)
     assert len(cleaned) >= 10
-    item = EmpathyItem(id=1, text_uk=raw, text_en="A sufficiently long item in English, unaffected")
-    assert item.text_uk == cleaned
+    item = EmpathyItem(id=1, text=raw)
+    assert item.text == cleaned
 
 
 # ── General mechanism: list[str] / dict[str, str] fields (no existing

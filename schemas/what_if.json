@@ -37,7 +37,7 @@
         "new_text": {
           "anyOf": [
             {
-              "maxLength": 200,
+              "maxLength": 260,
               "type": "string"
             },
             {
@@ -48,16 +48,10 @@
           "description": "Required for reduce/raise (the card's text after the move); must be omitted for eliminate/create.",
           "title": "New Text"
         },
-        "rationale_en": {
+        "rationale": {
           "maxLength": 400,
           "minLength": 10,
-          "title": "Rationale En",
-          "type": "string"
-        },
-        "rationale_uk": {
-          "maxLength": 400,
-          "minLength": 10,
-          "title": "Rationale Uk",
+          "title": "Rationale",
           "type": "string"
         },
         "target": {
@@ -75,8 +69,7 @@
         "action",
         "target_section",
         "target",
-        "rationale_uk",
-        "rationale_en"
+        "rationale"
       ],
       "title": "ERRCMove",
       "type": "object"
@@ -85,16 +78,10 @@
       "additionalProperties": false,
       "description": "One ERRC-grid alternative business model built from the project's canvas.",
       "properties": {
-        "expected_impact_en": {
-          "maxLength": 200,
+        "expected_impact": {
+          "maxLength": 320,
           "minLength": 5,
-          "title": "Expected Impact En",
-          "type": "string"
-        },
-        "expected_impact_uk": {
-          "maxLength": 200,
-          "minLength": 5,
-          "title": "Expected Impact Uk",
+          "title": "Expected Impact",
           "type": "string"
         },
         "id": {
@@ -111,44 +98,29 @@
           "title": "Moves",
           "type": "array"
         },
-        "premise_en": {
-          "maxLength": 200,
+        "premise": {
+          "maxLength": 320,
           "minLength": 5,
-          "title": "Premise En",
-          "type": "string"
-        },
-        "premise_uk": {
-          "maxLength": 200,
-          "minLength": 5,
-          "title": "Premise Uk",
+          "title": "Premise",
           "type": "string"
         },
         "status": {
           "$ref": "#/$defs/WhatIfStatus",
           "default": "draft"
         },
-        "title_en": {
+        "title": {
           "maxLength": 150,
           "minLength": 1,
-          "title": "Title En",
-          "type": "string"
-        },
-        "title_uk": {
-          "maxLength": 150,
-          "minLength": 1,
-          "title": "Title Uk",
+          "title": "Title",
           "type": "string"
         }
       },
       "required": [
         "id",
-        "title_uk",
-        "title_en",
-        "premise_uk",
-        "premise_en",
+        "title",
+        "premise",
         "moves",
-        "expected_impact_uk",
-        "expected_impact_en"
+        "expected_impact"
       ],
       "title": "WhatIfAlternative",
       "type": "object"

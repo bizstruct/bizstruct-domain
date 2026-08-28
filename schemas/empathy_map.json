@@ -9,23 +9,16 @@
           "title": "Id",
           "type": "integer"
         },
-        "text_en": {
+        "text": {
           "maxLength": 200,
           "minLength": 10,
-          "title": "Text En",
-          "type": "string"
-        },
-        "text_uk": {
-          "maxLength": 200,
-          "minLength": 10,
-          "title": "Text Uk",
+          "title": "Text",
           "type": "string"
         }
       },
       "required": [
         "id",
-        "text_uk",
-        "text_en"
+        "text"
       ],
       "title": "EmpathyItem",
       "type": "object"

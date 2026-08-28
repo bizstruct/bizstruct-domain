@@ -39,22 +39,18 @@ def test_canvas_card_text_accepts_past_old_200_limit():
 def test_architecture_rationale_fields_accept_past_old_600_limit():
     Architecture(
         epicenter=Epicenter.CUSTOMER_DRIVEN,
-        epicenter_rationale_uk=_over_old_limit(600) + " " * 40,
-        epicenter_rationale_en=_over_old_limit(600) + " " * 40,
+        epicenter_rationale=_over_old_limit(600) + " " * 40,
         pattern=Pattern.UNBUNDLING,
         pattern_subtype=None,
-        pattern_rationale_uk=_over_old_limit(600) + " " * 40,
-        pattern_rationale_en=_over_old_limit(600) + " " * 40,
+        pattern_rationale=_over_old_limit(600) + " " * 40,
     )
     with pytest.raises(ValidationError):
         Architecture(
             epicenter=Epicenter.CUSTOMER_DRIVEN,
-            epicenter_rationale_uk="a" * 2000,
-            epicenter_rationale_en="a" * 40,
+            epicenter_rationale="a" * 2000,
             pattern=Pattern.UNBUNDLING,
             pattern_subtype=None,
-            pattern_rationale_uk="a" * 40,
-            pattern_rationale_en="a" * 40,
+            pattern_rationale="a" * 40,
         )
 
 
@@ -103,21 +99,17 @@ def _move(action: ERRCAction) -> ERRCMove:
         target_section=CanvasSection.VALUE_PROPOSITIONS,
         target="A sufficiently long target text here for validation",
         new_text="A replacement card text" if action in (ERRCAction.REDUCE, ERRCAction.RAISE_) else None,
-        rationale_uk="Достатньо довге обґрунтування українською мовою тут для перевірки.",
-        rationale_en="A sufficiently long rationale in English here for validation purposes.",
+        rationale="A sufficiently long rationale in English here for validation purposes.",
     )
 
 
 def test_what_if_premise_and_expected_impact_accept_past_old_200_limit():
     WhatIfAlternative(
         id=uuid4(),
-        title_uk="Заголовок",
-        title_en="Title",
-        premise_uk=_over_old_limit(200) + " довший текст щоб набрати довжину",
-        premise_en=_over_old_limit(200) + " longer text to pad out the length",
+        title="Title",
+        premise=_over_old_limit(200) + " longer text to pad out the length",
         moves=[_move(ERRCAction.CREATE), _move(ERRCAction.ELIMINATE), _move(ERRCAction.RAISE_)],
-        expected_impact_uk=_over_old_limit(200) + " довший текст щоб набрати довжину",
-        expected_impact_en=_over_old_limit(200) + " longer text to pad out the length",
+        expected_impact=_over_old_limit(200) + " longer text to pad out the length",
     )
 
 
@@ -127,6 +119,5 @@ def test_what_if_new_text_accepts_past_old_200_limit():
         target_section=CanvasSection.VALUE_PROPOSITIONS,
         target="A sufficiently long target text here for validation",
         new_text=_over_old_limit(200),
-        rationale_uk="Достатньо довге обґрунтування українською мовою тут для перевірки.",
-        rationale_en="A sufficiently long rationale in English here for validation purposes.",
+        rationale="A sufficiently long rationale in English here for validation purposes.",
     )

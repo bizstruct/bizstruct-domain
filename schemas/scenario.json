@@ -3,36 +3,22 @@
     "MetricValue": {
       "additionalProperties": false,
       "properties": {
-        "label_en": {
+        "label": {
           "maxLength": 150,
           "minLength": 1,
-          "title": "Label En",
+          "title": "Label",
           "type": "string"
         },
-        "label_uk": {
-          "maxLength": 150,
-          "minLength": 1,
-          "title": "Label Uk",
-          "type": "string"
-        },
-        "value_en": {
+        "value": {
           "maxLength": 100,
           "minLength": 1,
-          "title": "Value En",
-          "type": "string"
-        },
-        "value_uk": {
-          "maxLength": 100,
-          "minLength": 1,
-          "title": "Value Uk",
+          "title": "Value",
           "type": "string"
         }
       },
       "required": [
-        "value_uk",
-        "value_en",
-        "label_uk",
-        "label_en"
+        "value",
+        "label"
       ],
       "title": "MetricValue",
       "type": "object"
@@ -41,50 +27,29 @@
       "additionalProperties": false,
       "description": "The protagonist of the scenario — should be the same persona as the\nproject's `empathy_map`, not a newly invented one.",
       "properties": {
-        "name_en": {
+        "name": {
           "maxLength": 100,
           "minLength": 1,
-          "title": "Name En",
+          "title": "Name",
           "type": "string"
         },
-        "name_uk": {
-          "maxLength": 100,
-          "minLength": 1,
-          "title": "Name Uk",
-          "type": "string"
-        },
-        "pain_point_en": {
+        "pain_point": {
           "maxLength": 300,
           "minLength": 10,
-          "title": "Pain Point En",
+          "title": "Pain Point",
           "type": "string"
         },
-        "pain_point_uk": {
-          "maxLength": 300,
-          "minLength": 10,
-          "title": "Pain Point Uk",
-          "type": "string"
-        },
-        "role_en": {
+        "role": {
           "maxLength": 150,
           "minLength": 1,
-          "title": "Role En",
-          "type": "string"
-        },
-        "role_uk": {
-          "maxLength": 150,
-          "minLength": 1,
-          "title": "Role Uk",
+          "title": "Role",
           "type": "string"
         }
       },
       "required": [
-        "name_uk",
-        "name_en",
-        "role_uk",
-        "role_en",
-        "pain_point_uk",
-        "pain_point_en"
+        "name",
+        "role",
+        "pain_point"
       ],
       "title": "Persona",
       "type": "object"
@@ -121,23 +86,16 @@
           "title": "Step Type",
           "type": "string"
         },
-        "text_en": {
+        "text": {
           "maxLength": 300,
           "minLength": 10,
-          "title": "Text En",
-          "type": "string"
-        },
-        "text_uk": {
-          "maxLength": 300,
-          "minLength": 10,
-          "title": "Text Uk",
+          "title": "Text",
           "type": "string"
         }
       },
       "required": [
         "step_type",
-        "text_uk",
-        "text_en"
+        "text"
       ],
       "title": "TimelineStep",
       "type": "object"

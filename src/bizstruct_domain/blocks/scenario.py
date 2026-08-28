@@ -1,7 +1,10 @@
 """Output model for the `scenario` generation stage.
 
-A before/after user-journey scenario for a concrete persona. Bilingual per
-field (`_uk`/`_en` suffixes), not a `{uk: {...}, en: {...}}` wrapper.
+A before/after user-journey scenario for a concrete persona.
+
+Single language per project (see data-quality brief part E / ADR-0006) —
+each text field is one field, not a `_uk`/`_en` pair. Language is a
+property of the project; this model doesn't carry it.
 
 `highlight` (which timeline steps get visually emphasized) is deliberately
 NOT part of this model — it's presentation logic, not domain data. The
@@ -33,12 +36,9 @@ class Persona(SanitizedModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    name_uk: str = Field(min_length=1, max_length=100)
-    name_en: str = Field(min_length=1, max_length=100)
-    role_uk: str = Field(min_length=1, max_length=150)
-    role_en: str = Field(min_length=1, max_length=150)
-    pain_point_uk: str = Field(min_length=10, max_length=300)
-    pain_point_en: str = Field(min_length=10, max_length=300)
+    name: str = Field(min_length=1, max_length=100)
+    role: str = Field(min_length=1, max_length=150)
+    pain_point: str = Field(min_length=10, max_length=300)
 
 
 class TimelineStep(SanitizedModel):
@@ -47,17 +47,14 @@ class TimelineStep(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     step_type: StepType
-    text_uk: str = Field(min_length=10, max_length=300)
-    text_en: str = Field(min_length=10, max_length=300)
+    text: str = Field(min_length=10, max_length=300)
 
 
 class MetricValue(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
-    value_uk: str = Field(min_length=1, max_length=100)
-    value_en: str = Field(min_length=1, max_length=100)
-    label_uk: str = Field(min_length=1, max_length=150)
-    label_en: str = Field(min_length=1, max_length=150)
+    value: str = Field(min_length=1, max_length=100)
+    label: str = Field(min_length=1, max_length=150)
 
 
 class ScenarioMetrics(SanitizedModel):

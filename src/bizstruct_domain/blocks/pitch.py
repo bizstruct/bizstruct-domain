@@ -5,8 +5,9 @@ Two five-slide decks, one per `bizstruct_domain.enums.PitchAudience` value
 previously called this audience `client` while bizstruct-fe already called
 it `customer`; this model settles the drift on the frontend's spelling.
 
-Bilingual per field (`_uk`/`_en` suffixes), not a `{uk: {...}, en: {...}}`
-wrapper.
+Single language per project (see data-quality brief part E / ADR-0006) —
+`headline`/`content` are one field each, not `_uk`/`_en` pairs. Language
+is a property of the project; this model doesn't carry it.
 """
 
 from typing import Literal
@@ -30,20 +31,16 @@ class InvestorSlide(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     type: InvestorSlideType
-    headline_uk: str = Field(min_length=1, max_length=80)
-    headline_en: str = Field(min_length=1, max_length=80)
-    content_uk: str = Field(min_length=1, max_length=400)
-    content_en: str = Field(min_length=1, max_length=400)
+    headline: str = Field(min_length=1, max_length=80)
+    content: str = Field(min_length=1, max_length=400)
 
 
 class CustomerSlide(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     type: CustomerSlideType
-    headline_uk: str = Field(min_length=1, max_length=80)
-    headline_en: str = Field(min_length=1, max_length=80)
-    content_uk: str = Field(min_length=1, max_length=400)
-    content_en: str = Field(min_length=1, max_length=400)
+    headline: str = Field(min_length=1, max_length=80)
+    content: str = Field(min_length=1, max_length=400)
 
 
 class Pitch(SanitizedModel):

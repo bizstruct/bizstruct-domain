@@ -12,8 +12,7 @@ def _move(action: ERRCAction = ERRCAction.ELIMINATE, **overrides) -> dict:
         action=action,
         target_section=CanvasSection.KEY_PARTNERS,
         target="Third-party logistics partner",
-        rationale_uk="Скорочує залежність від зовнішнього партнера.",
-        rationale_en="Reduces dependency on an external partner.",
+        rationale="Reduces dependency on an external partner.",
     )
     if action in (ERRCAction.REDUCE, ERRCAction.RAISE_):
         move["new_text"] = "Regional logistics partner, smaller contract"
@@ -32,13 +31,10 @@ def _diverse_moves() -> list[dict]:
 def _alternative(**overrides) -> dict:
     alt = dict(
         id=uuid.uuid4(),
-        title_uk="Пряма доставка",
-        title_en="Direct delivery",
-        premise_uk="Прибрати посередників у логістиці.",
-        premise_en="Remove logistics intermediaries.",
+        title="Direct delivery",
+        premise="Remove logistics intermediaries.",
         moves=_diverse_moves(),
-        expected_impact_uk="Нижча собівартість доставки.",
-        expected_impact_en="Lower delivery cost.",
+        expected_impact="Lower delivery cost.",
     )
     alt.update(overrides)
     return alt

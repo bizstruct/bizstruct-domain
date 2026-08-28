@@ -1,9 +1,13 @@
 """Output model for the `empathy_map` generation stage.
 
 Six-section empathy map (says / thinks / does / feels / pains / gains) for
-the primary customer persona. Bilingual per item (`text_uk`/`text_en`), not
-a `{uk: {...}, en: {...}}` wrapper — see `blocks.architecture` for the same
-convention and its rationale.
+the primary customer persona.
+
+Single language per project, not bilingual (`_uk`/`_en` pairs removed —
+see ADR-0006 / the data-quality brief's part E): language is a property of
+the project, not the artifact. bizstruct-ml is told which language to
+generate in via the queue message; this model doesn't know or care which
+one `text` ended up in.
 """
 
 from pydantic import ConfigDict, Field
@@ -17,8 +21,7 @@ class EmpathyItem(SanitizedModel):
     model_config = ConfigDict(extra="forbid")
 
     id: int = Field(description="1-based position within its section.")
-    text_uk: str = Field(min_length=10, max_length=200)
-    text_en: str = Field(min_length=10, max_length=200)
+    text: str = Field(min_length=10, max_length=200)
 
 
 class EmpathyMap(SanitizedModel):
