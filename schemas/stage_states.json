@@ -1,0 +1,84 @@
+{
+  "error_codes": [
+    "generation_failed",
+    "check_failed",
+    "queue_unavailable",
+    "canceled_by_user",
+    "stuck_timeout"
+  ],
+  "statuses": [
+    "pending",
+    "running",
+    "consistency_check",
+    "awaiting_decision",
+    "needs_retry",
+    "done",
+    "error"
+  ],
+  "transitions": [
+    {
+      "from": "pending",
+      "to": "running"
+    },
+    {
+      "from": "running",
+      "to": "running"
+    },
+    {
+      "from": "running",
+      "to": "consistency_check"
+    },
+    {
+      "from": "running",
+      "to": "error"
+    },
+    {
+      "from": "running",
+      "to": "pending"
+    },
+    {
+      "from": "consistency_check",
+      "to": "done"
+    },
+    {
+      "from": "consistency_check",
+      "to": "awaiting_decision"
+    },
+    {
+      "from": "consistency_check",
+      "to": "needs_retry"
+    },
+    {
+      "from": "consistency_check",
+      "to": "pending"
+    },
+    {
+      "from": "consistency_check",
+      "to": "error"
+    },
+    {
+      "from": "awaiting_decision",
+      "to": "done"
+    },
+    {
+      "from": "awaiting_decision",
+      "to": "pending"
+    },
+    {
+      "from": "needs_retry",
+      "to": "running"
+    },
+    {
+      "from": "done",
+      "to": "pending"
+    },
+    {
+      "from": "done",
+      "to": "needs_retry"
+    },
+    {
+      "from": "error",
+      "to": "pending"
+    }
+  ]
+}

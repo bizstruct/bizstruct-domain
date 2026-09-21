@@ -6,6 +6,14 @@ consumers (bizstruct-ml, bizstruct-be) can `import bizstruct_domain as bd`.
 
 from bizstruct_domain import enums
 from bizstruct_domain.chain import STAGES, Stage, StageMode, stages_for_mode, topological_order
+from bizstruct_domain.enums import StageAction, StageErrorCode, StageStatus
+from bizstruct_domain.stage_machine import (
+    STAGE_IDS,
+    STAGE_TRANSITIONS,
+    available_actions,
+    dependents_of,
+    is_valid_transition,
+)
 from bizstruct_domain.blocks.architecture import Architecture
 from bizstruct_domain.blocks.empathy_map import EmpathyMap
 from bizstruct_domain.blocks.scenario import Scenario
@@ -25,6 +33,14 @@ __all__ = [
     "StageMode",
     "stages_for_mode",
     "topological_order",
+    "StageAction",
+    "StageErrorCode",
+    "StageStatus",
+    "STAGE_IDS",
+    "STAGE_TRANSITIONS",
+    "available_actions",
+    "dependents_of",
+    "is_valid_transition",
     "Architecture",
     "EmpathyMap",
     "Scenario",
@@ -44,4 +60,4 @@ __all__ = [
     "ValidateModelResult",
 ]
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
