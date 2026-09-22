@@ -6,10 +6,26 @@ schemas/stage_states.json) must read the rules from here rather than
 re-deriving them.
 """
 
+from collections.abc import Iterable
+from typing import Protocol
+
 from bizstruct_domain.chain import STAGES
 from bizstruct_domain.enums import StageAction, StageErrorCode, StageStatus
 
 STAGE_IDS: tuple[str, ...] = tuple(stage.id for stage in STAGES)
+
+_DEPENDS_ON: dict[str, tuple[str, ...]] = {stage.id: stage.depends_on for stage in STAGES}
+
+
+class StageLike(Protocol):
+    """The minimal shape `ready_stages` needs from a stage record.
+
+    Lets callers (e.g. bizstruct-be's ORM `Stage` model) pass their own
+    rows without this package depending on that model.
+    """
+
+    type: str
+    status: StageStatus
 
 # The 16 allowed (from, to) transitions, in a fixed order so exports (e.g.
 # schemas/stage_states.json) are deterministic. `needs_retry -> error` does
@@ -83,6 +99,37 @@ def dependents_of(stage_id: str) -> tuple[str, ...]:
         frontier = next_frontier
 
     return tuple(stage.id for stage in STAGES if stage.id in dependents)
+
+
+def ready_stages(stages: Iterable[StageLike]) -> tuple[str, ...]:
+    """Stage ids that are `pending` with every direct dependency `done`.
+
+    The orchestration-facing counterpart to `dependents_of`: given the
+    current status of every stage in a project, which ones can start
+    right now (D17, D19, D29). Retry state, gates, and *why* a stage is
+    pending are the caller's business, not this function's.
+
+    A dependency that is not present in `stages` is treated as not done
+    (not raised on), so this is safe to call with a partial stage list.
+
+    Returns stage ids in domain graph order, not input order.
+
+    Raises:
+        ValueError: If a stage's `type` is not a known stage id.
+    """
+    status_by_id: dict[str, StageStatus] = {}
+    for stage in stages:
+        if stage.type not in _DEPENDS_ON:
+            raise ValueError(f"unknown stage id: '{stage.type}'")
+        status_by_id[stage.type] = stage.status
+
+    ready = {
+        stage_id
+        for stage_id, status in status_by_id.items()
+        if status == StageStatus.PENDING
+        and all(status_by_id.get(dep) == StageStatus.DONE for dep in _DEPENDS_ON[stage_id])
+    }
+    return tuple(stage_id for stage_id in STAGE_IDS if stage_id in ready)
 
 
 def available_actions(status: StageStatus) -> tuple[StageAction, ...]:

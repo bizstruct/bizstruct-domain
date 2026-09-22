@@ -10,9 +10,11 @@ from bizstruct_domain.enums import StageAction, StageErrorCode, StageStatus
 from bizstruct_domain.stage_machine import (
     STAGE_IDS,
     STAGE_TRANSITIONS,
+    StageLike,
     available_actions,
     dependents_of,
     is_valid_transition,
+    ready_stages,
 )
 from bizstruct_domain.blocks.architecture import Architecture
 from bizstruct_domain.blocks.empathy_map import EmpathyMap
@@ -38,9 +40,11 @@ __all__ = [
     "StageStatus",
     "STAGE_IDS",
     "STAGE_TRANSITIONS",
+    "StageLike",
     "available_actions",
     "dependents_of",
     "is_valid_transition",
+    "ready_stages",
     "Architecture",
     "EmpathyMap",
     "Scenario",
