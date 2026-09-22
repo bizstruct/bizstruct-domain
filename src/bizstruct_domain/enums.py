@@ -146,3 +146,44 @@ class CanvasSection(str, Enum):
     CUSTOMER_SEGMENTS = "customer_segments"
     COST_STRUCTURE = "cost_structure"
     REVENUE_STREAMS = "revenue_streams"
+
+
+class StageStatus(str, Enum):
+    """Lifecycle status of a single stage in the generation chain.
+
+    See `bizstruct_domain.stage_machine` for the allowed-transition table
+    between these statuses.
+    """
+
+    PENDING = "pending"
+    RUNNING = "running"
+    CONSISTENCY_CHECK = "consistency_check"
+    AWAITING_DECISION = "awaiting_decision"
+    NEEDS_RETRY = "needs_retry"
+    DONE = "done"
+    ERROR = "error"
+
+
+class StageErrorCode(str, Enum):
+    """Reason a stage entered `StageStatus.ERROR`.
+
+    `error` is reserved for external failures and cancellation, never for
+    reaching the retry limit (that goes to `awaiting_decision` instead).
+    """
+
+    GENERATION_FAILED = "generation_failed"
+    CHECK_FAILED = "check_failed"
+    QUEUE_UNAVAILABLE = "queue_unavailable"
+    CANCELED_BY_USER = "canceled_by_user"
+    STUCK_TIMEOUT = "stuck_timeout"
+
+
+class StageAction(str, Enum):
+    """A user-facing action offered for a stage, given its current status.
+
+    See `bizstruct_domain.stage_machine.available_actions`.
+    """
+
+    APPROVE = "approve"
+    REGENERATE = "regenerate"
+    RETRY = "retry"

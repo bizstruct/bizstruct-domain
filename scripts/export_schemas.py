@@ -20,6 +20,8 @@ from bizstruct_domain.blocks.canvas import Canvas
 from bizstruct_domain.blocks.what_if import WhatIf
 from bizstruct_domain.validate_model import ValidateModelResult
 from bizstruct_domain.chain import STAGES
+from bizstruct_domain.enums import StageErrorCode, StageStatus
+from bizstruct_domain.stage_machine import STAGE_TRANSITIONS
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEMAS_DIR = REPO_ROOT / "schemas"
@@ -67,6 +69,16 @@ def main() -> None:
     chain_data = [stage.model_dump(mode="json") for stage in STAGES]
     _write_json(SCHEMAS_DIR / "chain.json", chain_data)
     print("wrote schemas/chain.json")
+
+    stage_states_data = {
+        "statuses": [status.value for status in StageStatus],
+        "error_codes": [code.value for code in StageErrorCode],
+        "transitions": [
+            {"from": current.value, "to": target.value} for current, target in STAGE_TRANSITIONS
+        ],
+    }
+    _write_json(SCHEMAS_DIR / "stage_states.json", stage_states_data)
+    print("wrote schemas/stage_states.json")
 
 
 if __name__ == "__main__":
