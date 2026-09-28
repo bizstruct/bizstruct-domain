@@ -90,8 +90,17 @@ def test_dependents_of_leaf_stage_is_empty():
     assert dependents_of("pitch") == ()
 
 
-def test_dependents_of_brief_is_everything_else():
-    assert set(dependents_of("brief")) == {s.id for s in STAGES if s.id != "brief"}
+def test_dependents_of_brief_is_everything_but_the_other_root():
+    # team_info has no dependencies at all — it's user input collected
+    # alongside the brief, not derived from it.
+    assert set(dependents_of("brief")) == {s.id for s in STAGES} - {"brief", "team_info"}
+
+
+def test_dependents_of_follows_optional_edges():
+    # errc only optionally consumes assessment, but a changed assessment
+    # still makes an errc that used it stale.
+    assert "errc" in dependents_of("assessment")
+    assert set(dependents_of("team_info")) == {"pitch"}
 
 
 def test_dependents_of_is_in_graph_order():
@@ -121,10 +130,11 @@ def test_available_actions(status, expected):
 
 
 # ready_stages: exercised over the real STAGES graph's
-# brief -> empathy_map -> value_map -> models_options -> {canvas, scenario}
-# chain, since canvas and scenario share the exact same depends_on and are
-# where the graph's only fan-out (parallel readiness) sits (thesis §2.2.7).
-_CHAIN_IDS = ("brief", "empathy_map", "value_map", "models_options", "canvas", "scenario")
+# brief -> empathy_map -> {customer_scenario, ideation} -> patterns chain:
+# customer_scenario and ideation share their only hard dependency once brief
+# is done, so they're the fan-out (parallel readiness), and patterns is the
+# fan-in that needs both.
+_CHAIN_IDS = ("brief", "empathy_map", "customer_scenario", "ideation", "patterns")
 
 
 def _chain_stages(**statuses: StageStatus) -> list[_FakeStage]:
@@ -141,18 +151,20 @@ def test_ready_stages_root_done_unblocks_its_direct_dependent():
 
 
 def test_ready_stages_needs_every_direct_dependency_done():
-    stages = _chain_stages(brief=StageStatus.DONE, empathy_map=StageStatus.DONE, value_map=StageStatus.DONE)
-    assert ready_stages(stages) == ("models_options",)
-
-
-def test_ready_stages_parallel_readiness_when_shared_dependency_done():
+    stages = _chain_stages(brief=StageStatus.DONE, empathy_map=StageStatus.DONE, customer_scenario=StageStatus.DONE)
+    assert "patterns" not in ready_stages(stages)
     stages = _chain_stages(
         brief=StageStatus.DONE,
         empathy_map=StageStatus.DONE,
-        value_map=StageStatus.DONE,
-        models_options=StageStatus.DONE,
+        customer_scenario=StageStatus.DONE,
+        ideation=StageStatus.DONE,
     )
-    assert ready_stages(stages) == ("canvas", "scenario")
+    assert ready_stages(stages) == ("patterns",)
+
+
+def test_ready_stages_parallel_readiness_when_shared_dependency_done():
+    stages = _chain_stages(brief=StageStatus.DONE, empathy_map=StageStatus.DONE)
+    assert ready_stages(stages) == ("customer_scenario", "ideation")
 
 
 def test_ready_stages_all_done_nothing_ready():
@@ -172,32 +184,37 @@ def test_ready_stages_all_done_nothing_ready():
     ],
 )
 def test_ready_stages_never_returns_a_non_pending_stage(status):
-    stages = _chain_stages(
-        brief=StageStatus.DONE,
-        empathy_map=StageStatus.DONE,
-        value_map=StageStatus.DONE,
-        models_options=StageStatus.DONE,
-        canvas=status,
-    )
-    assert "canvas" not in ready_stages(stages)
+    stages = _chain_stages(brief=StageStatus.DONE, empathy_map=StageStatus.DONE, ideation=status)
+    assert "ideation" not in ready_stages(stages)
 
 
 def test_ready_stages_dependency_awaiting_decision_still_blocks():
     stages = _chain_stages(
         brief=StageStatus.DONE,
         empathy_map=StageStatus.DONE,
-        value_map=StageStatus.DONE,
-        models_options=StageStatus.AWAITING_DECISION,
+        customer_scenario=StageStatus.DONE,
+        ideation=StageStatus.AWAITING_DECISION,
     )
-    assert "canvas" not in ready_stages(stages)
-    assert "scenario" not in ready_stages(stages)
+    assert "patterns" not in ready_stages(stages)
+
+
+def test_ready_stages_ignores_optional_dependencies():
+    # errc optionally consumes assessment; a pending assessment must not
+    # block it. Waiting for it anyway is bizstruct-be's decision.
+    done = ("brief", "empathy_map", "customer_scenario", "ideation", "patterns", "value_map", "models_options", "canvas")
+    stages = [_FakeStage(type=stage_id, status=StageStatus.DONE) for stage_id in done]
+    stages += [
+        _FakeStage(type="assessment", status=StageStatus.PENDING),
+        _FakeStage(type="errc", status=StageStatus.PENDING),
+    ]
+    assert set(ready_stages(stages)) == {"assessment", "errc"}
 
 
 def test_ready_stages_partial_input_does_not_raise():
     stages = [
         _FakeStage(type="brief", status=StageStatus.DONE),
         _FakeStage(type="empathy_map", status=StageStatus.PENDING),
-        _FakeStage(type="value_map", status=StageStatus.PENDING),
+        _FakeStage(type="ideation", status=StageStatus.PENDING),
     ]
     assert ready_stages(stages) == ("empathy_map",)
 
@@ -208,16 +225,11 @@ def test_ready_stages_unknown_stage_type_raises():
 
 
 def test_ready_stages_output_order_is_domain_graph_order_regardless_of_input_order():
-    stages = _chain_stages(
-        brief=StageStatus.DONE,
-        empathy_map=StageStatus.DONE,
-        value_map=StageStatus.DONE,
-        models_options=StageStatus.DONE,
-    )
+    stages = _chain_stages(brief=StageStatus.DONE, empathy_map=StageStatus.DONE)
     shuffled = stages.copy()
     random.shuffle(shuffled)
     result = ready_stages(shuffled)
-    assert result == ("canvas", "scenario")
+    assert result == ("customer_scenario", "ideation")
     assert result == tuple(stage_id for stage_id in STAGE_IDS if stage_id in set(result))
 
 

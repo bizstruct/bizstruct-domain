@@ -1,9 +1,9 @@
 """Guards against presentation/UI concerns leaking into domain models.
 
 Three times running, an ML generator produced a UI-presentation attribute
-alongside domain data: colors/icons in what_if (now fixed — see
-blocks/what_if.py's module docstring), `highlight` in scenario, `initials`
-in scenario. Each was caught by hand, after the
+alongside domain data: colors/icons in what_if (now errc — see
+blocks/errc.py's module docstring), `highlight` and `initials` in the
+former before/after scenario. Each was caught by hand, after the
 fact, once someone noticed the frontend had to derive the same thing anyway.
 This test makes that class of defect fail automatically instead: it walks
 every field of every block model (recursing into nested domain models) and
@@ -33,14 +33,19 @@ import typing
 import pytest
 from pydantic import BaseModel
 
-from bizstruct_domain.blocks.architecture import Architecture
+from bizstruct_domain.blocks.assessment import Assessment
+from bizstruct_domain.blocks.business_case import BusinessCase
+from bizstruct_domain.blocks.customer_scenario import CustomerScenario
 from bizstruct_domain.blocks.empathy_map import EmpathyMap
-from bizstruct_domain.blocks.scenario import Scenario
+from bizstruct_domain.blocks.ideation import Ideation
+from bizstruct_domain.blocks.patterns import Patterns
+from bizstruct_domain.blocks.scenario import FutureScenario
+from bizstruct_domain.blocks.team_info import TeamInfo
 from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypotheses
 from bizstruct_domain.blocks.models_options import ModelsOptions
 from bizstruct_domain.blocks.canvas import CanvasGenerated
-from bizstruct_domain.blocks.what_if import WhatIfGenerated
+from bizstruct_domain.blocks.errc import ERRCGenerated
 
 BLACKLIST = {
     "color", "colour", "icon", "highlight", "initials", "variant",
@@ -49,16 +54,21 @@ BLACKLIST = {
 }
 
 BLOCK_MODELS: dict[str, type[BaseModel]] = {
-    "architecture": Architecture,
+    "team_info": TeamInfo,
+    "business_case": BusinessCase,
     "empathy_map": EmpathyMap,
-    "scenario": Scenario,
+    "customer_scenario": CustomerScenario,
+    "ideation": Ideation,
+    "patterns": Patterns,
+    "assessment": Assessment,
+    "scenario": FutureScenario,
     "pitch": Pitch,
     "hypotheses": Hypotheses,
     "models_options": ModelsOptions,
     # CanvasGenerated, not Canvas — same fields, checking the stricter
     # subclass covers the base class's fields too.
     "canvas": CanvasGenerated,
-    "what_if": WhatIfGenerated,
+    "errc": ERRCGenerated,
 }
 
 

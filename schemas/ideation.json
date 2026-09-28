@@ -1,0 +1,47 @@
+{
+  "$defs": {
+    "Epicenter": {
+      "description": "Epicentres of business model innovation.\n\nOsterwalder & Pigneur, \"Business Model Generation\" — Ideation,\nEpicentres of Business Model Innovation. The book names four\nepicentres plus \"multiple-epicenter driven\" innovation. Only the four\nare values here: \"multiple\" is expressed as `Ideation.epicenters`\nholding more than one value, not as a fifth value that would duplicate\nthat meaning (see docs/adr/0008-bmg-domain-rewrite.md). Do not add\ninvented values (e.g. a \"competitor-driven\" epicenter is not part\nof the methodology).",
+      "enum": [
+        "resource_driven",
+        "offer_driven",
+        "customer_driven",
+        "finance_driven"
+      ],
+      "title": "Epicenter",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `ideation` stage: epicentre tags plus \"What if\" questions.",
+  "properties": {
+    "epicenters": {
+      "description": "Epicentres driving the idea, each at most once. More than one value means the idea is multiple-epicenter driven.",
+      "items": {
+        "$ref": "#/$defs/Epicenter"
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "title": "Epicenters",
+      "type": "array"
+    },
+    "what_if_questions": {
+      "description": "Provocative 'What if...?' questions, each challenging one standard industry assumption from the brief, tied to an empathy-map pain or gain where possible. Starting points, not solutions.",
+      "items": {
+        "maxLength": 300,
+        "minLength": 10,
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "title": "What If Questions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "epicenters",
+    "what_if_questions"
+  ],
+  "title": "Ideation",
+  "type": "object"
+}

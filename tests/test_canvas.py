@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from bizstruct_domain.blocks.canvas import Canvas, CanvasCard, CanvasGenerated
+from bizstruct_domain.enums import CanvasDetailLevel
 
 _SECTIONS = (
     "key_partners", "key_activities", "key_resources", "value_propositions",
@@ -100,3 +101,37 @@ def test_no_order_field_on_card():
     assert not hasattr(card, "position")
     with pytest.raises(ValidationError):
         CanvasCard(**_card(order=1))
+
+
+def test_generated_defaults_to_elaborated_detail_level():
+    assert CanvasGenerated(**_generated_kwargs()).detail_level is CanvasDetailLevel.ELABORATED
+
+
+def test_generated_napkin_needs_only_value_propositions_and_revenue_streams():
+    kwargs = {section: [] for section in _SECTIONS}
+    kwargs["value_propositions"] = [_card(), _card()]
+    kwargs["revenue_streams"] = [_card(), _card()]
+    model = CanvasGenerated(detail_level=CanvasDetailLevel.NAPKIN, **kwargs)
+    assert model.key_partners == []
+
+
+def test_generated_napkin_without_revenue_streams_rejected():
+    kwargs = {section: [] for section in _SECTIONS}
+    kwargs["value_propositions"] = [_card(), _card()]
+    with pytest.raises(ValidationError, match="revenue_streams"):
+        CanvasGenerated(detail_level=CanvasDetailLevel.NAPKIN, **kwargs)
+
+
+def test_generated_napkin_still_caps_optional_sections_at_four():
+    kwargs = _generated_kwargs()
+    kwargs["key_partners"] = [_card() for _ in range(5)]
+    with pytest.raises(ValidationError):
+        CanvasGenerated(detail_level=CanvasDetailLevel.NAPKIN, **kwargs)
+
+
+@pytest.mark.parametrize("level", [CanvasDetailLevel.ELABORATED, CanvasDetailLevel.BUSINESS_CASE])
+def test_generated_full_levels_require_every_section(level):
+    kwargs = _generated_kwargs()
+    kwargs["key_partners"] = []
+    with pytest.raises(ValidationError, match="key_partners"):
+        CanvasGenerated(detail_level=level, **kwargs)

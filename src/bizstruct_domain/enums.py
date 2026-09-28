@@ -1,29 +1,35 @@
-"""Shared enums for the BizStruct domain model.
-
-All enums are `str, Enum` so they serialize as plain strings in JSON /
-OpenAI structured output and compare equal to their string values.
+"""
+    Shared enums for the BizStruct domain model.
+    
+    All enums are `str, Enum` so they serialize as plain strings in JSON /
+    OpenAI structured output and compare equal to their string values.
 """
 
-from enum import Enum
+from enum import StrEnum
 
 
-class Epicenter(str, Enum):
-    """Epicentres of business model innovation.
+class Epicenter(StrEnum):
+    """
+        Epicentres of business model innovation.
 
-    Osterwalder & Pigneur, "Business Model Generation" — Epicentres of
-    Business Model Innovation. Exactly 5 canonical values; do not add
-    invented values (e.g. a "competitor-driven" epicenter is not part
-    of the methodology).
+        Osterwalder & Pigneur, "Business Model Generation" — Ideation,
+        Epicentres of Business Model Innovation. The book names four
+        epicentres plus "multiple-epicenter driven" innovation. Only the four
+        are values here: "multiple" is expressed as `Ideation.epicenters`
+        holding more than one value, not as a fifth value that would duplicate
+        that meaning (see docs/adr/0008-bmg-domain-rewrite.md). Do not add
+        invented values (e.g. a "competitor-driven" epicenter is not part
+        of the methodology).
     """
 
     RESOURCE_DRIVEN = "resource_driven"
     OFFER_DRIVEN = "offer_driven"
     CUSTOMER_DRIVEN = "customer_driven"
     FINANCE_DRIVEN = "finance_driven"
-    MULTIPLE_EPICENTER = "multiple_epicenter"
 
 
-class Pattern(str, Enum):
+
+class Pattern(StrEnum):
     """Business model patterns.
 
     Osterwalder & Pigneur, "Business Model Generation" — Part 2,
@@ -38,7 +44,8 @@ class Pattern(str, Enum):
     OPEN_BUSINESS_MODEL = "open_business_model"
 
 
-class PatternSubtype(str, Enum):
+
+class PatternSubtype(StrEnum):
     """Subtypes that refine specific patterns.
 
     Only meaningful in combination with `Pattern.FREE`
@@ -70,7 +77,10 @@ PATTERN_SUBTYPES: dict[Pattern, set[PatternSubtype]] = {
 }
 
 
-class HypothesisCategory(str, Enum):
+
+
+
+class HypothesisCategoryStrEnum(StrEnum):
     """Testing Business Ideas risk categories: Desirability / Viability / Feasibility."""
 
     DESIRABILITY = "desirability"
@@ -96,14 +106,16 @@ class Quadrant(str, Enum):
     Q4 = "q4"
 
 
-class WhatIfStatus(str, Enum):
-    """Lifecycle status of a what-if (ERRC) alternative."""
+
+class ERRCStatus(str, StrEnum):
+    """Lifecycle status of an ERRC alternative."""
 
     DRAFT = "draft"
     APPLIED = "applied"
 
 
-class ERRCAction(str, Enum):
+
+class ERRCAction(str, StrEnum):
     """Blue Ocean Strategy ERRC grid actions.
 
     `raise` is a reserved Python keyword, so the member name is `RAISE_`
@@ -116,14 +128,73 @@ class ERRCAction(str, Enum):
     CREATE = "create"
 
 
-class PitchAudience(str, Enum):
+
+class CanvasBranchingDecision(StrEnum):
+    """How many canvases the Patterns stage decides to build.
+
+    Project decision on top of BMG (see docs/adr/0008-bmg-domain-rewrite.md):
+    - A_SHARED: one canvas shared by every customer segment.
+    - B_BRANCHING: one canvas per customer segment.
+
+    This is only the classification result. Creating the one or N canvas
+    instances is bizstruct-be's job, not this package's.
+    """
+
+    A_SHARED = "a_shared"
+    B_BRANCHING = "b_branching"
+
+
+class CanvasDetailLevel(StrEnum):
+    """Level of detail of a canvas.
+
+    BMG, Design -> Prototyping (p. 165): napkin sketch, elaborated canvas,
+    business case.
+    """
+
+    NAPKIN = "napkin"
+    ELABORATED = "elaborated"
+    BUSINESS_CASE = "business_case"
+
+
+class SWOTCluster(StrEnum):
+    """The four canvas clusters a SWOT assessment is grouped by.
+
+    BMG, Strategy -> Evaluating Business Models (pp. 217-223): the book
+    does not assess the nine blocks one by one but in these four groups.
+    See `SWOT_CLUSTER_SECTIONS` for which blocks each one covers.
+    """
+
+    VALUE_PROPOSITION = "value_proposition"
+    COST_REVENUE = "cost_revenue"
+    INFRASTRUCTURE = "infrastructure"
+    CUSTOMER_INTERFACE = "customer_interface"
+
+
+class ScenarioAdaptationArea(StrEnum):
+    """Canvas areas a future scenario asks adaptation questions about.
+
+    BMG, Design -> Scenarios, type 2 (pp. 187-188): value proposition, key
+    resources/activities, revenue, costs, partnerships, customer
+    relationships.
+    """
+
+    VALUE_PROPOSITION = "value_proposition"
+    KEY_RESOURCES_ACTIVITIES = "key_resources_activities"
+    REVENUE_STREAMS = "revenue_streams"
+    COST_STRUCTURE = "cost_structure"
+    KEY_PARTNERS = "key_partners"
+    CUSTOMER_RELATIONSHIPS = "customer_relationships"
+
+
+class PitchAudience(str, StrEnum):
     """Target audience for a generated pitch."""
 
     INVESTOR = "investor"
     CUSTOMER = "customer"
 
 
-class MonetizationType(str, Enum):
+
+class MonetizationType(str, StrEnum):
     """How a business model option makes money."""
 
     SUBSCRIPTION = "subscription"
@@ -134,7 +205,8 @@ class MonetizationType(str, Enum):
     MARKETPLACE_TAKE_RATE = "marketplace_take_rate"
 
 
-class CanvasSection(str, Enum):
+
+class CanvasSection(str, StrEnum):
     """The nine building blocks of the Business Model Canvas."""
 
     KEY_PARTNERS = "key_partners"
@@ -148,7 +220,24 @@ class CanvasSection(str, Enum):
     REVENUE_STREAMS = "revenue_streams"
 
 
-class StageStatus(str, Enum):
+SWOT_CLUSTER_SECTIONS: dict[SWOTCluster, frozenset[CanvasSection]] = {
+    SWOTCluster.VALUE_PROPOSITION: frozenset({CanvasSection.VALUE_PROPOSITIONS}),
+    SWOTCluster.COST_REVENUE: frozenset({CanvasSection.REVENUE_STREAMS, CanvasSection.COST_STRUCTURE}),
+    SWOTCluster.INFRASTRUCTURE: frozenset({
+        CanvasSection.KEY_RESOURCES,
+        CanvasSection.KEY_ACTIVITIES,
+        CanvasSection.KEY_PARTNERS,
+    }),
+    SWOTCluster.CUSTOMER_INTERFACE: frozenset({
+        CanvasSection.CUSTOMER_SEGMENTS,
+        CanvasSection.CHANNELS,
+        CanvasSection.CUSTOMER_RELATIONSHIPS,
+    }),
+}
+
+
+
+class StageStatus(str, StrEnum):
     """Lifecycle status of a single stage in the generation chain.
 
     See `bizstruct_domain.stage_machine` for the allowed-transition table
@@ -164,7 +253,8 @@ class StageStatus(str, Enum):
     ERROR = "error"
 
 
-class StageErrorCode(str, Enum):
+
+class StageErrorCode(str, StrEnum):
     """Reason a stage entered `StageStatus.ERROR`.
 
     `error` is reserved for external failures and cancellation, never for
@@ -178,7 +268,8 @@ class StageErrorCode(str, Enum):
     STUCK_TIMEOUT = "stuck_timeout"
 
 
-class StageAction(str, Enum):
+
+class StageAction(str, StrEnum):
     """A user-facing action offered for a stage, given its current status.
 
     See `bizstruct_domain.stage_machine.available_actions`.

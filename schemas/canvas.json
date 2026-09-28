@@ -28,6 +28,16 @@
       ],
       "title": "CanvasCard",
       "type": "object"
+    },
+    "CanvasDetailLevel": {
+      "description": "Level of detail of a canvas.\n\nBMG, Design -> Prototyping (p. 165): napkin sketch, elaborated canvas,\nbusiness case.",
+      "enum": [
+        "napkin",
+        "elaborated",
+        "business_case"
+      ],
+      "title": "CanvasDetailLevel",
+      "type": "string"
     }
   },
   "additionalProperties": false,
@@ -60,6 +70,10 @@
       },
       "title": "Customer Segments",
       "type": "array"
+    },
+    "detail_level": {
+      "$ref": "#/$defs/CanvasDetailLevel",
+      "default": "elaborated"
     },
     "key_activities": {
       "items": {

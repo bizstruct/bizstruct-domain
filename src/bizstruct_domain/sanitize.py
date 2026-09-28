@@ -11,7 +11,7 @@ transient `5xx` — masking a permanent generation defect as a retryable
 one. Sanitizing at the domain-model boundary fixes it in both directions
 at once: bizstruct-ml's generation output (`ModelsOptions.model_validate`
 etc. in `generators/base.py`) and bizstruct-be's hook validation
-(`CanvasGenerated`/`WhatIfGenerated`/... in `app/routers/internal.py`)
+(`CanvasGenerated`/`ERRCGenerated`/... in `app/routers/internal.py`)
 both construct these same domain models, so both get the same protection
 for free — no separate fix needed in either consuming repo.
 

@@ -75,15 +75,20 @@ def is_valid_transition(current: StageStatus, target: StageStatus) -> bool:
 def dependents_of(stage_id: str) -> tuple[str, ...]:
     """The transitive dependents of `stage_id`, in graph order.
 
-    A dependent is any stage whose `depends_on` includes `stage_id`,
-    directly or through another dependent. `stage_id` itself is excluded.
+    A dependent is any stage whose `depends_on` or `optional_depends_on`
+    includes `stage_id`, directly or through another dependent. Optional
+    edges count here because this answers "which results may be stale if
+    `stage_id` changes": a stage that consumed an optional input is stale
+    when that input changes. Whether the consumer actually used the optional
+    input in its last run is bizstruct-be's knowledge, not this package's.
+    `stage_id` itself is excluded.
     """
     if stage_id not in STAGE_IDS:
         raise ValueError(f"unknown stage id: '{stage_id}'")
 
     direct_dependents: dict[str, set[str]] = {stage.id: set() for stage in STAGES}
     for stage in STAGES:
-        for dep in stage.depends_on:
+        for dep in (*stage.depends_on, *stage.optional_depends_on):
             if dep in direct_dependents:
                 direct_dependents[dep].add(stage.id)
 
@@ -102,7 +107,11 @@ def dependents_of(stage_id: str) -> tuple[str, ...]:
 
 
 def ready_stages(stages: Iterable[StageLike]) -> tuple[str, ...]:
-    """Stage ids that are `pending` with every direct dependency `done`.
+    """Stage ids that are `pending` with every direct hard dependency `done`.
+
+    Only `depends_on` is checked. `optional_depends_on` never blocks
+    readiness; whether to wait for an optional input anyway is the
+    caller's decision (see `bizstruct_domain.chain.Stage`).
 
     The orchestration-facing counterpart to `dependents_of`: given the
     current status of every stage in a project, which ones can start

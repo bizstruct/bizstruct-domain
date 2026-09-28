@@ -1,0 +1,172 @@
+{
+  "$defs": {
+    "CostItem": {
+      "additionalProperties": false,
+      "description": "One typical cost line for models of this domain/pattern.",
+      "properties": {
+        "estimate": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Estimate",
+          "type": "string"
+        },
+        "item": {
+          "maxLength": 150,
+          "minLength": 3,
+          "title": "Item",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "estimate"
+      ],
+      "title": "CostItem",
+      "type": "object"
+    },
+    "MarketBenchmark": {
+      "additionalProperties": false,
+      "description": "One external market data point for the domain.",
+      "properties": {
+        "metric": {
+          "description": "e.g. typical price, market size, typical cost range.",
+          "maxLength": 150,
+          "minLength": 3,
+          "title": "Metric",
+          "type": "string"
+        },
+        "retrieved_at": {
+          "format": "date",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "source": {
+          "maxLength": 300,
+          "minLength": 3,
+          "title": "Source",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "metric",
+        "value",
+        "source",
+        "retrieved_at"
+      ],
+      "title": "MarketBenchmark",
+      "type": "object"
+    },
+    "SalesScenario": {
+      "additionalProperties": false,
+      "description": "One sales projection built on the benchmarks.",
+      "properties": {
+        "assumptions": {
+          "maxLength": 600,
+          "minLength": 20,
+          "title": "Assumptions",
+          "type": "string"
+        },
+        "case": {
+          "enum": [
+            "conservative",
+            "base",
+            "optimistic"
+          ],
+          "title": "Case",
+          "type": "string"
+        },
+        "projection": {
+          "maxLength": 600,
+          "minLength": 10,
+          "title": "Projection",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case",
+        "assumptions",
+        "projection"
+      ],
+      "title": "SalesScenario",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `business_case` stage.",
+  "properties": {
+    "breakeven_formula": {
+      "description": "How the breakeven point is computed; the numbers are filled in from the final canvas at the pitch stage.",
+      "maxLength": 600,
+      "minLength": 10,
+      "title": "Breakeven Formula",
+      "type": "string"
+    },
+    "capital_costs": {
+      "items": {
+        "$ref": "#/$defs/CostItem"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "title": "Capital Costs",
+      "type": "array"
+    },
+    "funding_requirements": {
+      "description": "Estimated funding need, derived from capital costs and time to breakeven.",
+      "maxLength": 600,
+      "minLength": 10,
+      "title": "Funding Requirements",
+      "type": "string"
+    },
+    "market_benchmarks": {
+      "items": {
+        "$ref": "#/$defs/MarketBenchmark"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "title": "Market Benchmarks",
+      "type": "array"
+    },
+    "operating_costs": {
+      "items": {
+        "$ref": "#/$defs/CostItem"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "title": "Operating Costs",
+      "type": "array"
+    },
+    "profit_potential": {
+      "description": "Profitability and cash flow over time, under the stated assumptions.",
+      "maxLength": 600,
+      "minLength": 10,
+      "title": "Profit Potential",
+      "type": "string"
+    },
+    "sales_scenarios": {
+      "items": {
+        "$ref": "#/$defs/SalesScenario"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Sales Scenarios",
+      "type": "array"
+    }
+  },
+  "required": [
+    "market_benchmarks",
+    "breakeven_formula",
+    "sales_scenarios",
+    "capital_costs",
+    "operating_costs",
+    "funding_requirements",
+    "profit_potential"
+  ],
+  "title": "BusinessCase",
+  "type": "object"
+}

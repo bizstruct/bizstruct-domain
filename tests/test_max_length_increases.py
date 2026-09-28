@@ -9,15 +9,14 @@ gets rejected, so these aren't accidentally unbounded.
 import pytest
 from pydantic import ValidationError
 
-from bizstruct_domain.blocks.architecture import Architecture
 from bizstruct_domain.blocks.canvas import CanvasCard
 from bizstruct_domain.blocks.hypotheses import Hypothesis
 from bizstruct_domain.blocks.models_options import BusinessModelOption
-from bizstruct_domain.blocks.what_if import ERRCMove, WhatIfAlternative
+from bizstruct_domain.blocks.errc import ERRCAlternative, ERRCMove
+from bizstruct_domain.blocks.patterns import PatternTag
 from bizstruct_domain.enums import (
     CanvasSection,
     ERRCAction,
-    Epicenter,
     HypothesisCategory,
     MonetizationType,
     Pattern,
@@ -36,22 +35,12 @@ def test_canvas_card_text_accepts_past_old_200_limit():
         CanvasCard(id=uuid4(), text="a" * 1000)
 
 
-def test_architecture_rationale_fields_accept_past_old_600_limit():
-    Architecture(
-        epicenter=Epicenter.CUSTOMER_DRIVEN,
-        epicenter_rationale=_over_old_limit(600) + " " * 40,
-        pattern=Pattern.UNBUNDLING,
-        pattern_subtype=None,
-        pattern_rationale=_over_old_limit(600) + " " * 40,
-    )
+def test_pattern_rationale_keeps_architecture_750_limit():
+    # The 750 limit was measured on the former architecture block's
+    # rationale fields and carried over to PatternTag.rationale.
+    PatternTag(pattern=Pattern.UNBUNDLING, subtype=None, rationale=_over_old_limit(600) + " " * 40)
     with pytest.raises(ValidationError):
-        Architecture(
-            epicenter=Epicenter.CUSTOMER_DRIVEN,
-            epicenter_rationale="a" * 2000,
-            pattern=Pattern.UNBUNDLING,
-            pattern_subtype=None,
-            pattern_rationale="a" * 40,
-        )
+        PatternTag(pattern=Pattern.UNBUNDLING, subtype=None, rationale="a" * 2000)
 
 
 def test_models_options_time_to_value_accepts_past_old_100_limit():
@@ -103,8 +92,8 @@ def _move(action: ERRCAction) -> ERRCMove:
     )
 
 
-def test_what_if_premise_and_expected_impact_accept_past_old_200_limit():
-    WhatIfAlternative(
+def test_errc_premise_and_expected_impact_accept_past_old_200_limit():
+    ERRCAlternative(
         id=uuid4(),
         title="Title",
         premise=_over_old_limit(200) + " longer text to pad out the length",
@@ -113,7 +102,7 @@ def test_what_if_premise_and_expected_impact_accept_past_old_200_limit():
     )
 
 
-def test_what_if_new_text_accepts_past_old_200_limit():
+def test_errc_new_text_accepts_past_old_200_limit():
     ERRCMove(
         action=ERRCAction.RAISE_,
         target_section=CanvasSection.VALUE_PROPOSITIONS,

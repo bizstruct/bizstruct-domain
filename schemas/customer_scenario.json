@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "CanvasSection": {
+      "description": "The nine building blocks of the Business Model Canvas.",
+      "enum": [
+        "key_partners",
+        "key_activities",
+        "key_resources",
+        "value_propositions",
+        "customer_relationships",
+        "channels",
+        "customer_segments",
+        "cost_structure",
+        "revenue_streams"
+      ],
+      "title": "CanvasSection",
+      "type": "string"
+    },
+    "ScenarioQuestion": {
+      "additionalProperties": false,
+      "description": "An open question the scenario raises about one canvas block.",
+      "properties": {
+        "question": {
+          "maxLength": 300,
+          "minLength": 10,
+          "title": "Question",
+          "type": "string"
+        },
+        "section": {
+          "$ref": "#/$defs/CanvasSection",
+          "description": "One of channels, customer_relationships, revenue_streams."
+        }
+      },
+      "required": [
+        "section",
+        "question"
+      ],
+      "title": "ScenarioQuestion",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `customer_scenario` stage.",
+  "properties": {
+    "open_questions": {
+      "items": {
+        "$ref": "#/$defs/ScenarioQuestion"
+      },
+      "maxItems": 9,
+      "minItems": 3,
+      "title": "Open Questions",
+      "type": "array"
+    },
+    "persona": {
+      "description": "Who the protagonist is — the same persona as the empathy map, not a new one.",
+      "maxLength": 200,
+      "minLength": 10,
+      "title": "Persona",
+      "type": "string"
+    },
+    "situation": {
+      "description": "Where, when and how exactly the persona uses the offer, told as a short concrete story.",
+      "maxLength": 1000,
+      "minLength": 40,
+      "title": "Situation",
+      "type": "string"
+    }
+  },
+  "required": [
+    "persona",
+    "situation",
+    "open_questions"
+  ],
+  "title": "CustomerScenario",
+  "type": "object"
+}

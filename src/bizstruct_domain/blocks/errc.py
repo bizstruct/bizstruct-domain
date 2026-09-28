@@ -1,26 +1,34 @@
-"""Output model for the `what_if` generation stage (ERRC alternatives).
+"""Output model for the `errc` generation stage (ERRC alternatives).
+
+Renamed from `what_if` (ADR-0008): the id collided with the Ideation
+"What if...?" technique, which is a different, upstream step (see
+`blocks/ideation.py`). This stage is the Blue Ocean ERRC edit step.
 
 Blue Ocean Strategy's ERRC grid (Eliminate-Reduce-Raise-Create), applied to
-the project's own Business Model Canvas: each alternative is a set of moves
-against the canvas the project already has, not an abstract "what if we
-tried X" idea disconnected from it. This replaces an earlier, unfounded
-Financial/Technical/Emotional-vector design that had no basis in any
-business-modeling methodology and gave no structured way to actually change
-the model.
+the project's own Business Model Canvas (BMG, Strategy -> Business Model
+Perspective on Blue Ocean Strategy, pp. 226-231): each alternative is a set
+of moves against the canvas the project already has, not an abstract "what
+if we tried X" idea disconnected from it.
 
-Colors and icons were previously hardcoded per-vector in bizstruct-ml
-(indigo/coins, teal/cpu, slate/heartHandshake) — the last known case of
-presentation leaking into this domain (see
-tests/test_no_presentation_fields.py's docstring). Deliberately absent
-here; the frontend derives styling from `ERRCAction` itself, a fixed,
-finite enum.
+Project extensions, not methodology quotes: three alternatives per run,
+3-6 moves per alternative, and at least three distinct ERRC actions per
+alternative. The book describes the four actions; these counts are this
+project's quality bar on generated output.
+
+Applying an alternative produces the next canvas version. Storing versions
+and running the Canvas -> SWOT -> ERRC loop is bizstruct-be's job, not
+this package's (ADR-0008).
+
+Colors and icons are deliberately absent (see
+tests/test_no_presentation_fields.py's docstring); the frontend derives
+styling from `ERRCAction` itself, a fixed, finite enum.
 """
 
 from uuid import UUID
 
 from pydantic import ConfigDict, Field, model_validator
 
-from bizstruct_domain.enums import CanvasSection, ERRCAction, WhatIfStatus
+from bizstruct_domain.enums import CanvasSection, ERRCAction, ERRCStatus
 from bizstruct_domain.sanitize import SanitizedModel
 
 # `target` matches an existing canvas card's exact text (see ERRCMove's
@@ -90,7 +98,7 @@ class ERRCMove(SanitizedModel):
         return self
 
 
-class WhatIfAlternative(SanitizedModel):
+class ERRCAlternative(SanitizedModel):
     """One ERRC-grid alternative business model built from the project's canvas."""
 
     model_config = ConfigDict(extra="forbid")
@@ -100,10 +108,10 @@ class WhatIfAlternative(SanitizedModel):
     premise: str = Field(**_TEXT_LONG)
     moves: list[ERRCMove] = Field(min_length=_MIN_MOVES, max_length=_MAX_MOVES)
     expected_impact: str = Field(**_TEXT_LONG)
-    status: WhatIfStatus = WhatIfStatus.DRAFT
+    status: ERRCStatus = ERRCStatus.DRAFT
 
     @model_validator(mode="after")
-    def _validate_action_coverage(self) -> "WhatIfAlternative":
+    def _validate_action_coverage(self) -> "ERRCAlternative":
         distinct_actions = {move.action for move in self.moves}
         if len(distinct_actions) < _MIN_ACTIONS_COVERED:
             raise ValueError(
@@ -115,17 +123,17 @@ class WhatIfAlternative(SanitizedModel):
         return self
 
 
-class WhatIf(SanitizedModel):
+class ERRC(SanitizedModel):
     """The persisted/CRUD shape: exactly three ERRC alternatives, at most one
-    `applied` (the user's own choice — see module docstring)."""
+    `applied` (the user's own choice)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    alternatives: list[WhatIfAlternative] = Field(min_length=3, max_length=3)
+    alternatives: list[ERRCAlternative] = Field(min_length=3, max_length=3)
 
     @model_validator(mode="after")
-    def _validate_at_most_one_applied(self) -> "WhatIf":
-        applied = [a for a in self.alternatives if a.status is WhatIfStatus.APPLIED]
+    def _validate_at_most_one_applied(self) -> "ERRC":
+        applied = [a for a in self.alternatives if a.status is ERRCStatus.APPLIED]
         if len(applied) > 1:
             raise ValueError(
                 f"at most one alternative may be status=applied, got {len(applied)} "
@@ -136,14 +144,14 @@ class WhatIf(SanitizedModel):
         return self
 
 
-class WhatIfGenerated(WhatIf):
-    """Output of the `what_if` generation stage. Same shape as `WhatIf`, plus:
+class ERRCGenerated(ERRC):
+    """Output of the `errc` generation stage. Same shape as `ERRC`, plus:
     every alternative must be `status=draft` — the LLM proposes, it never
-    decides which alternative is in effect (see module docstring, B1)."""
+    decides which alternative is in effect."""
 
     @model_validator(mode="after")
-    def _validate_all_draft(self) -> "WhatIfGenerated":
-        applied = [a for a in self.alternatives if a.status is not WhatIfStatus.DRAFT]
+    def _validate_all_draft(self) -> "ERRCGenerated":
+        applied = [a for a in self.alternatives if a.status is not ERRCStatus.DRAFT]
         if applied:
             raise ValueError(
                 f"freshly generated alternatives must all be status=draft, got "

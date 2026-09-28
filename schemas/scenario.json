@@ -1,130 +1,103 @@
 {
   "$defs": {
-    "MetricValue": {
+    "AdaptationQuestion": {
       "additionalProperties": false,
+      "description": "How one canvas area would have to adapt in this future.",
       "properties": {
-        "label": {
-          "maxLength": 150,
-          "minLength": 1,
-          "title": "Label",
-          "type": "string"
+        "area": {
+          "$ref": "#/$defs/ScenarioAdaptationArea"
         },
-        "value": {
-          "maxLength": 100,
-          "minLength": 1,
-          "title": "Value",
-          "type": "string"
-        }
-      },
-      "required": [
-        "value",
-        "label"
-      ],
-      "title": "MetricValue",
-      "type": "object"
-    },
-    "Persona": {
-      "additionalProperties": false,
-      "description": "The protagonist of the scenario — should be the same persona as the\nproject's `empathy_map`, not a newly invented one.",
-      "properties": {
-        "name": {
-          "maxLength": 100,
-          "minLength": 1,
-          "title": "Name",
-          "type": "string"
-        },
-        "pain_point": {
+        "question": {
           "maxLength": 300,
           "minLength": 10,
-          "title": "Pain Point",
+          "title": "Question",
+          "type": "string"
+        }
+      },
+      "required": [
+        "area",
+        "question"
+      ],
+      "title": "AdaptationQuestion",
+      "type": "object"
+    },
+    "FutureScenarioCase": {
+      "additionalProperties": false,
+      "description": "One possible future, from one combination of driver values.",
+      "properties": {
+        "adaptation_questions": {
+          "description": "One question per significant canvas area, each area at most once.",
+          "items": {
+            "$ref": "#/$defs/AdaptationQuestion"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Adaptation Questions",
+          "type": "array"
+        },
+        "narrative": {
+          "maxLength": 1200,
+          "minLength": 40,
+          "title": "Narrative",
           "type": "string"
         },
-        "role": {
-          "maxLength": 150,
+        "title": {
+          "maxLength": 120,
           "minLength": 1,
-          "title": "Role",
+          "title": "Title",
           "type": "string"
         }
       },
       "required": [
-        "name",
-        "role",
-        "pain_point"
+        "title",
+        "narrative",
+        "adaptation_questions"
       ],
-      "title": "Persona",
+      "title": "FutureScenarioCase",
       "type": "object"
     },
-    "ScenarioMetrics": {
-      "additionalProperties": false,
-      "properties": {
-        "after": {
-          "$ref": "#/$defs/MetricValue"
-        },
-        "before": {
-          "$ref": "#/$defs/MetricValue"
-        }
-      },
-      "required": [
-        "before",
-        "after"
+    "ScenarioAdaptationArea": {
+      "description": "Canvas areas a future scenario asks adaptation questions about.\n\nBMG, Design -> Scenarios, type 2 (pp. 187-188): value proposition, key\nresources/activities, revenue, costs, partnerships, customer\nrelationships.",
+      "enum": [
+        "value_proposition",
+        "key_resources_activities",
+        "revenue_streams",
+        "cost_structure",
+        "key_partners",
+        "customer_relationships"
       ],
-      "title": "ScenarioMetrics",
-      "type": "object"
-    },
-    "TimelineStep": {
-      "additionalProperties": false,
-      "description": "One step of the persona's journey.",
-      "properties": {
-        "step_type": {
-          "enum": [
-            "context",
-            "goal",
-            "action",
-            "result",
-            "impact"
-          ],
-          "title": "Step Type",
-          "type": "string"
-        },
-        "text": {
-          "maxLength": 300,
-          "minLength": 10,
-          "title": "Text",
-          "type": "string"
-        }
-      },
-      "required": [
-        "step_type",
-        "text"
-      ],
-      "title": "TimelineStep",
-      "type": "object"
+      "title": "ScenarioAdaptationArea",
+      "type": "string"
     }
   },
   "additionalProperties": false,
-  "description": "Output of the `scenario` stage: a before/after user journey.",
+  "description": "Output of the `scenario` stage.",
   "properties": {
-    "metrics": {
-      "$ref": "#/$defs/ScenarioMetrics"
-    },
-    "persona": {
-      "$ref": "#/$defs/Persona"
-    },
-    "timeline": {
+    "scenario_matrix": {
       "items": {
-        "$ref": "#/$defs/TimelineStep"
+        "$ref": "#/$defs/FutureScenarioCase"
       },
-      "maxItems": 5,
-      "minItems": 5,
-      "title": "Timeline",
+      "maxItems": 4,
+      "minItems": 2,
+      "title": "Scenario Matrix",
+      "type": "array"
+    },
+    "uncertainty_drivers": {
+      "items": {
+        "maxLength": 300,
+        "minLength": 10,
+        "type": "string"
+      },
+      "maxItems": 4,
+      "minItems": 2,
+      "title": "Uncertainty Drivers",
       "type": "array"
     }
   },
   "required": [
-    "persona",
-    "timeline",
-    "metrics"
+    "uncertainty_drivers",
+    "scenario_matrix"
   ],
-  "title": "Scenario",
+  "title": "FutureScenario",
   "type": "object"
 }

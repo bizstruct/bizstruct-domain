@@ -10,14 +10,19 @@ git diff.
 import json
 from pathlib import Path
 
-from bizstruct_domain.blocks.architecture import Architecture
+from bizstruct_domain.blocks.assessment import Assessment
+from bizstruct_domain.blocks.business_case import BusinessCase
+from bizstruct_domain.blocks.customer_scenario import CustomerScenario
 from bizstruct_domain.blocks.empathy_map import EmpathyMap
-from bizstruct_domain.blocks.scenario import Scenario
+from bizstruct_domain.blocks.ideation import Ideation
+from bizstruct_domain.blocks.patterns import Patterns
+from bizstruct_domain.blocks.scenario import FutureScenario
 from bizstruct_domain.blocks.pitch import Pitch
 from bizstruct_domain.blocks.hypotheses import Hypotheses
 from bizstruct_domain.blocks.models_options import ModelsOptions
 from bizstruct_domain.blocks.canvas import Canvas
-from bizstruct_domain.blocks.what_if import WhatIf
+from bizstruct_domain.blocks.errc import ERRC
+from bizstruct_domain.blocks.team_info import TeamInfo
 from bizstruct_domain.validate_model import ValidateModelResult
 from bizstruct_domain.chain import STAGES
 from bizstruct_domain.enums import StageErrorCode, StageStatus
@@ -27,9 +32,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 BLOCK_MODELS = {
-    "architecture": Architecture,
+    "team_info": TeamInfo,
+    "business_case": BusinessCase,
     "empathy_map": EmpathyMap,
-    "scenario": Scenario,
+    "customer_scenario": CustomerScenario,
+    "ideation": Ideation,
+    "patterns": Patterns,
+    "assessment": Assessment,
+    "scenario": FutureScenario,
     "pitch": Pitch,
     "hypotheses": Hypotheses,
     "models_options": ModelsOptions,
@@ -41,9 +51,9 @@ BLOCK_MODELS = {
     # Schema sync.
     "canvas": Canvas,
     # The persisted/CRUD shape, same reasoning as canvas above —
-    # WhatIfGenerated (generation-time, all-draft) isn't exported; it's an
+    # ERRCGenerated (generation-time, all-draft) isn't exported; it's an
     # internal bizstruct-ml/bizstruct-be contract imported directly.
-    "what_if": WhatIf,
+    "errc": ERRC,
 }
 
 # Not a chain stage (not in STAGES) — a side-channel task result. Exported

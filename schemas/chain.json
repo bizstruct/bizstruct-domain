@@ -2,17 +2,35 @@
   {
     "depends_on": [],
     "id": "brief",
-    "mode": "both",
+    "optional_depends_on": [],
     "requires_user_gate": false,
     "source": "-",
     "title_uk": "Нормалізація ідеї"
+  },
+  {
+    "depends_on": [],
+    "id": "team_info",
+    "optional_depends_on": [],
+    "requires_user_gate": false,
+    "source": "BMG, Outlook -> Business Plan (p. 268)",
+    "title_uk": "Дані команди"
+  },
+  {
+    "depends_on": [
+      "brief"
+    ],
+    "id": "business_case",
+    "optional_depends_on": [],
+    "requires_user_gate": false,
+    "source": "BMG, Design -> Prototyping (p. 165) + Outlook -> Business Plan, Financial Analysis (p. 269)",
+    "title_uk": "Ринкові бенчмарки"
   },
   {
     "depends_on": [
       "brief"
     ],
     "id": "empathy_map",
-    "mode": "both",
+    "optional_depends_on": [],
     "requires_user_gate": false,
     "source": "BMG, Customer Insights",
     "title_uk": "Карта емпатії"
@@ -23,7 +41,7 @@
       "empathy_map"
     ],
     "id": "environment_scan",
-    "mode": "pro",
+    "optional_depends_on": [],
     "requires_user_gate": false,
     "source": "BMG, Business Model Environment",
     "title_uk": "Аналіз середовища (4 сили)"
@@ -33,105 +51,128 @@
       "empathy_map"
     ],
     "id": "value_map",
-    "mode": "both",
+    "optional_depends_on": [],
     "requires_user_gate": false,
     "source": "Value Proposition Design",
     "title_uk": "Ціннісна пропозиція"
   },
   {
     "depends_on": [
-      "empathy_map",
-      "value_map"
+      "empathy_map"
+    ],
+    "id": "customer_scenario",
+    "optional_depends_on": [],
+    "requires_user_gate": false,
+    "source": "BMG, Design -> Scenarios, type 1: customer scenarios (pp. 182-185)",
+    "title_uk": "Клієнтський сценарій"
+  },
+  {
+    "depends_on": [
+      "brief",
+      "empathy_map"
+    ],
+    "id": "ideation",
+    "optional_depends_on": [],
+    "requires_user_gate": false,
+    "source": "BMG, Design -> Ideation (pp. 136-141)",
+    "title_uk": "Епіцентр і \"What if\""
+  },
+  {
+    "depends_on": [
+      "customer_scenario",
+      "ideation"
+    ],
+    "id": "patterns",
+    "optional_depends_on": [],
+    "requires_user_gate": false,
+    "source": "BMG, Patterns (pp. 56-119)",
+    "title_uk": "Патерни і рішення А/Б"
+  },
+  {
+    "depends_on": [
+      "value_map",
+      "patterns"
     ],
     "id": "models_options",
-    "mode": "both",
+    "optional_depends_on": [],
     "requires_user_gate": true,
-    "source": "BMG, Ideation",
+    "source": "BMG, Design -> Ideation (project extension)",
     "title_uk": "Варіанти монетизації"
   },
   {
     "depends_on": [
       "empathy_map",
       "value_map",
+      "customer_scenario",
+      "patterns",
       "models_options"
     ],
     "id": "canvas",
-    "mode": "both",
+    "optional_depends_on": [],
     "requires_user_gate": false,
     "source": "BMG, ядро",
     "title_uk": "Business Model Canvas"
   },
   {
     "depends_on": [
-      "canvas"
-    ],
-    "id": "architecture",
-    "mode": "both",
-    "requires_user_gate": false,
-    "source": "BMG, Patterns",
-    "title_uk": "Епіцентр і патерн"
-  },
-  {
-    "depends_on": [
       "canvas",
-      "architecture"
+      "patterns"
     ],
     "id": "assessment",
-    "mode": "pro",
+    "optional_depends_on": [
+      "environment_scan"
+    ],
     "requires_user_gate": false,
-    "source": "BMG, Evaluating Business Models",
-    "title_uk": "SWOT-оцінка блоків"
+    "source": "BMG, Strategy -> Evaluating Business Models (pp. 212-225)",
+    "title_uk": "SWOT-оцінка"
   },
   {
     "depends_on": [
       "canvas",
-      "architecture"
+      "patterns"
     ],
-    "id": "what_if",
-    "mode": "both",
+    "id": "errc",
+    "optional_depends_on": [
+      "assessment"
+    ],
     "requires_user_gate": true,
-    "source": "Blue Ocean Strategy",
+    "source": "BMG, Strategy -> Business Model Perspective on Blue Ocean Strategy (pp. 226-231)",
     "title_uk": "ERRC-альтернативи"
   },
   {
     "depends_on": [
       "canvas",
-      "what_if"
+      "errc"
     ],
     "id": "hypotheses",
-    "mode": "both",
+    "optional_depends_on": [],
     "requires_user_gate": false,
     "source": "Testing Business Ideas",
     "title_uk": "Гіпотези D/V/F"
   },
   {
     "depends_on": [
-      "empathy_map",
-      "value_map",
-      "models_options"
+      "canvas"
     ],
     "id": "scenario",
-    "mode": "both",
+    "optional_depends_on": [],
     "requires_user_gate": false,
-    "source": "BMG, Scenarios",
-    "title_uk": "Сценарій до/після"
+    "source": "BMG, Design -> Scenarios, type 2: future scenarios (pp. 186-189)",
+    "title_uk": "Сценарій майбутнього"
   },
   {
     "depends_on": [
-      "brief",
-      "empathy_map",
-      "value_map",
-      "models_options",
       "canvas",
-      "architecture",
-      "what_if",
-      "hypotheses",
+      "errc",
       "scenario"
     ],
     "id": "pitch",
-    "mode": "both",
+    "optional_depends_on": [
+      "team_info",
+      "business_case"
+    ],
     "requires_user_gate": false,
-    "source": "BMG, Storytelling",
-    "title_uk": "Пітч-презентації"
+    "source": "BMG, Design -> Storytelling (pp. 170-179) + Outlook -> Business Plan (pp. 268-269)",
+    "title_uk": "Пітч"
   }
 ]

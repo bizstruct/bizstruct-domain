@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "TeamMember": {
+      "additionalProperties": false,
+      "description": "One team member.",
+      "properties": {
+        "competencies": {
+          "description": "Key competencies for this particular business model.",
+          "items": {
+            "maxLength": 100,
+            "minLength": 2,
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Competencies",
+          "type": "array"
+        },
+        "experience": {
+          "description": "Relevant experience and track record.",
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Experience",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "role": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "role",
+        "experience"
+      ],
+      "title": "TeamMember",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The team behind the project.",
+  "properties": {
+    "members": {
+      "items": {
+        "$ref": "#/$defs/TeamMember"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "title": "Members",
+      "type": "array"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "maxLength": 1000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Why this team is the right one to build this business model.",
+      "title": "Summary"
+    }
+  },
+  "required": [
+    "members"
+  ],
+  "title": "TeamInfo",
+  "type": "object"
+}

@@ -9,9 +9,10 @@ its models as the Azure OpenAI `response_format` / API schema. `bizstruct-fe`
 does not depend on it at runtime — it generates TypeScript types from the
 JSON Schemas committed under [`schemas/`](schemas/).
 
-**Pilot scope:** this initial cut implements only the `architecture` block,
-as a template for the rest. Other blocks (`empathy_map`, `canvas`, `pitch`,
-etc.) will be added the same way in follow-up PRs.
+The package describes the shape of one generation pass. Multiplicity (how
+many instances of a stage a project has), versioning of the Canvas -> SWOT
+-> ERRC loop, and product tiers (Basic/Pro) are the consumers' concern — see
+[ADR-0008](docs/adr/0008-bmg-domain-rewrite.md).
 
 ## Why Pydantic, not JSON Schema, as the source of truth
 
@@ -30,10 +31,10 @@ pip install "bizstruct-domain @ git+https://github.com/bizstruct/bizstruct-domai
 ```
 
 ```python
-from bizstruct_domain.blocks.architecture import Architecture
+from bizstruct_domain.blocks.patterns import Patterns
 from bizstruct_domain.chain import topological_order
 
-order = topological_order(pro=False)
+order = topological_order()
 ```
 
 ### TypeScript (bizstruct-fe)
@@ -42,7 +43,7 @@ Generate types from the committed schemas with
 [`json-schema-to-typescript`](https://github.com/bcherny/json-schema-to-typescript):
 
 ```bash
-npx json-schema-to-typescript schemas/architecture.json > src/types/architecture.ts
+npx json-schema-to-typescript schemas/patterns.json > src/types/patterns.ts
 ```
 
 `schemas/chain.json` is the serialized `STAGES` tuple, for building stage
@@ -62,7 +63,8 @@ committed `schemas/` — i.e. if the schemas fell out of sync with the models.
 ## Architecture decisions
 
 See [`docs/adr/`](docs/adr/), starting with
-[0001: generation stages](docs/adr/0001-generation-stages.md).
+[0008: BMG domain rewrite](docs/adr/0008-bmg-domain-rewrite.md) for the
+current stage graph.
 
 ## Changing the domain model
 

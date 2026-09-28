@@ -1,0 +1,109 @@
+{
+  "$defs": {
+    "CanvasBranchingDecision": {
+      "description": "How many canvases the Patterns stage decides to build.\n\nProject decision on top of BMG (see docs/adr/0008-bmg-domain-rewrite.md):\n- A_SHARED: one canvas shared by every customer segment.\n- B_BRANCHING: one canvas per customer segment.\n\nThis is only the classification result. Creating the one or N canvas\ninstances is bizstruct-be's job, not this package's.",
+      "enum": [
+        "a_shared",
+        "b_branching"
+      ],
+      "title": "CanvasBranchingDecision",
+      "type": "string"
+    },
+    "Pattern": {
+      "description": "Business model patterns.\n\nOsterwalder & Pigneur, \"Business Model Generation\" — Part 2,\nPatterns. Exactly 5 canonical values; do not add invented values\n(e.g. \"PAID\" is not part of the methodology).",
+      "enum": [
+        "unbundling",
+        "long_tail",
+        "multi_sided_platform",
+        "free",
+        "open_business_model"
+      ],
+      "title": "Pattern",
+      "type": "string"
+    },
+    "PatternSubtype": {
+      "description": "Subtypes that refine specific patterns.\n\nOnly meaningful in combination with `Pattern.FREE`\n(`freemium`, `ad_supported`, `bait_and_hook`) or\n`Pattern.OPEN_BUSINESS_MODEL` (`outside_in`, `inside_out`).\nSee `PATTERN_SUBTYPES` below for the full mapping.",
+      "enum": [
+        "freemium",
+        "ad_supported",
+        "bait_and_hook",
+        "outside_in",
+        "inside_out"
+      ],
+      "title": "PatternSubtype",
+      "type": "string"
+    },
+    "PatternTag": {
+      "additionalProperties": false,
+      "description": "One business model pattern the project fits, with its subtype.",
+      "properties": {
+        "pattern": {
+          "$ref": "#/$defs/Pattern"
+        },
+        "rationale": {
+          "description": "Why the project fits this pattern, in the project's language.",
+          "maxLength": 750,
+          "minLength": 40,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "subtype": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PatternSubtype"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Subtype refining the pattern. Required for patterns that define subtypes (free, open_business_model) — freemium, ad-supported, and bait-and-hook are distinct economics and must be told apart; must be null for all other patterns."
+        }
+      },
+      "required": [
+        "pattern",
+        "rationale"
+      ],
+      "title": "PatternTag",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Output of the `patterns` stage: pattern tags plus the A/B canvas decision.",
+  "properties": {
+    "branching_decision": {
+      "$ref": "#/$defs/CanvasBranchingDecision"
+    },
+    "branching_rationale": {
+      "description": "Why one shared canvas or one per segment: similarity of the segments, synergy between them, or conflict, in the project's language.",
+      "maxLength": 750,
+      "minLength": 40,
+      "title": "Branching Rationale",
+      "type": "string"
+    },
+    "pattern_tags": {
+      "description": "Patterns the whole project fits, each at most once. May be empty.",
+      "items": {
+        "$ref": "#/$defs/PatternTag"
+      },
+      "maxItems": 5,
+      "minItems": 0,
+      "title": "Pattern Tags",
+      "type": "array"
+    },
+    "segment_count": {
+      "description": "How many customer segments (customer_scenario/ideation pairs) this classification was made over. Set from the stage's inputs by the caller, not judged by the LLM. It exists only so the validators below can check pattern/decision constraints that depend on it.",
+      "minimum": 1,
+      "title": "Segment Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "pattern_tags",
+    "segment_count",
+    "branching_decision",
+    "branching_rationale"
+  ],
+  "title": "Patterns",
+  "type": "object"
+}
