@@ -60,7 +60,7 @@ class ErrcMove(BaseModel):
             "Reducing production costs will improve our profit margins.",
         ],
     )
-    
+
     @model_validator(mode="after")
     def action_field_consistency(self) -> "ErrcMove":
         """
@@ -92,6 +92,13 @@ class Errc(BaseModel):
         ...,
         description="Identifier of the canvas this ERRC analysis is associated with.",
         examples=["canvas_001"],
+    )
+    swot_id: str = Field(
+        ...,
+        description="Identifier of the SWOT analysis whose signals informed these moves. "
+                     "SWOT always precedes ERRC in the swot_errc_cycle, so this is required, "
+                     "not optional.",
+        examples=["swot_001"],
     )
     from_version: int = Field(
         ...,
@@ -137,7 +144,7 @@ class Errc(BaseModel):
             ],
         ],
     )
-    
+
     @model_validator(mode="after")
     def version_increments(self) -> "Errc":
         """
@@ -149,4 +156,3 @@ class Errc(BaseModel):
                 f" one greater than from_version ({self.from_version})."
             )
         return self
-

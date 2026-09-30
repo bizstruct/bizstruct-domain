@@ -21,7 +21,7 @@ class SwotAxisStatement(BaseModel):
         ...,
         ge=-5,
         le=5,
-        
+
         description=(
             "A score representing the impact of the statement,"
             " ranging from -5 (very negative) to 5 (very positive)."
@@ -55,6 +55,31 @@ class SwotAxisStatement(BaseModel):
         if v == 0:
             raise ValueError("Score cannot be zero.")
         return v
+
+
+class SwotOpportunityThreat(BaseModel):
+    """
+        Represents a single Opportunity or Threat item, per the BMG document's
+        Evaluating Business Models format (pp. 220-223): each generative
+        question is paired with a 1-5 scale. The book gives no caption for
+        this scale; the working interpretation used here is "how strongly
+        this applies to this model" (1 = barely, 5 = very strongly).
+    """
+    text: str = Field(
+        ...,
+        description="The opportunity or threat statement (typically phrased as, "
+                     "or derived from, one of the book's generative questions).",
+        examples=["Could we generate recurring revenues by converting products into services?"],
+    )
+    score: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        description="How strongly this applies to this model: 1 (barely) to 5 (very strongly). "
+                     "Interpretation is a project decision; the book's pages give the scale "
+                     "with no caption.",
+        examples=[2, 3, 5],
+    )
 
 
 class SwotClusterResult(BaseModel):
@@ -92,20 +117,20 @@ class SwotClusterResult(BaseModel):
             ],
         ],
     )
-    opportunities: list[str] = Field(
+    opportunities: list[SwotOpportunityThreat] = Field(
         ...,
-        description="A list of identified opportunities for the specified cluster.",
+        description="A list of identified opportunities for the specified cluster, each scored 1-5.",
         examples=[[
-            "Expand into new geographic markets.",
-            "Develop strategic partnerships with complementary businesses.",
+            SwotOpportunityThreat(text="Expand into new geographic markets.", score=4),
+            SwotOpportunityThreat(text="Develop strategic partnerships with complementary businesses.", score=3),
         ]],
     )
-    threats: list[str] = Field(
+    threats: list[SwotOpportunityThreat] = Field(
         ...,
-        description="A list of identified threats for the specified cluster.",
+        description="A list of identified threats for the specified cluster, each scored 1-5.",
         examples=[[
-            "Emerging competitors with lower-priced alternatives.",
-            "Changes in regulations that could impact our operations.",
+            SwotOpportunityThreat(text="Emerging competitors with lower-priced alternatives.", score=4),
+            SwotOpportunityThreat(text="Changes in regulations that could impact our operations.", score=2),
         ]],
     )
 
@@ -131,10 +156,12 @@ class Swot(BaseModel):
         description="Version of the canvas this SWOT analysis is associated with.",
         examples=[1],
     )
-    used_environment_scan: bool = Field(
-        default=False,
-        description="Indicates whether an environmental scan was used in this SWOT analysis.",
-        examples=[True, False],
+    environment_scan_id: str | None = Field(
+        None,
+        description="Identifier of the EnvironmentScan used to inform Opportunities/Threats "
+                     "for this cluster set, if any. Strengths/Weaknesses are always derived "
+                     "solely from the canvas.",
+        examples=["environment_scan_001"],
     )
     clusters: list[SwotClusterResult] = Field(
         ...,
@@ -155,10 +182,10 @@ class Swot(BaseModel):
                         ),
                     ],
                     opportunities=[
-                        "Expand into new geographic markets.",
+                        SwotOpportunityThreat(text="Expand into new geographic markets.", score=4),
                     ],
                     threats=[
-                        "Emerging competitors with lower-priced alternatives.",
+                        SwotOpportunityThreat(text="Emerging competitors with lower-priced alternatives.", score=4),
                     ],
                 ),
                 SwotClusterResult(
@@ -173,10 +200,10 @@ class Swot(BaseModel):
                         ),
                     ],
                     opportunities=[
-                        "Develop strategic partnerships with complementary businesses.",
+                        SwotOpportunityThreat(text="Develop strategic partnerships with complementary businesses.", score=3),
                     ],
                     threats=[
-                        "Changes in regulations that could impact our operations.",
+                        SwotOpportunityThreat(text="Changes in regulations that could impact our operations.", score=2),
                     ],
                 ),
                 SwotClusterResult(
@@ -191,10 +218,10 @@ class Swot(BaseModel):
                         ),
                     ],
                     opportunities=[
-                        "Invest in scalable infrastructure solutions.",
+                        SwotOpportunityThreat(text="Invest in scalable infrastructure solutions.", score=3),
                     ],
                     threats=[
-                        "Supply chain disruptions due to global events.",
+                        SwotOpportunityThreat(text="Supply chain disruptions due to global events.", score=3),
                     ],
                 ),
                 SwotClusterResult(
@@ -209,29 +236,30 @@ class Swot(BaseModel):
                         ),
                     ],
                     opportunities=[
-                        "Enhance the user experience through design improvements.",
+                        SwotOpportunityThreat(text="Enhance the user experience through design improvements.", score=2),
                     ],
                     threats=[
-                        "Negative reviews and feedback impacting brand perception.",
+                        SwotOpportunityThreat(text="Negative reviews and feedback impacting brand perception.", score=3),
                     ],
                 ),
             ],
         ],
     )
-    
+
     @property
     def weighted_weakness_threat_score(self) -> float:
         """
             Calculates the weighted score for weaknesses and threats across all clusters.
-            The score is calculated as the sum of the absolute values of negative scores
-            multiplied by their importance, plus the count of threats.
+            The score is the sum of the absolute values of negative axis scores
+            multiplied by their importance, plus the sum of each threat's own
+            1-5 score (not a flat count per item).
         """
         total = 0.0
         for c in self.clusters:
             for axis in c.axis_statements:
                 if axis.score < 0:
                     total += axis.importance * abs(axis.score)
-            total += len(c.threats)
+            total += sum(t.score for t in c.threats)
         return total
 
     @model_validator(mode="after")
@@ -246,4 +274,3 @@ class Swot(BaseModel):
                 f"All four SWOT clusters must be represented. Missing: {', '.join(missing)}"
             )
         return self
-

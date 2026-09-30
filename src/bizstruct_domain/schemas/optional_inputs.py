@@ -70,6 +70,29 @@ class TeamInfo(BaseModel):
     )
 
 
+class Source(BaseModel):
+    """
+        Represents an external source backing a quantitative claim in
+        EnvironmentScan or BusinessCase. Required so that "obtained from
+        external sources" is verifiable rather than merely claimed.
+    """
+    title: str = Field(
+        ...,
+        description="Short label for the source (publication, report, or site name).",
+        examples=["Statista: SaaS Market Size 2026", "IBISWorld Industry Report"],
+    )
+    url: str | None = Field(
+        None,
+        description="Link to the source, if available.",
+        examples=["https://www.statista.com/..."],
+    )
+    note: str = Field(
+        ...,
+        description="What this source specifically supports (which figure or claim).",
+        examples=["Basis for the projected 10% annual growth rate figure."],
+    )
+
+
 class SalesScenario(BaseModel):
     """
         Represents a sales scenario in a business context.
@@ -110,6 +133,19 @@ class BusinessCase(BaseModel):
             "The market benchmarks indicate a growing demand for eco-friendly products, with a projected annual growth rate of 10% over the next five years.",
             "The market benchmarks suggest a declining trend in consumer interest for traditional products, with a projected annual decrease of 5% in sales over the next three years.",
         ],
+    )
+    sources: list[Source] = Field(
+        ...,
+        min_length=1,
+        description="External sources backing the market benchmarks. A generation with no "
+                     "sources is treated as a failed generation, not as a valid empty result.",
+        examples=[[
+            Source(
+                title="Statista: SaaS Market Size 2026",
+                url="https://www.statista.com/...",
+                note="Basis for the projected 10% annual growth rate figure.",
+            ),
+        ]],
     )
     breakeven_formula: str = Field(
         ...,
@@ -176,6 +212,20 @@ class EnvironmentScan(BaseModel):
         description="Identifier of the project this environment scan is associated with.",
         examples=["project_001"],
     )
+    sources: list[Source] = Field(
+        ...,
+        min_length=1,
+        description="External sources backing the market/industry analysis below. A "
+                     "generation with no sources is treated as a failed generation, not "
+                     "as a valid empty result.",
+        examples=[[
+            Source(
+                title="IBISWorld Industry Report",
+                url=None,
+                note="Basis for the industry_forces and key_trends entries.",
+            ),
+        ]],
+    )
     market_forces: list[str] = Field(
         ...,
         min_length=1,
@@ -200,4 +250,3 @@ class EnvironmentScan(BaseModel):
         description="A list of macroeconomic forces relevant to the environment scan.",
         examples=[["Interest rate fluctuations", "Inflation trends"]],
     )
-
