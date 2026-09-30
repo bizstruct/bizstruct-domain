@@ -1,11 +1,3 @@
-"""Populated stage graph for the BMG generation chain.
-
-Single source of truth for stage order and dependencies, consumed by
-bizstruct-ml (both the pipeline and the agentic strategy), bizstruct-be
-(orchestration), and bizstruct-fe (via an exported schemas/stages.json).
-See docs/adr for the graph shape rationale.
-"""
-
 from .enums import Stage
 from .stage_definition import StageDefinition
 from .stage_registry import StageRegistry
@@ -38,7 +30,13 @@ STAGE_REGISTRY = StageRegistry(
         ),
         Stage.CANVAS: StageDefinition(
             id=Stage.CANVAS,
-            depends_on=[Stage.PATTERNS],
+            depends_on=[
+                Stage.BRIEF,
+                Stage.EMPATHY_MAP,
+                Stage.CUSTOMER_SCENARIO,
+                Stage.IDEATION,
+                Stage.PATTERNS,
+            ],
         ),
         Stage.SWOT_ERRC_CYCLE: StageDefinition(
             id=Stage.SWOT_ERRC_CYCLE,
