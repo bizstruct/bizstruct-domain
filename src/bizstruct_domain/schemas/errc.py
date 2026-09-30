@@ -107,6 +107,11 @@ class Errc(BaseModel):
         description="The version of the canvas to which this ERRC analysis is applied.",
         examples=[2],
     )
+    result_canvas_id: str = Field(
+        ...,
+        description="Identifier of the resulting canvas after applying this ERRC analysis.",
+        examples=["canvas_002"],
+    )
     moves: list[ErrcMove] = Field(
         ...,
         min_length=1,

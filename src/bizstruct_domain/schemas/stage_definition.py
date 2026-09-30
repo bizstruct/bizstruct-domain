@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 
 from .enums import (
     Stage,
-    StageMode,
 )
 
 class StageDefinition(BaseModel):
@@ -21,13 +20,6 @@ class StageDefinition(BaseModel):
         description="The list of stages that this stage depends on.",
         examples=[
             [Stage.BRIEF, Stage.EMPATHY_MAP],
-        ]
-    )
-    mode: StageMode = Field(
-        ...,
-        description="The mode of the stage.",
-        examples=[
-            StageMode.PRO_ONLY,
         ]
     )
     allows_multiple_instances: bool = Field(

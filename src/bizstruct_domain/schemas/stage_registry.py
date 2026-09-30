@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field, model_validator
 
 from .enums import (
     Stage,
-    StageMode,
 )
 
 from .stage_definition import StageDefinition
@@ -20,7 +19,6 @@ class StageRegistry(BaseModel):
                 Stage.BRIEF: StageDefinition(
                     id=Stage.BRIEF,
                     depends_on=[],
-                    mode=StageMode.BOTH,
                     allows_multiple_instances=False,
                     is_optional=False,
                 ),
@@ -68,21 +66,6 @@ class StageRegistry(BaseModel):
             
         for stage_id in self.stages:
             visit(stage_id)
-        return self
-    
-    @model_validator(mode="after")
-    def both_never_depends_on_pro_only(self) -> "StageRegistry":
-        """
-            Validates that stages with mode BOTH do not depend on stages with mode PRO_ONLY.
-        """
-        for stage_id, definition in self.stages.items():
-            if definition.mode != StageMode.BOTH:
-                continue
-            for dep_id in definition.depends_on:
-                if self.stages[dep_id].mode == StageMode.PRO_ONLY:
-                    raise ValueError(
-                        f"Stage {stage_id} (BOTH) cannot depend on {dep_id} (PRO_ONLY)"
-                    )
         return self
     
     def topological_order(self) -> list[Stage]:

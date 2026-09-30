@@ -154,10 +154,3 @@ class Stage(StrEnum):
     BUSINESS_CASE = "business_case"
     ENVIRONMENT_SCAN = "environment_scan"
 
-
-class StageMode(StrEnum):
-    """
-        Enum representing the different modes of a stage.
-    """
-    BOTH = "both"
-    PRO_ONLY = "pro_only"
