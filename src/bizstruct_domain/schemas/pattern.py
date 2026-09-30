@@ -22,7 +22,7 @@ class SegmentPair(BaseModel):
         description="Identifier of the second empathy map in the segment pair.",
         examples=["empathy_map_002"],
     )
-    
+
     @model_validator(mode="after")
     def ids_must_differ(self) -> "SegmentPair":
         """
@@ -38,6 +38,11 @@ class SegmentPair(BaseModel):
 class PairwiseSegmentScore(BaseModel):
     """
         Represents a score between two segments in a business context.
+
+        Bounds follow the BMG document's NetScore formula: synergy 0..+5,
+        conflict -7..0. Thresholds for branch/pattern decisions (e.g.
+        Multi-Sided at net_score >= +3) are calibrated against this range;
+        widening it invalidates those thresholds.
     """
     segment_pair: SegmentPair = Field(
         ...,
@@ -46,16 +51,16 @@ class PairwiseSegmentScore(BaseModel):
     synergy: int = Field(
         ...,
         ge=0,
-        le=10,
-        description="A score representing the synergy between the two segments, on a scale from 0 to 10.",
-        examples=[7, 8, 9],
+        le=5,
+        description="A score representing the synergy between the two segments, on a scale from 0 to 5.",
+        examples=[3, 4, 5],
     )
     conflict: int = Field(
         ...,
-        ge=-10,
+        ge=-7,
         le=0,
-        description="A score representing the conflict between the two segments, on a scale from -10 to 0.",
-        examples=[-3, -5, -7],
+        description="A score representing the conflict between the two segments, on a scale from -7 to 0.",
+        examples=[-2, -4, -6],
     )
 
     @property
@@ -67,6 +72,11 @@ class CanvasGroup(BaseModel):
     """
         Represents a group of segments in a business context.
     """
+    id: str = Field(
+        ...,
+        description="Unique identifier for the canvas group (referenced by Canvas.group_id).",
+        examples=["canvas_group_001"],
+    )
     empathy_map_ids: list[str] = Field(
         ...,
         min_length=1,
@@ -113,7 +123,7 @@ class PatternTag(BaseModel):
         description="A rationale explaining the reasoning behind the pattern tag.",
         examples=["The business model is primarily driven by customer needs and feedback."],
     )
-    
+
     _SUBTYPE_BY_PATTERN: dict[Pattern, type] = {
         Pattern.FREE: FreePatternSubtype,
         Pattern.OPEN_BUSINESS_MODEL: OpenBusinessModelPatternSubtype,
@@ -160,16 +170,16 @@ class Patterns(BaseModel):
                         empathy_map_id_a="empathy_map_001",
                         empathy_map_id_b="empathy_map_002",
                     ),
-                    synergy=7,
-                    conflict=-3,
+                    synergy=4,
+                    conflict=-2,
                 ),
                 PairwiseSegmentScore(
                     segment_pair=SegmentPair(
                         empathy_map_id_a="empathy_map_001",
                         empathy_map_id_b="empathy_map_003",
                     ),
-                    synergy=8,
-                    conflict=-2,
+                    synergy=5,
+                    conflict=-1,
                 ),
             ],
         ],
@@ -181,10 +191,12 @@ class Patterns(BaseModel):
         examples=[
             [
                 CanvasGroup(
+                    id="canvas_group_001",
                     empathy_map_ids=["empathy_map_001", "empathy_map_002"],
                     relation_type=SegmentRelationType.MULTI_SIDED,
                 ),
                 CanvasGroup(
+                    id="canvas_group_002",
                     empathy_map_ids=["empathy_map_003", "empathy_map_004"],
                     relation_type=SegmentRelationType.SEGMENTED,
                 ),
@@ -218,7 +230,7 @@ class Patterns(BaseModel):
             ],
         ],
     )
-    
+
     @model_validator(mode="after")
     def branch_matches_group_count(self) -> "Patterns":
         """
@@ -232,7 +244,7 @@ class Patterns(BaseModel):
                 f"Expected {expected.value}."
             )
         return self
-    
+
     @model_validator(mode="after")
     def multi_sided_requires_two_maps(self) -> "Patterns":
         """
@@ -241,7 +253,7 @@ class Patterns(BaseModel):
         has_multi_sided_tag = any(t.pattern == Pattern.MULTI_SIDED_PLATFORM for t in self.pattern_tags)
         if not has_multi_sided_tag:
             return self
-    
+
         has_matching_group = any(
             g.relation_type == SegmentRelationType.MULTI_SIDED and len(g.empathy_map_ids) >= 2
             for g in self.groups
@@ -251,4 +263,3 @@ class Patterns(BaseModel):
                 "A multi-sided platform pattern requires at least one group with two or more empathy maps."
             )
         return self
-

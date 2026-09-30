@@ -17,9 +17,21 @@ class StageDefinition(BaseModel):
     )
     depends_on: list[Stage] = Field(
         ...,
-        description="The list of stages that this stage depends on.",
+        description="The list of stages that this stage depends on. Hard "
+                     "dependencies: the stage cannot be generated until "
+                     "every one of these is done.",
         examples=[
             [Stage.BRIEF, Stage.EMPATHY_MAP],
+        ]
+    )
+    optional_depends_on: list[Stage] = Field(
+        default_factory=list,
+        description="Stages whose output is used if present, but never "
+                     "blocks this stage (e.g. environment_scan enriching "
+                     "swot_errc_cycle, team_info/business_case enriching "
+                     "pitch).",
+        examples=[
+            [Stage.ENVIRONMENT_SCAN],
         ]
     )
     allows_multiple_instances: bool = Field(
