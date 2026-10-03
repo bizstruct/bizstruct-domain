@@ -116,6 +116,31 @@ class RuleInput(BaseModel):
 
     stage: Stage
     arity: StageArity
+    optional: bool = Field(
+        default=False,
+        description="True for an input that only exists in some projects "
+                     "(chain.py's is_optional stages: team_info, "
+                     "business_case, environment_scan). An optional "
+                     "input never blocks discovery on its own; if it is "
+                     "absent the caller passes None (ONE) or an empty "
+                     "list (MANY) in its position.",
+    )
+
+
+def _is_checkable(inputs: tuple[RuleInput, ...], completed: set[Stage]) -> bool:
+    """Shared discovery rule for ConsistencyRule and JudgeCheck.
+
+    Every non-optional input's stage must be completed. If the rule
+    declares optional inputs at all, at least one of them must be
+    completed too -- otherwise the rule has nothing optional to check
+    (e.g. a pitch-vs-sources check with neither TeamInfo nor
+    BusinessCase present).
+    """
+    required = {i.stage for i in inputs if not i.optional}
+    optional = {i.stage for i in inputs if i.optional}
+    if not required <= completed:
+        return False
+    return not optional or bool(optional & completed)
 
 
 class ConsistencyRule:
@@ -142,10 +167,13 @@ class ConsistencyRule:
 
     @property
     def applies_to(self) -> tuple[Stage, ...]:
-        """Convenience: just the stage ids, for a caller that only wants
-        to test "are all of this rule's stages completed yet", not the
-        arities."""
+        """All stages this rule reads, optional ones included. For
+        deciding whether the rule can run now, use `is_checkable`, not
+        a subset test against this."""
         return tuple(i.stage for i in self.inputs)
+
+    def is_checkable(self, completed: set[Stage]) -> bool:
+        return _is_checkable(self.inputs, completed)
 
 
 class JudgeCheck(BaseModel):
@@ -183,6 +211,9 @@ class JudgeCheck(BaseModel):
     @property
     def applies_to(self) -> tuple[Stage, ...]:
         return tuple(i.stage for i in self.inputs)
+
+    def is_checkable(self, completed: set[Stage]) -> bool:
+        return _is_checkable(self.inputs, completed)
 
 
 JUDGE_CHECKS: list[JudgeCheck] = [
@@ -300,8 +331,8 @@ JUDGE_CHECKS: list[JudgeCheck] = [
         id="pitch_optional_sections_grounded_in_sources",
         inputs=(
             RuleInput(stage=Stage.PITCH, arity=StageArity.ONE),
-            RuleInput(stage=Stage.TEAM_INFO, arity=StageArity.ONE),
-            RuleInput(stage=Stage.BUSINESS_CASE, arity=StageArity.ONE),
+            RuleInput(stage=Stage.TEAM_INFO, arity=StageArity.ONE, optional=True),
+            RuleInput(stage=Stage.BUSINESS_CASE, arity=StageArity.ONE, optional=True),
         ),
         instruction=(
             "You will see one Pitch (with team_section and "
@@ -327,8 +358,8 @@ JUDGE_CHECKS: list[JudgeCheck] = [
         id="business_case_environment_scan_relevant_to_brief",
         inputs=(
             RuleInput(stage=Stage.BRIEF, arity=StageArity.ONE),
-            RuleInput(stage=Stage.BUSINESS_CASE, arity=StageArity.ONE),
-            RuleInput(stage=Stage.ENVIRONMENT_SCAN, arity=StageArity.ONE),
+            RuleInput(stage=Stage.BUSINESS_CASE, arity=StageArity.ONE, optional=True),
+            RuleInput(stage=Stage.ENVIRONMENT_SCAN, arity=StageArity.ONE, optional=True),
         ),
         instruction=(
             "You will see one Brief (industry, idea_summary) and, where "
