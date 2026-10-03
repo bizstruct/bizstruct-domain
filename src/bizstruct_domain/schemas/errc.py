@@ -1,11 +1,12 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
+from .fields import SanitizedModel
 
 from .enums import (
     ERRCActionType,
     CanvasSection
 )
 
-class ErrcMove(BaseModel):
+class ErrcMove(SanitizedModel):
     """
         Represents a move in the error correction system.
     """
@@ -79,7 +80,7 @@ class ErrcMove(BaseModel):
         return self
 
 
-class Errc(BaseModel):
+class Errc(SanitizedModel):
     """
         Represents an error correction (ERRC) analysis for a business model canvas.
     """

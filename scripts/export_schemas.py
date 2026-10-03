@@ -26,11 +26,12 @@ from bizstruct_domain.schemas import (
     Pitch,
     STAGE_REGISTRY,
     Storytelling,
+    StageErrorCode,
+    StageStatus,
     Swot,
     TeamInfo,
+    ValidateModelResult,
 )
-from bizstruct_domain.validate_model import ValidateModelResult
-from bizstruct_domain.enums import StageErrorCode, StageStatus
 from bizstruct_domain.stage_machine import STAGE_TRANSITIONS
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -61,26 +62,15 @@ GENERATION_MODELS = {
     "canvas_generated": CanvasGenerated,
 }
 
-# Not a stage artifact: a side-channel task result of the previous design.
-# Still owned here until Phase 3 decides its fate.
+# Not a stage artifact: a side-channel task result (see schemas/validate_model.py).
 NON_ARTIFACT_MODELS = {
     "validate_model": ValidateModelResult,
 }
 
-# Committed schemas/*.json that this script no longer generates. They are
-# leftovers of the previous design, kept (not deleted) so bizstruct-fe keeps
-# building until it migrates; they do NOT track the code any more. The drift
-# test requires every committed .json to be either generated or listed here.
-# Phase 3 empties this set and deletes the files.
-LEGACY_SCHEMA_FILES = frozenset(
-    {
-        "assessment.json",
-        "chain.json",
-        "hypotheses.json",
-        "models_options.json",
-        "scenario.json",
-    }
-)
+# Committed schemas/*.json that this script no longer generates. Empty since
+# the old design was removed; the drift test fails on any committed .json that
+# is neither generated nor listed here.
+LEGACY_SCHEMA_FILES: frozenset[str] = frozenset()
 
 
 def _dumps(data: object) -> str:
@@ -102,7 +92,6 @@ def build_schemas() -> dict[str, str]:
     ]
     files["stages.json"] = _dumps(stages)
 
-    # Kept until Phase 3 resolves stage_machine.
     files["stage_states.json"] = _dumps(
         {
             "statuses": [status.value for status in StageStatus],

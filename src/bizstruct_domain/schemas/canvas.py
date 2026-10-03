@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
+from .fields import SanitizedModel
 
 
 from .enums import (
@@ -12,7 +13,7 @@ from .enums import (
 GENERATED_CARDS_PER_SECTION_MIN = 2
 GENERATED_CARDS_PER_SECTION_MAX = 4
 
-class CanvasCard(BaseModel):
+class CanvasCard(SanitizedModel):
     """
         Represents a card in a business canvas, which can be used to capture key information or insights.
     """
@@ -38,7 +39,7 @@ class CanvasCard(BaseModel):
     )
 
 
-class CanvasSections(BaseModel):
+class CanvasSections(SanitizedModel):
     """
         Represents the sections of a business canvas, each containing a list of canvas cards.
     """
@@ -166,7 +167,7 @@ class CanvasSections(BaseModel):
     )
 
 
-class Canvas(BaseModel):
+class Canvas(SanitizedModel):
     """
         Represents a business canvas, which is a visual representation of key elements of a business model.
     """
@@ -305,7 +306,7 @@ class Canvas(BaseModel):
         return self
 
 
-class CanvasCardDraft(BaseModel):
+class CanvasCardDraft(SanitizedModel):
     """
         A card as the generator produces it: text only. The card id and
         errc_marker are assigned by the backend when it persists the card
@@ -319,7 +320,7 @@ class CanvasCardDraft(BaseModel):
     )
 
 
-class CanvasSectionsGenerated(BaseModel):
+class CanvasSectionsGenerated(SanitizedModel):
     """
         The nine canvas sections as the generator must produce them. Unlike
         CanvasSections (the persisted shape, which accepts any number of
@@ -446,7 +447,7 @@ class CanvasSectionsGenerated(BaseModel):
     )
 
 
-class CanvasGenerated(BaseModel):
+class CanvasGenerated(SanitizedModel):
     """
         Generation-time contract for the canvas stage: the response_format
         bizstruct-ml asks the model for. It carries content only; group_id,

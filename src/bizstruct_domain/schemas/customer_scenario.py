@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
+from .fields import SanitizedModel
 
 from .enums import PricingTier
 
-class CustomerScenario(BaseModel):
+class CustomerScenario(SanitizedModel):
     """
         A customer scenario describes a specific situation or 
         context in which a customer interacts with a product or service.

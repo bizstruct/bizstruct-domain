@@ -31,10 +31,9 @@ pip install "bizstruct-domain @ git+https://github.com/bizstruct/bizstruct-domai
 ```
 
 ```python
-from bizstruct_domain.blocks.patterns import Patterns
-from bizstruct_domain.chain import topological_order
+from bizstruct_domain import Patterns, STAGE_REGISTRY
 
-order = topological_order()
+order = STAGE_REGISTRY.topological_order()
 ```
 
 ### TypeScript (bizstruct-fe)
@@ -48,9 +47,7 @@ npx json-schema-to-typescript schemas/patterns.json > src/types/patterns.ts
 
 `schemas/stages.json` is the serialized `STAGE_REGISTRY` (topological order, with
 `depends_on` / `optional_depends_on`), for building stage navigation from the
-same source instead of a hand-maintained list. `schemas/chain.json` and the other
-files listed in `LEGACY_SCHEMA_FILES` (`scripts/export_schemas.py`) are leftovers
-of the previous design and are no longer regenerated.
+same source instead of a hand-maintained list.
 
 ## Development
 

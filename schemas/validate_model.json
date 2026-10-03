@@ -4,26 +4,33 @@
       "additionalProperties": false,
       "properties": {
         "comment": {
+          "description": "What is good or wrong with this field.",
+          "examples": [
+            "The value proposition does not name a concrete customer pain."
+          ],
           "maxLength": 400,
           "minLength": 5,
           "title": "Comment",
           "type": "string"
         },
         "field": {
-          "enum": [
-            "title",
-            "audience",
-            "value_proposition",
-            "description"
+          "description": "Name of the field of the evaluated option this feedback is about.",
+          "examples": [
+            "value_proposition"
           ],
+          "minLength": 1,
           "title": "Field",
           "type": "string"
         },
         "status": {
+          "description": "Verdict for this field.",
           "enum": [
             "ok",
             "weak",
             "invalid"
+          ],
+          "examples": [
+            "weak"
           ],
           "title": "Status",
           "type": "string"
@@ -39,6 +46,10 @@
             }
           ],
           "default": null,
+          "description": "A concrete rewrite or fix, if one is useful.",
+          "examples": [
+            "State which pain is removed and for whom."
+          ],
           "title": "Suggestion"
         }
       },
@@ -55,6 +66,17 @@
   "description": "Output of the `validate_model` side-channel task.",
   "properties": {
     "fields": {
+      "description": "Per-field feedback, at least one entry.",
+      "examples": [
+        [
+          {
+            "comment": "Too generic to evaluate.",
+            "field": "value_proposition",
+            "status": "weak",
+            "suggestion": null
+          }
+        ]
+      ],
       "items": {
         "$ref": "#/$defs/FieldFeedback"
       },
@@ -63,21 +85,33 @@
       "type": "array"
     },
     "score": {
+      "description": "Overall quality score, 0 (unusable) to 100 (excellent).",
+      "examples": [
+        62
+      ],
       "maximum": 100,
       "minimum": 0,
       "title": "Score",
       "type": "integer"
     },
     "status": {
+      "description": "Overall verdict.",
       "enum": [
         "valid",
         "needs_revision",
         "invalid"
       ],
+      "examples": [
+        "needs_revision"
+      ],
       "title": "Status",
       "type": "string"
     },
     "summary": {
+      "description": "Short overall assessment.",
+      "examples": [
+        "Clear audience, but the value proposition is generic."
+      ],
       "maxLength": 500,
       "minLength": 10,
       "title": "Summary",

@@ -33,12 +33,13 @@ and how many instances of each stage type to gather -- the same
 from enum import StrEnum
 from typing import Callable, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from .enums import Stage
+from .fields import SanitizedModel
 
 
-class ConsistencyViolation(BaseModel):
+class ConsistencyViolation(SanitizedModel):
     """One thing a rule found wrong, or worth flagging, between artifacts."""
 
     rule_id: str = Field(
@@ -74,7 +75,7 @@ class ConsistencyViolation(BaseModel):
     )
 
 
-class ConsistencyReport(BaseModel):
+class ConsistencyReport(SanitizedModel):
     """Result of running one or more rules against a set of artifacts."""
 
     score: int = Field(
@@ -101,7 +102,7 @@ class StageArity(StrEnum):
     MANY = "many"
 
 
-class RuleInput(BaseModel):
+class RuleInput(SanitizedModel):
     """One of a rule's inputs: which stage, and how many instances of it.
 
     `ONE`: the rule's check function takes a single artifact instance for
@@ -176,7 +177,7 @@ class ConsistencyRule:
         return _is_checkable(self.inputs, completed)
 
 
-class JudgeCheck(BaseModel):
+class JudgeCheck(SanitizedModel):
     """A consistency claim that needs a judge model, not a deterministic
     rule -- comparing the *meaning* of free text across artifacts, which
     no pure predicate can do (see module docstring: e.g. does Canvas's

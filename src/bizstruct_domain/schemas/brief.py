@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
+from .fields import SanitizedModel
 
 
-class Brief(BaseModel):
+class Brief(SanitizedModel):
     """
         A brief description of a business structure.
     """

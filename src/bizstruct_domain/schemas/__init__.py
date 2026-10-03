@@ -40,12 +40,16 @@ from .enums import (
     PricingTier,
     SegmentRelationType,
     Stage,
+    StageAction,
+    StageErrorCode,
+    StageStatus,
     StorytellingFormat,
     StorytellingGoal,
     StorytellingPerspective,
     SwotCluster,
 )
 from .errc import Errc, ErrcMove
+from .fields import SanitizedModel, strip_control_chars
 from .future_scenario import AdaptationQuestion, FutureScenario, FutureScenarioVariant
 from .ideation import EpicenterClassification, Ideation
 from .optional_inputs import (
@@ -62,6 +66,7 @@ from .stage_definition import StageDefinition
 from .stage_registry import StageRegistry
 from .storytelling import CanvasReference, Storytelling
 from .swot import Swot, SwotAxisStatement, SwotClusterResult, SwotOpportunityThreat
+from .validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
     # enums
@@ -75,6 +80,9 @@ __all__ = [
     "PricingTier",
     "SegmentRelationType",
     "Stage",
+    "StageAction",
+    "StageErrorCode",
+    "StageStatus",
     "StorytellingFormat",
     "StorytellingGoal",
     "StorytellingPerspective",
@@ -121,6 +129,12 @@ __all__ = [
     "CanvasSectionsGenerated",
     "GENERATED_CARDS_PER_SECTION_MIN",
     "GENERATED_CARDS_PER_SECTION_MAX",
+    # side-channel contract (not a stage)
+    "FieldFeedback",
+    "ValidateModelResult",
+    # sanitizing base class
+    "SanitizedModel",
+    "strip_control_chars",
     # consistency
     "ConsistencyReport",
     "ConsistencyViolation",
