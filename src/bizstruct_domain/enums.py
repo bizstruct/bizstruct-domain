@@ -5,7 +5,7 @@
     OpenAI structured output and compare equal to their string values.
 """
 
-from enum import StrEnum
+from enum import Enum, StrEnum
 
 
 class Epicenter(StrEnum):
@@ -80,7 +80,7 @@ PATTERN_SUBTYPES: dict[Pattern, set[PatternSubtype]] = {
 
 
 
-class HypothesisCategoryStrEnum(StrEnum):
+class HypothesisCategory(StrEnum):
     """Testing Business Ideas risk categories: Desirability / Viability / Feasibility."""
 
     DESIRABILITY = "desirability"
@@ -107,7 +107,7 @@ class Quadrant(str, Enum):
 
 
 
-class ERRCStatus(str, StrEnum):
+class ERRCStatus(StrEnum):
     """Lifecycle status of an ERRC alternative."""
 
     DRAFT = "draft"
@@ -115,7 +115,7 @@ class ERRCStatus(str, StrEnum):
 
 
 
-class ERRCAction(str, StrEnum):
+class ERRCAction(StrEnum):
     """Blue Ocean Strategy ERRC grid actions.
 
     `raise` is a reserved Python keyword, so the member name is `RAISE_`
@@ -186,7 +186,7 @@ class ScenarioAdaptationArea(StrEnum):
     CUSTOMER_RELATIONSHIPS = "customer_relationships"
 
 
-class PitchAudience(str, StrEnum):
+class PitchAudience(StrEnum):
     """Target audience for a generated pitch."""
 
     INVESTOR = "investor"
@@ -194,7 +194,7 @@ class PitchAudience(str, StrEnum):
 
 
 
-class MonetizationType(str, StrEnum):
+class MonetizationType(StrEnum):
     """How a business model option makes money."""
 
     SUBSCRIPTION = "subscription"
@@ -206,7 +206,7 @@ class MonetizationType(str, StrEnum):
 
 
 
-class CanvasSection(str, StrEnum):
+class CanvasSection(StrEnum):
     """The nine building blocks of the Business Model Canvas."""
 
     KEY_PARTNERS = "key_partners"
@@ -237,7 +237,7 @@ SWOT_CLUSTER_SECTIONS: dict[SWOTCluster, frozenset[CanvasSection]] = {
 
 
 
-class StageStatus(str, StrEnum):
+class StageStatus(StrEnum):
     """Lifecycle status of a single stage in the generation chain.
 
     See `bizstruct_domain.stage_machine` for the allowed-transition table
@@ -254,7 +254,7 @@ class StageStatus(str, StrEnum):
 
 
 
-class StageErrorCode(str, StrEnum):
+class StageErrorCode(StrEnum):
     """Reason a stage entered `StageStatus.ERROR`.
 
     `error` is reserved for external failures and cancellation, never for
@@ -269,7 +269,7 @@ class StageErrorCode(str, StrEnum):
 
 
 
-class StageAction(str, StrEnum):
+class StageAction(StrEnum):
     """A user-facing action offered for a stage, given its current status.
 
     See `bizstruct_domain.stage_machine.available_actions`.
