@@ -1,74 +1,123 @@
 {
   "$defs": {
-    "CanvasSection": {
-      "description": "The nine building blocks of the Business Model Canvas.",
+    "PricingTier": {
+      "description": "An enumeration of the different pricing tiers.",
       "enum": [
-        "key_partners",
-        "key_activities",
-        "key_resources",
-        "value_propositions",
-        "customer_relationships",
-        "channels",
-        "customer_segments",
-        "cost_structure",
-        "revenue_streams"
+        "premium",
+        "mid_market",
+        "low_cost"
       ],
-      "title": "CanvasSection",
+      "title": "PricingTier",
       "type": "string"
-    },
-    "ScenarioQuestion": {
-      "additionalProperties": false,
-      "description": "An open question the scenario raises about one canvas block.",
-      "properties": {
-        "question": {
-          "maxLength": 300,
-          "minLength": 10,
-          "title": "Question",
-          "type": "string"
-        },
-        "section": {
-          "$ref": "#/$defs/CanvasSection",
-          "description": "One of channels, customer_relationships, revenue_streams."
-        }
-      },
-      "required": [
-        "section",
-        "question"
-      ],
-      "title": "ScenarioQuestion",
-      "type": "object"
     }
   },
-  "additionalProperties": false,
-  "description": "Output of the `customer_scenario` stage.",
+  "description": "A customer scenario describes a specific situation or \ncontext in which a customer interacts with a product or service.",
   "properties": {
+    "channel_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The channel through which the customer interacts with the product or service.",
+      "examples": [
+        "mobile app",
+        "website",
+        "in-store"
+      ],
+      "title": "Channel Type"
+    },
+    "empathy_map_id": {
+      "description": "Identifier of the empathy map this customer scenario is associated with.",
+      "examples": [
+        "empathy_map_001"
+      ],
+      "title": "Empathy Map Id",
+      "type": "string"
+    },
+    "id": {
+      "description": "Unique identifier for the customer scenario.",
+      "examples": [
+        "customer_scenario_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "interdependence_signal": {
+      "default": false,
+      "description": "Indicates whether there is a signal of interdependence in this customer scenario.",
+      "examples": [
+        true,
+        false
+      ],
+      "title": "Interdependence Signal",
+      "type": "boolean"
+    },
     "open_questions": {
+      "description": "A list of open-ended questions that arise from this customer scenario.",
+      "examples": [
+        [
+          "How can we improve the online ordering experience for busy professionals?"
+        ]
+      ],
       "items": {
-        "$ref": "#/$defs/ScenarioQuestion"
+        "type": "string"
       },
-      "maxItems": 9,
-      "minItems": 3,
       "title": "Open Questions",
       "type": "array"
     },
-    "persona": {
-      "description": "Who the protagonist is — the same persona as the empathy map, not a new one.",
-      "maxLength": 200,
-      "minLength": 10,
-      "title": "Persona",
-      "type": "string"
+    "pricing_tier": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PricingTier"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The pricing tier relevant to this customer scenario, if applicable.",
+      "examples": [
+        "premium",
+        "mid_market",
+        "low_cost"
+      ]
     },
-    "situation": {
-      "description": "Where, when and how exactly the persona uses the offer, told as a short concrete story.",
-      "maxLength": 1000,
-      "minLength": 40,
-      "title": "Situation",
+    "relationship_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The type of relationship the customer has with the business in this scenario.",
+      "examples": [
+        "loyal customer",
+        "first-time user",
+        "occasional buyer"
+      ],
+      "title": "Relationship Type"
+    },
+    "situation_narrative": {
+      "description": "A narrative describing the situation or context of the customer scenario.",
+      "examples": [
+        "A busy professional trying to order groceries online during a hectic workday."
+      ],
+      "title": "Situation Narrative",
       "type": "string"
     }
   },
   "required": [
-    "persona",
-    "situation",
+    "id",
+    "empathy_map_id",
+    "situation_narrative",
     "open_questions"
   ],
   "title": "CustomerScenario",

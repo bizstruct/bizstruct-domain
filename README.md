@@ -46,8 +46,11 @@ Generate types from the committed schemas with
 npx json-schema-to-typescript schemas/patterns.json > src/types/patterns.ts
 ```
 
-`schemas/chain.json` is the serialized `STAGES` tuple, for building stage
-navigation from the same source instead of a hand-maintained list.
+`schemas/stages.json` is the serialized `STAGE_REGISTRY` (topological order, with
+`depends_on` / `optional_depends_on`), for building stage navigation from the
+same source instead of a hand-maintained list. `schemas/chain.json` and the other
+files listed in `LEGACY_SCHEMA_FILES` (`scripts/export_schemas.py`) are leftovers
+of the previous design and are no longer regenerated.
 
 ## Development
 

@@ -1,101 +1,167 @@
 {
-  "$defs": {
-    "CustomerSlide": {
-      "additionalProperties": false,
-      "properties": {
-        "content": {
-          "maxLength": 400,
-          "minLength": 1,
-          "title": "Content",
-          "type": "string"
-        },
-        "headline": {
-          "maxLength": 80,
-          "minLength": 1,
-          "title": "Headline",
-          "type": "string"
-        },
-        "type": {
-          "enum": [
-            "opening",
-            "empathy",
-            "transformation",
-            "social_proof",
-            "invitation"
-          ],
-          "title": "Type",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "headline",
-        "content"
-      ],
-      "title": "CustomerSlide",
-      "type": "object"
-    },
-    "InvestorSlide": {
-      "additionalProperties": false,
-      "properties": {
-        "content": {
-          "maxLength": 400,
-          "minLength": 1,
-          "title": "Content",
-          "type": "string"
-        },
-        "headline": {
-          "maxLength": 80,
-          "minLength": 1,
-          "title": "Headline",
-          "type": "string"
-        },
-        "type": {
-          "enum": [
-            "hook",
-            "problem",
-            "solution",
-            "traction",
-            "ask"
-          ],
-          "title": "Type",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "headline",
-        "content"
-      ],
-      "title": "InvestorSlide",
-      "type": "object"
-    }
-  },
-  "additionalProperties": false,
-  "description": "Output of the `pitch` stage: investor and customer decks.",
+  "description": "Represents a business pitch with various attributes and sections.",
   "properties": {
-    "customer": {
+    "business_case_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Identifier of the business case this pitch is associated with, if applicable.",
+      "examples": [
+        "business_case_001"
+      ],
+      "title": "Business Case Id"
+    },
+    "business_model_summary": {
+      "description": "A concise summary of the business model being pitched.",
+      "examples": [
+        "Our platform leverages AI to provide personalized recommendations to users."
+      ],
+      "title": "Business Model Summary",
+      "type": "string"
+    },
+    "canvas_id": {
+      "description": "Identifier of the canvas this pitch is associated with.",
+      "examples": [
+        "canvas_001"
+      ],
+      "title": "Canvas Id",
+      "type": "string"
+    },
+    "competitive_advantages": {
+      "description": "A list of competitive advantages that differentiate the business from its competitors.",
+      "examples": [
+        [
+          "Proprietary AI algorithms",
+          "Strong brand recognition",
+          "Exclusive partnerships"
+        ]
+      ],
       "items": {
-        "$ref": "#/$defs/CustomerSlide"
+        "type": "string"
       },
-      "maxItems": 5,
-      "minItems": 5,
-      "title": "Customer",
+      "minItems": 1,
+      "title": "Competitive Advantages",
       "type": "array"
     },
-    "investor": {
+    "financial_analysis_section": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "A section providing a financial analysis of the business, if applicable.",
+      "examples": [
+        "Our financial projections indicate a steady growth trajectory over the next five years."
+      ],
+      "title": "Financial Analysis Section"
+    },
+    "hook": {
+      "description": "A brief and compelling hook for the pitch.",
+      "examples": [
+        "Revolutionizing the way we connect with our customers."
+      ],
+      "title": "Hook",
+      "type": "string"
+    },
+    "id": {
+      "description": "Unique identifier for the pitch.",
+      "examples": [
+        "pitch_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "description": "Identifier of the project this pitch is associated with.",
+      "examples": [
+        "project_001"
+      ],
+      "title": "Project Id",
+      "type": "string"
+    },
+    "risk_analysis": {
+      "description": "A list of potential risks associated with the business and strategies to mitigate them.",
+      "examples": [
+        [
+          "Market volatility: Diversify product offerings to reduce dependency on a single market segment."
+        ]
+      ],
       "items": {
-        "$ref": "#/$defs/InvestorSlide"
+        "type": "string"
       },
-      "maxItems": 5,
-      "minItems": 5,
-      "title": "Investor",
+      "minItems": 1,
+      "title": "Risk Analysis",
       "type": "array"
+    },
+    "storytelling_id": {
+      "description": "Identifier of the storytelling this pitch is associated with.",
+      "examples": [
+        "storytelling_001"
+      ],
+      "title": "Storytelling Id",
+      "type": "string"
+    },
+    "swot_id": {
+      "description": "Identifier of the SWOT analysis this pitch is associated with.",
+      "examples": [
+        "swot_001"
+      ],
+      "title": "Swot Id",
+      "type": "string"
+    },
+    "team_info_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Identifier of the team information this pitch is associated with, if applicable.",
+      "examples": [
+        "team_info_001"
+      ],
+      "title": "Team Info Id"
+    },
+    "team_section": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "A section highlighting the team behind the business, if applicable.",
+      "examples": [
+        "Our team consists of experienced professionals with a proven track record in the industry."
+      ],
+      "title": "Team Section"
     }
   },
   "required": [
-    "investor",
-    "customer"
+    "id",
+    "project_id",
+    "storytelling_id",
+    "canvas_id",
+    "swot_id",
+    "hook",
+    "business_model_summary",
+    "competitive_advantages",
+    "risk_analysis"
   ],
   "title": "Pitch",
   "type": "object"
