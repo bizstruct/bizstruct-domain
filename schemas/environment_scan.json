@@ -1,0 +1,156 @@
+{
+  "$defs": {
+    "Source": {
+      "description": "Represents an external source backing a quantitative claim in\nEnvironmentScan or BusinessCase. Required so that \"obtained from\nexternal sources\" is verifiable rather than merely claimed.",
+      "properties": {
+        "note": {
+          "description": "What this source specifically supports (which figure or claim).",
+          "examples": [
+            "Basis for the projected 10% annual growth rate figure."
+          ],
+          "title": "Note",
+          "type": "string"
+        },
+        "title": {
+          "description": "Short label for the source (publication, report, or site name).",
+          "examples": [
+            "Statista: SaaS Market Size 2026",
+            "IBISWorld Industry Report"
+          ],
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Link to the source, if available.",
+          "examples": [
+            "https://www.statista.com/..."
+          ],
+          "title": "Url"
+        }
+      },
+      "required": [
+        "title",
+        "note"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "description": "Represents an environment scan in a business context.",
+  "properties": {
+    "id": {
+      "description": "Unique identifier for the environment scan.",
+      "examples": [
+        "environment_scan_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "industry_forces": {
+      "description": "A list of industry forces relevant to the environment scan.",
+      "examples": [
+        [
+          "Competitive rivalry",
+          "Supplier power"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Industry Forces",
+      "type": "array"
+    },
+    "key_trends": {
+      "description": "A list of key trends relevant to the environment scan.",
+      "examples": [
+        [
+          "Digital transformation",
+          "Sustainability initiatives"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Key Trends",
+      "type": "array"
+    },
+    "macroeconomic_forces": {
+      "description": "A list of macroeconomic forces relevant to the environment scan.",
+      "examples": [
+        [
+          "Interest rate fluctuations",
+          "Inflation trends"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Macroeconomic Forces",
+      "type": "array"
+    },
+    "market_forces": {
+      "description": "A list of market forces relevant to the environment scan.",
+      "examples": [
+        [
+          "Market volatility",
+          "Regulatory changes"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Market Forces",
+      "type": "array"
+    },
+    "project_id": {
+      "description": "Identifier of the project this environment scan is associated with.",
+      "examples": [
+        "project_001"
+      ],
+      "title": "Project Id",
+      "type": "string"
+    },
+    "sources": {
+      "description": "External sources backing the market/industry analysis below. A generation with no sources is treated as a failed generation, not as a valid empty result.",
+      "examples": [
+        [
+          {
+            "note": "Basis for the industry_forces and key_trends entries.",
+            "title": "IBISWorld Industry Report",
+            "url": null
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/Source"
+      },
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "sources",
+    "market_forces",
+    "industry_forces",
+    "key_trends",
+    "macroeconomic_forces"
+  ],
+  "title": "EnvironmentScan",
+  "type": "object"
+}

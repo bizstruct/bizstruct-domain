@@ -1,36 +1,52 @@
 {
   "$defs": {
     "TeamMember": {
-      "additionalProperties": false,
-      "description": "One team member.",
+      "description": "Represents a team member involved in the business structuring process.",
       "properties": {
-        "competencies": {
-          "description": "Key competencies for this particular business model.",
+        "key_competencies": {
+          "description": "A list of the team member's key competencies.",
+          "examples": [
+            [
+              "Strategic Planning",
+              "Market Analysis",
+              "Customer Relationship Management"
+            ],
+            [
+              "Financial Modeling",
+              "Risk Assessment",
+              "Data Analysis"
+            ]
+          ],
           "items": {
-            "maxLength": 100,
-            "minLength": 2,
             "type": "string"
           },
-          "maxItems": 10,
-          "title": "Competencies",
+          "title": "Key Competencies",
           "type": "array"
         },
-        "experience": {
-          "description": "Relevant experience and track record.",
-          "maxLength": 600,
-          "minLength": 1,
-          "title": "Experience",
-          "type": "string"
-        },
         "name": {
-          "maxLength": 100,
-          "minLength": 1,
+          "description": "The name of the team member.",
+          "examples": [
+            "Alice Johnson",
+            "Bob Smith"
+          ],
           "title": "Name",
           "type": "string"
         },
+        "relevant_experience": {
+          "description": "A brief description of the team member's relevant experience.",
+          "examples": [
+            "Alice has over 10 years of experience in business strategy and market analysis.",
+            "Bob has a background in financial modeling and risk assessment."
+          ],
+          "title": "Relevant Experience",
+          "type": "string"
+        },
         "role": {
-          "maxLength": 150,
-          "minLength": 1,
+          "description": "The role of the team member within the business structuring process.",
+          "examples": [
+            "Project Manager",
+            "Business Analyst"
+          ],
           "title": "Role",
           "type": "string"
         }
@@ -38,40 +54,68 @@
       "required": [
         "name",
         "role",
-        "experience"
+        "relevant_experience",
+        "key_competencies"
       ],
       "title": "TeamMember",
       "type": "object"
     }
   },
-  "additionalProperties": false,
-  "description": "The team behind the project.",
+  "description": "Represents information about the team involved in the business structuring process.",
   "properties": {
+    "id": {
+      "description": "Unique identifier for the team.",
+      "examples": [
+        "team_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
     "members": {
+      "description": "A list of team members involved in the business structuring process.",
+      "examples": [
+        [
+          {
+            "key_competencies": [
+              "Strategic Planning",
+              "Market Analysis",
+              "Customer Relationship Management"
+            ],
+            "name": "Alice Johnson",
+            "relevant_experience": "Alice has over 10 years of experience in business strategy and market analysis.",
+            "role": "Project Manager"
+          },
+          {
+            "key_competencies": [
+              "Financial Modeling",
+              "Risk Assessment",
+              "Data Analysis"
+            ],
+            "name": "Bob Smith",
+            "relevant_experience": "Bob has a background in financial modeling and risk assessment.",
+            "role": "Business Analyst"
+          }
+        ]
+      ],
       "items": {
         "$ref": "#/$defs/TeamMember"
       },
-      "maxItems": 20,
       "minItems": 1,
       "title": "Members",
       "type": "array"
     },
-    "summary": {
-      "anyOf": [
-        {
-          "maxLength": 1000,
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+    "project_id": {
+      "description": "Identifier of the project this team is associated with.",
+      "examples": [
+        "project_001"
       ],
-      "default": null,
-      "description": "Why this team is the right one to build this business model.",
-      "title": "Summary"
+      "title": "Project Id",
+      "type": "string"
     }
   },
   "required": [
+    "id",
+    "project_id",
     "members"
   ],
   "title": "TeamInfo",

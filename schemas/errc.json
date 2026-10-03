@@ -1,94 +1,48 @@
 {
   "$defs": {
     "CanvasSection": {
-      "description": "The nine building blocks of the Business Model Canvas.",
+      "description": "An enumeration of the different sections of a business model canvas.",
       "enum": [
-        "key_partners",
-        "key_activities",
-        "key_resources",
         "value_propositions",
-        "customer_relationships",
-        "channels",
         "customer_segments",
-        "cost_structure",
-        "revenue_streams"
+        "channels",
+        "customer_relationships",
+        "revenue_streams",
+        "key_resources",
+        "key_activities",
+        "key_partnerships",
+        "cost_structure"
       ],
       "title": "CanvasSection",
       "type": "string"
     },
-    "ERRCAction": {
-      "description": "Blue Ocean Strategy ERRC grid actions.\n\n`raise` is a reserved Python keyword, so the member name is `RAISE_`\nwhile the serialized value stays the plain string \"raise\".",
+    "ERRCActionType": {
+      "description": "An enumeration of the different types of ERRC actions.",
       "enum": [
         "eliminate",
         "reduce",
         "raise",
         "create"
       ],
-      "title": "ERRCAction",
+      "title": "ERRCActionType",
       "type": "string"
     },
-    "ERRCAlternative": {
-      "additionalProperties": false,
-      "description": "One ERRC-grid alternative business model built from the project's canvas.",
-      "properties": {
-        "expected_impact": {
-          "maxLength": 320,
-          "minLength": 5,
-          "title": "Expected Impact",
-          "type": "string"
-        },
-        "id": {
-          "format": "uuid",
-          "title": "Id",
-          "type": "string"
-        },
-        "moves": {
-          "items": {
-            "$ref": "#/$defs/ERRCMove"
-          },
-          "maxItems": 6,
-          "minItems": 3,
-          "title": "Moves",
-          "type": "array"
-        },
-        "premise": {
-          "maxLength": 320,
-          "minLength": 5,
-          "title": "Premise",
-          "type": "string"
-        },
-        "status": {
-          "$ref": "#/$defs/ERRCStatus",
-          "default": "draft"
-        },
-        "title": {
-          "maxLength": 150,
-          "minLength": 1,
-          "title": "Title",
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "premise",
-        "moves",
-        "expected_impact"
-      ],
-      "title": "ERRCAlternative",
-      "type": "object"
-    },
-    "ERRCMove": {
-      "additionalProperties": false,
-      "description": "A single ERRC action against one canvas section.\n\n`target` always identifies what the move is about, but what it means\ndepends on `action`:\n- eliminate: the exact `text` of the existing card in `target_section`\n  to remove. `new_text` must be absent.\n- reduce / raise: the exact `text` of the existing card in\n  `target_section` being scaled back/up. `new_text` is required — the\n  card's replacement text after the move (there is no way to\n  \"reduce\"/\"raise\" a card without saying what it now reads).\n- create: the proposed new card's text. `new_text` must be absent.\n\nThis is deliberately a text match on `target`, not a UUID reference —\nsee bizstruct-be's application endpoint for how an unresolved match is\nhandled (never a silent best-effort guess).",
+    "ErrcMove": {
+      "description": "Represents a move in the error correction system.",
       "properties": {
         "action": {
-          "$ref": "#/$defs/ERRCAction"
+          "$ref": "#/$defs/ERRCActionType",
+          "description": "The action to be taken for error correction.",
+          "examples": [
+            "eliminate",
+            "reduce",
+            "raise",
+            "create"
+          ]
         },
         "new_text": {
           "anyOf": [
             {
-              "maxLength": 260,
               "type": "string"
             },
             {
@@ -96,61 +50,161 @@
             }
           ],
           "default": null,
-          "description": "Required for reduce/raise (the card's text after the move); must be omitted for eliminate/create.",
+          "description": "The new text to be used for the card after the action is applied, if applicable.",
+          "examples": [
+            "Implement a new customer onboarding process",
+            "Reduce production costs by 15%"
+          ],
           "title": "New Text"
         },
+        "opposite_side_impact": {
+          "description": "A description of how the action will impact the opposite side of the canvas.",
+          "examples": [
+            "Eliminating this feature may reduce customer satisfaction.",
+            "Raising the price may increase revenue but could decrease demand."
+          ],
+          "title": "Opposite Side Impact",
+          "type": "string"
+        },
         "rationale": {
-          "maxLength": 400,
-          "minLength": 10,
+          "description": "The rationale behind the action, explaining why it is necessary.",
+          "examples": [
+            "This feature is not aligned with our core value proposition.",
+            "Reducing production costs will improve our profit margins."
+          ],
           "title": "Rationale",
           "type": "string"
         },
-        "target": {
-          "maxLength": 200,
-          "minLength": 5,
-          "title": "Target",
-          "type": "string"
+        "target_card_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The text of the card that the action targets, if applicable.",
+          "examples": [
+            "Improve customer onboarding process",
+            "Reduce production costs"
+          ],
+          "title": "Target Card Text"
         },
         "target_section": {
           "$ref": "#/$defs/CanvasSection",
-          "description": "Which canvas section this move acts on. Required for all four actions — this is what makes a move concrete instead of a vague statement of intent."
+          "description": "The section of the canvas that the action targets.",
+          "examples": [
+            "customer_segments",
+            "value_propositions",
+            "channels"
+          ]
         }
       },
       "required": [
         "action",
         "target_section",
-        "target",
+        "opposite_side_impact",
         "rationale"
       ],
-      "title": "ERRCMove",
+      "title": "ErrcMove",
       "type": "object"
-    },
-    "ERRCStatus": {
-      "description": "Lifecycle status of an ERRC alternative.",
-      "enum": [
-        "draft",
-        "applied"
-      ],
-      "title": "ERRCStatus",
-      "type": "string"
     }
   },
-  "additionalProperties": false,
-  "description": "The persisted/CRUD shape: exactly three ERRC alternatives, at most one\n`applied` (the user's own choice).",
+  "description": "Represents an error correction (ERRC) analysis for a business model canvas.",
   "properties": {
-    "alternatives": {
+    "canvas_id": {
+      "description": "Identifier of the canvas this ERRC analysis is associated with.",
+      "examples": [
+        "canvas_001"
+      ],
+      "title": "Canvas Id",
+      "type": "string"
+    },
+    "from_version": {
+      "description": "The version of the canvas from which this ERRC analysis is derived.",
+      "examples": [
+        1
+      ],
+      "maximum": 5,
+      "minimum": 1,
+      "title": "From Version",
+      "type": "integer"
+    },
+    "id": {
+      "description": "Unique identifier for the ERRC analysis.",
+      "examples": [
+        "errc_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "moves": {
+      "description": "A list of moves in the ERRC analysis.",
+      "examples": [
+        [
+          {
+            "action": "eliminate",
+            "new_text": null,
+            "opposite_side_impact": "Eliminating this segment may reduce revenue.",
+            "rationale": "This segment is no longer profitable.",
+            "target_card_text": "Old customer segment",
+            "target_section": "customer_segments"
+          },
+          {
+            "action": "create",
+            "new_text": "New value proposition",
+            "opposite_side_impact": "Creating this proposition may attract new customers.",
+            "rationale": "This proposition addresses a new market need.",
+            "target_card_text": null,
+            "target_section": "value_propositions"
+          }
+        ]
+      ],
       "items": {
-        "$ref": "#/$defs/ERRCAlternative"
+        "$ref": "#/$defs/ErrcMove"
       },
-      "maxItems": 3,
-      "minItems": 3,
-      "title": "Alternatives",
+      "minItems": 1,
+      "title": "Moves",
       "type": "array"
+    },
+    "result_canvas_id": {
+      "description": "Identifier of the resulting canvas after applying this ERRC analysis.",
+      "examples": [
+        "canvas_002"
+      ],
+      "title": "Result Canvas Id",
+      "type": "string"
+    },
+    "swot_id": {
+      "description": "Identifier of the SWOT analysis whose signals informed these moves. SWOT always precedes ERRC in the swot_errc_cycle, so this is required, not optional.",
+      "examples": [
+        "swot_001"
+      ],
+      "title": "Swot Id",
+      "type": "string"
+    },
+    "to_version": {
+      "description": "The version of the canvas to which this ERRC analysis is applied.",
+      "examples": [
+        2
+      ],
+      "maximum": 5,
+      "minimum": 2,
+      "title": "To Version",
+      "type": "integer"
     }
   },
   "required": [
-    "alternatives"
+    "id",
+    "canvas_id",
+    "swot_id",
+    "from_version",
+    "to_version",
+    "result_canvas_id",
+    "moves"
   ],
-  "title": "ERRC",
+  "title": "Errc",
   "type": "object"
 }

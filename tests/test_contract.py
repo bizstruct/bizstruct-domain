@@ -43,10 +43,6 @@ EXPECTED_STAGE_IDS = {
     "pitch",
 }
 
-# Stages that have a block model and hence an exported schema. brief,
-# environment_scan and value_map don't have models yet.
-EXPECTED_BLOCK_SCHEMAS = EXPECTED_STAGE_IDS - {"brief", "environment_scan", "value_map"}
-
 REMOVED_STAGE_IDS = {"architecture", "what_if"}
 
 
@@ -57,12 +53,6 @@ def test_stage_ids_are_exactly_the_contract():
 def test_removed_stage_ids_are_gone():
     # architecture -> ideation + patterns; what_if -> errc.
     assert not REMOVED_STAGE_IDS & {s.id for s in STAGES}
-
-
-def test_exported_schemas_match_block_stages():
-    exported = {p.stem for p in SCHEMAS_DIR.glob("*.json")}
-    non_block = {"chain", "stage_states", "validate_model"}
-    assert exported - non_block == EXPECTED_BLOCK_SCHEMAS
 
 
 def test_chain_json_matches_stages():

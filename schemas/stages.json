@@ -1,0 +1,126 @@
+[
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [],
+    "id": "brief",
+    "is_optional": false,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": true,
+    "depends_on": [
+      "brief"
+    ],
+    "id": "empathy_map",
+    "is_optional": false,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": true,
+    "depends_on": [
+      "empathy_map"
+    ],
+    "id": "customer_scenario",
+    "is_optional": false,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": true,
+    "depends_on": [
+      "empathy_map"
+    ],
+    "id": "ideation",
+    "is_optional": false,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [
+      "customer_scenario",
+      "ideation"
+    ],
+    "id": "patterns",
+    "is_optional": false,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [
+      "brief",
+      "empathy_map",
+      "customer_scenario",
+      "ideation",
+      "patterns"
+    ],
+    "id": "canvas",
+    "is_optional": false,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [
+      "brief"
+    ],
+    "id": "environment_scan",
+    "is_optional": true,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [
+      "canvas"
+    ],
+    "id": "swot_errc_cycle",
+    "is_optional": false,
+    "optional_depends_on": [
+      "environment_scan"
+    ]
+  },
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [
+      "swot_errc_cycle"
+    ],
+    "id": "storytelling",
+    "is_optional": false,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [
+      "swot_errc_cycle"
+    ],
+    "id": "future_scenario",
+    "is_optional": false,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [],
+    "id": "team_info",
+    "is_optional": true,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [
+      "brief"
+    ],
+    "id": "business_case",
+    "is_optional": true,
+    "optional_depends_on": []
+  },
+  {
+    "allows_multiple_instances": false,
+    "depends_on": [
+      "storytelling",
+      "swot_errc_cycle"
+    ],
+    "id": "pitch",
+    "is_optional": false,
+    "optional_depends_on": [
+      "team_info",
+      "business_case"
+    ]
+  }
+]
