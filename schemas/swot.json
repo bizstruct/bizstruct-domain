@@ -44,15 +44,25 @@
           "type": "string"
         },
         "score": {
-          "description": "A score representing the impact of the statement, ranging from -5 (very negative) to 5 (very positive).",
+          "description": "A score representing the impact of the statement, from -5 (very negative) to 5 (very positive). A forced choice: there is no neutral 0 (the book's bipolar scale), so every statement takes a side.",
+          "enum": [
+            -5,
+            -4,
+            -3,
+            -2,
+            -1,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
           "examples": [
             -5,
             -1,
             1,
             5
           ],
-          "maximum": 5,
-          "minimum": -5,
           "title": "Score",
           "type": "integer"
         }

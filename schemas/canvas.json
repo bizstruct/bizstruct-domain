@@ -267,7 +267,7 @@
     },
     "is_generated": {
       "default": true,
-      "description": "Indicates whether this canvas was generated automatically.",
+      "description": "Informational. True when this version is exactly what the generator produced; False once a person edited it or ERRC moves were applied. No validation depends on it: the 2-4 cards per section bound applies to CanvasGenerated only.",
       "examples": [
         true,
         false
