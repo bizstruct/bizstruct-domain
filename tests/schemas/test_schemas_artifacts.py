@@ -31,7 +31,7 @@ from bizstruct_domain.schemas.enums import (
     SwotCluster,
 )
 from bizstruct_domain.schemas.errc import Errc
-from bizstruct_domain.schemas.swot import SwotClusterResult
+from bizstruct_domain.schemas.swot import SwotAxisStatement, SwotClusterResult
 from bizstruct_domain.schemas.future_scenario import (
     AdaptationQuestion,
     FutureScenario,
@@ -283,17 +283,26 @@ class TestSwot:
         b.swot()
 
     def test_axis_score_zero_rejected(self):
-        with pytest.raises(ValidationError, match="cannot be zero"):
+        with pytest.raises(ValidationError):
             b.axis(0)
 
-    @pytest.mark.parametrize("score", [-5, -1, 1, 5])
-    def test_axis_score_nonzero_in_range_accepted(self, score):
+    @pytest.mark.parametrize("score", [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+    def test_axis_score_every_nonzero_value_accepted(self, score):
         assert b.axis(score).score == score
 
-    @pytest.mark.parametrize("score", [-6, 6])
+    @pytest.mark.parametrize("score", [-6, 6, -100, 100])
     def test_axis_score_out_of_range_rejected(self, score):
         with pytest.raises(ValidationError):
             b.axis(score)
+
+    def test_axis_score_json_schema_is_an_enum_without_zero(self):
+        prop = SwotAxisStatement.model_json_schema()["properties"]["score"]
+        assert sorted(prop["enum"]) == [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]
+        assert 0 not in prop["enum"]
+        assert prop["type"] == "integer"
+
+    def test_axis_score_has_no_validator_left(self):
+        assert "score_not_zero" not in SwotAxisStatement.__pydantic_decorators__.field_validators
 
     @pytest.mark.parametrize("score", [0, 6])
     def test_opportunity_threat_score_must_be_1_to_5(self, score):
@@ -528,28 +537,25 @@ class TestCanvasIsGenerated:
     def test_constants(self):
         assert (LO, HI) == (2, 4)
 
-    @pytest.mark.parametrize("n", [LO, 3, HI])
-    def test_generated_accepts_2_to_4_cards_everywhere(self, n):
-        assert b.canvas(sections=b.sections(n), is_generated=True).is_generated
+    @pytest.mark.parametrize("is_generated", [True, False])
+    @pytest.mark.parametrize("n", [0, 1, 2, 4, 5, 7])
+    def test_persisted_canvas_accepts_any_card_count_per_section(self, n, is_generated):
+        # ERRC moves and manual edits legitimately leave the 2-4 range; the bound
+        # lives in CanvasGenerated only. is_generated is informational.
+        canvas = b.canvas(sections=b.sections(n), is_generated=is_generated)
+        assert canvas.is_generated is is_generated
+        assert all(len(canvas.get_section(s)) == n for s in CanvasSection)
 
-    @pytest.mark.parametrize("n", [0, 1, 5])
-    def test_generated_rejects_other_counts(self, n):
-        with pytest.raises(ValidationError, match="between 2 and 4"):
-            b.canvas(sections=b.sections(n), is_generated=True)
+    def test_one_section_may_differ_from_the_others(self):
+        canvas = b.canvas(sections=b.sections(2, channels=b.cards("channels", 5), key_resources=[]))
+        assert len(canvas.sections.channels) == 5
+        assert canvas.sections.key_resources == []
 
-    def test_generated_is_the_default(self):
-        with pytest.raises(ValidationError, match="between 2 and 4"):
-            b.canvas(sections=b.sections(1))
+    def test_is_generated_defaults_to_true(self):
+        assert b.canvas().is_generated is True
 
-    @pytest.mark.parametrize("name", b.SECTION_NAMES)
-    def test_one_bad_section_is_enough_and_is_named(self, name):
-        sections = b.sections(2, **{name: b.cards(name, 5)})
-        with pytest.raises(ValidationError, match=name):
-            b.canvas(sections=sections)
-
-    @pytest.mark.parametrize("n", [0, 1, 7])
-    def test_not_generated_accepts_any_count(self, n):
-        assert not b.canvas(sections=b.sections(n), is_generated=False).is_generated
+    def test_canvas_has_no_card_count_validator(self):
+        assert not hasattr(Canvas, "generated_card_count")
 
     def test_get_section(self):
         c = b.canvas()

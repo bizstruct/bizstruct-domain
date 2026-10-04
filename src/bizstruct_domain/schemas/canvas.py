@@ -1,4 +1,4 @@
-from pydantic import Field, model_validator
+from pydantic import Field
 from .fields import SanitizedModel
 
 
@@ -7,9 +7,9 @@ from .enums import (
     CanvasSection,
 )
 
-# Per-section card count the *generator* must produce. Lives in one place so
-# CanvasSectionsGenerated's schema constraints and Canvas's validator can
-# never disagree about it.
+# Per-section card count the *generator* must produce (CanvasSectionsGenerated's
+# schema constraints). The persisted Canvas does not enforce it: ERRC moves
+# and manual edits legitimately take a section outside this range.
 GENERATED_CARDS_PER_SECTION_MIN = 2
 GENERATED_CARDS_PER_SECTION_MAX = 4
 
@@ -277,33 +277,15 @@ class Canvas(SanitizedModel):
     )
     is_generated: bool = Field(
         default=True,
-        description="Indicates whether this canvas was generated automatically.",
+        description="Informational. True when this version is exactly what the generator produced; "
+                     "False once a person edited it or ERRC moves were applied. No validation "
+                     "depends on it: the 2-4 cards per section bound applies to CanvasGenerated only.",
         examples=[True, False],
     )
 
 
     def get_section(self, section: CanvasSection) -> list[CanvasCard]:
         return getattr(self.sections, section.value)
-
-    @model_validator(mode="after")
-    def generated_card_count(self) -> "Canvas":
-        """
-            When the canvas is flagged as generated, every section must hold
-            between GENERATED_CARDS_PER_SECTION_MIN and _MAX cards. The same
-            bounds are enforced at generation time by CanvasGenerated's
-            schema; this re-checks them on the persisted shape.
-        """
-        if not self.is_generated:
-            return self
-        for field_name in CanvasSections.model_fields:
-            cards = getattr(self.sections, field_name)
-            if not (GENERATED_CARDS_PER_SECTION_MIN <= len(cards) <= GENERATED_CARDS_PER_SECTION_MAX):
-                raise ValueError(
-                    f"Section '{field_name}' must have between "
-                    f"{GENERATED_CARDS_PER_SECTION_MIN} and {GENERATED_CARDS_PER_SECTION_MAX} "
-                    f"cards when the canvas is generated. Found {len(cards)} cards."
-                )
-        return self
 
 
 class CanvasCardDraft(SanitizedModel):

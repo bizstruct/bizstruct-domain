@@ -1,4 +1,6 @@
-from pydantic import Field, field_validator, model_validator
+from typing import Literal
+
+from pydantic import Field, model_validator
 from .fields import SanitizedModel
 
 from .enums import SwotCluster
@@ -18,14 +20,12 @@ class SwotAxisStatement(SanitizedModel):
         description="A statement describing a negative aspect (Weakness or Threat).",
         examples=["Our production costs are higher than the industry average."],
     )
-    score: int = Field(
+    score: Literal[-5, -4, -3, -2, -1, 1, 2, 3, 4, 5] = Field(
         ...,
-        ge=-5,
-        le=5,
-
         description=(
-            "A score representing the impact of the statement,"
-            " ranging from -5 (very negative) to 5 (very positive)."
+            "A score representing the impact of the statement, from -5 (very negative)"
+            " to 5 (very positive). A forced choice: there is no neutral 0 (the book's"
+            " bipolar scale), so every statement takes a side."
         ),
         examples=[-5, -1, 1, 5],
     )
@@ -49,13 +49,6 @@ class SwotAxisStatement(SanitizedModel):
         ),
         examples=[3, 7, 10],
     )
-
-    @field_validator("score")
-    @classmethod
-    def score_not_zero(cls, v: int) -> int:
-        if v == 0:
-            raise ValueError("Score cannot be zero.")
-        return v
 
 
 class SwotOpportunityThreat(SanitizedModel):
