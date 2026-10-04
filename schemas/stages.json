@@ -44,7 +44,7 @@
     "optional_depends_on": []
   },
   {
-    "allows_multiple_instances": false,
+    "allows_multiple_instances": true,
     "depends_on": [
       "brief",
       "empathy_map",
@@ -66,7 +66,7 @@
     "optional_depends_on": []
   },
   {
-    "allows_multiple_instances": false,
+    "allows_multiple_instances": true,
     "depends_on": [
       "canvas"
     ],
@@ -77,7 +77,7 @@
     ]
   },
   {
-    "allows_multiple_instances": false,
+    "allows_multiple_instances": true,
     "depends_on": [
       "swot_errc_cycle"
     ],
@@ -86,7 +86,7 @@
     "optional_depends_on": []
   },
   {
-    "allows_multiple_instances": false,
+    "allows_multiple_instances": true,
     "depends_on": [
       "swot_errc_cycle"
     ],
@@ -111,7 +111,7 @@
     "optional_depends_on": []
   },
   {
-    "allows_multiple_instances": false,
+    "allows_multiple_instances": true,
     "depends_on": [
       "storytelling",
       "swot_errc_cycle"

@@ -37,24 +37,29 @@ STAGE_REGISTRY = StageRegistry(
                 Stage.IDEATION,
                 Stage.PATTERNS,
             ],
+            allows_multiple_instances=True,
         ),
         Stage.SWOT_ERRC_CYCLE: StageDefinition(
             id=Stage.SWOT_ERRC_CYCLE,
             depends_on=[Stage.CANVAS],
             optional_depends_on=[Stage.ENVIRONMENT_SCAN],
+            allows_multiple_instances=True,
         ),
         Stage.STORYTELLING: StageDefinition(
             id=Stage.STORYTELLING,
             depends_on=[Stage.SWOT_ERRC_CYCLE],
+            allows_multiple_instances=True,
         ),
         Stage.FUTURE_SCENARIO: StageDefinition(
             id=Stage.FUTURE_SCENARIO,
             depends_on=[Stage.SWOT_ERRC_CYCLE],
+            allows_multiple_instances=True,
         ),
         Stage.PITCH: StageDefinition(
             id=Stage.PITCH,
             depends_on=[Stage.STORYTELLING, Stage.SWOT_ERRC_CYCLE],
             optional_depends_on=[Stage.TEAM_INFO, Stage.BUSINESS_CASE],
+            allows_multiple_instances=True,
         ),
         Stage.TEAM_INFO: StageDefinition(
             id=Stage.TEAM_INFO,

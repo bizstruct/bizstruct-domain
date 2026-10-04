@@ -30,11 +30,11 @@ ADR-0008 переписав домен під методологію BMG, але
 | `customer_scenario` | empathy_map | — | так | |
 | `ideation` | empathy_map | — | так | |
 | `patterns` | customer_scenario, ideation | — | | |
-| `canvas` | brief, empathy_map, customer_scenario, ideation, patterns | — | | |
-| `swot_errc_cycle` | canvas | environment_scan | | |
-| `storytelling` | swot_errc_cycle | — | | |
-| `future_scenario` | swot_errc_cycle | — | | |
-| `pitch` | storytelling, swot_errc_cycle | team_info, business_case | | |
+| `canvas` | brief, empathy_map, customer_scenario, ideation, patterns | — | так | |
+| `swot_errc_cycle` | canvas | environment_scan | так | |
+| `storytelling` | swot_errc_cycle | — | так | |
+| `future_scenario` | swot_errc_cycle | — | так | |
+| `pitch` | storytelling, swot_errc_cycle | team_info, business_case | так | |
 | `team_info` | — | — | | так |
 | `business_case` | brief | — | | так |
 | `environment_scan` | brief | — | | так |
@@ -178,6 +178,10 @@ ADR-0008 переписав домен під методологію BMG, але
 1. **`Canvas.generated_card_count` видалено.** Підстава: коли ERRC редагує канву, секція може законно мати 1 або 5 карток; валідатор змушував `is_generated=False` для таких версій, і прапорець змішував «відредаговано людиною» та «відредаговано ERRC». Правило 2–4 лишається тільки в `CanvasGenerated`, де воно видиме генератору через `minItems`/`maxItems`. `is_generated` — інформаційний.
 2. **`SwotAxisStatement.score` — `Literal[-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]`**, `score_not_zero` видалено. Підстава: нуль не є валідним значенням біполярної шкали книги (вимушений вибір), а `Literal` потрапляє в JSON Schema як `enum` без 0 — генератор бачить заборону, чого валідатор не забезпечував. Для fe тип `score` стає об'єднанням цілих (`-5 | -4 | … | 5`).
 3. **Фіксований каталог із 21 загрози** (відповідь на питання про порівнянність `weighted_weakness_threat_score`; варіант «порівнювати середнє» відхилено). Підстава: середнє на загрозу не прибирає залежності від того, які загрози модель вирішила перелічити, а каталог робить множину оцінюваних питань однаковою в кожній ітерації. Наслідок — загрозова частина тепер у діапазоні 21..105. Це розв'язує проблему лише наполовину: див. відкрите питання 1 (частина слабких сторін).
+
+**2026-10-04, після релізу 0.13.0** (версія 0.14.0).
+
+4. **Багатоекземплярність за методологією: прапорці й межа сегментів.** `allows_multiple_instances=True` додано для `canvas`, `swot_errc_cycle`, `storytelling`, `future_scenario` і `pitch` (до `empathy_map`, `customer_scenario`, `ideation`); `patterns`, `brief`, `team_info`, `business_case`, `environment_scan` лишаються одиничними. Підстава: методологічний документ визначає SWOT, цикл, storytelling і future scenario як 1:1 до канви, а канв стільки, скільки груп у `Patterns` (`split_model`); `Canvas.group_id` і зовнішні ключі `canvas_id` у `Swot`/`Storytelling`/`FutureScenario`/`Pitch` це вже виражали, а прапорці — ні. **Pitch — по одному на канву**, зі спільними на проєкт `team_info` і `business_case`; єдиний пітч компанії — можливий пізніший етап. Кратність: `brief` 1; `empathy_map` — один на кандидата сегмента (не більше 3); `customer_scenario` і `ideation` — по одному на рядок `empathy_map`; `patterns` 1; `canvas` — одна на групу `Patterns`; `swot_errc_cycle`, `storytelling`, `future_scenario`, `pitch` — по одному на канву; `team_info`, `business_case`, `environment_scan` — по одному на проєкт. Прапорець — лише декларація: `topological_order`, `next_available`, `ready_stages` і `dependents_of` його не читають (перевірено тестом, що інвертування всіх прапорців не змінює їхній результат), тож зміни поведінки в доменному коді немає; змінюється `stages.json`. **Межа сегментів = 3** (`MAX_SEGMENTS`, публічна константа): `Brief.customer_segment_candidates` має `max_length=3`, тож межу бачить генератор.
 
 ## Consequences
 
