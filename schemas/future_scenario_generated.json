@@ -97,24 +97,8 @@
       "type": "object"
     }
   },
-  "description": "Represents a future scenario in a business context.",
+  "description": "Generation contract of FutureScenario: only what the LLM writes. The system\nfields (canvas_id, id) are added by FutureScenario, which extends this model.",
   "properties": {
-    "canvas_id": {
-      "description": "Identifier of the canvas this future scenario is associated with.",
-      "examples": [
-        "canvas_001"
-      ],
-      "title": "Canvas Id",
-      "type": "string"
-    },
-    "id": {
-      "description": "Unique identifier for the future scenario.",
-      "examples": [
-        "future_scenario_001"
-      ],
-      "title": "Id",
-      "type": "string"
-    },
     "uncertainty_drivers": {
       "description": "Uncertainty drivers that may impact the future scenario: between 2 and 4.",
       "examples": [
@@ -176,10 +160,8 @@
   },
   "required": [
     "uncertainty_drivers",
-    "variants",
-    "id",
-    "canvas_id"
+    "variants"
   ],
-  "title": "FutureScenario",
+  "title": "FutureScenarioGenerated",
   "type": "object"
 }

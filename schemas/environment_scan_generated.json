@@ -1,0 +1,73 @@
+{
+  "description": "Generation contract of EnvironmentScan: only what the LLM writes. The system\nfields (id, project_id, sources) are added by EnvironmentScan, which extends this model.",
+  "properties": {
+    "industry_forces": {
+      "description": "A list of industry forces relevant to the environment scan.",
+      "examples": [
+        [
+          "Competitive rivalry",
+          "Supplier power"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Industry Forces",
+      "type": "array"
+    },
+    "key_trends": {
+      "description": "A list of key trends relevant to the environment scan.",
+      "examples": [
+        [
+          "Digital transformation",
+          "Sustainability initiatives"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Key Trends",
+      "type": "array"
+    },
+    "macroeconomic_forces": {
+      "description": "A list of macroeconomic forces relevant to the environment scan.",
+      "examples": [
+        [
+          "Interest rate fluctuations",
+          "Inflation trends"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Macroeconomic Forces",
+      "type": "array"
+    },
+    "market_forces": {
+      "description": "A list of market forces relevant to the environment scan.",
+      "examples": [
+        [
+          "Market volatility",
+          "Regulatory changes"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Market Forces",
+      "type": "array"
+    }
+  },
+  "required": [
+    "market_forces",
+    "industry_forces",
+    "key_trends",
+    "macroeconomic_forces"
+  ],
+  "title": "EnvironmentScanGenerated",
+  "type": "object"
+}

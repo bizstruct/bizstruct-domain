@@ -32,6 +32,7 @@ src/bizstruct_domain/
     pitch.py, optional_inputs.py (TeamInfo, BusinessCase, EnvironmentScan)
                      artifact models, one module per stage
     consistency.py   cross-artifact rules and judge-check declarations
+    generation.py    GENERATION_CONTRACTS: what the LLM writes, per stage (ADR-0010)
     validate_model.py  side-channel result contract (not a stage)
 scripts/export_schemas.py   regenerates schemas/*.json
 schemas/                    generated JSON Schemas (committed)

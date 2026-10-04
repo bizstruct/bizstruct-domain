@@ -154,13 +154,13 @@
     }
   },
   "required": [
-    "id",
-    "project_id",
-    "sources",
     "market_forces",
     "industry_forces",
     "key_trends",
-    "macroeconomic_forces"
+    "macroeconomic_forces",
+    "id",
+    "project_id",
+    "sources"
   ],
   "title": "EnvironmentScan",
   "type": "object"

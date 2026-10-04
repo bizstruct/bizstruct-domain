@@ -1,5 +1,5 @@
 from pydantic import Field
-from .fields import SanitizedModel
+from .fields import FromGeneratedMixin, SanitizedModel
 
 from .enums import (
     CanvasSection,
@@ -63,20 +63,11 @@ class FutureScenarioVariant(SanitizedModel):
     )
     
 
-class FutureScenario(SanitizedModel):
+class FutureScenarioGenerated(SanitizedModel):
     """
-        Represents a future scenario in a business context.
+        Generation contract of FutureScenario: only what the LLM writes. The system
+        fields (canvas_id, id) are added by FutureScenario, which extends this model.
     """
-    id: str = Field(
-        ...,
-        description="Unique identifier for the future scenario.",
-        examples=["future_scenario_001"],
-    )
-    canvas_id: str = Field(
-        ...,
-        description="Identifier of the canvas this future scenario is associated with.",
-        examples=["canvas_001"],
-    )
     uncertainty_drivers: list[str] = Field(
         ...,
         min_length=2,
@@ -121,5 +112,21 @@ class FutureScenario(SanitizedModel):
                 ),
             ],
         ],
+    )
+
+
+class FutureScenario(FutureScenarioGenerated, FromGeneratedMixin):
+    """
+        Represents a future scenario in a business context.
+    """
+    id: str = Field(
+        ...,
+        description="Unique identifier for the future scenario.",
+        examples=["future_scenario_001"],
+    )
+    canvas_id: str = Field(
+        ...,
+        description="Identifier of the canvas this future scenario is associated with.",
+        examples=["canvas_001"],
     )
     

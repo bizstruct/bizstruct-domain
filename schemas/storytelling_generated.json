@@ -76,16 +76,8 @@
       "type": "string"
     }
   },
-  "description": "Represents a storytelling element for a business model canvas.",
+  "description": "Generation contract of Storytelling: only what the LLM writes. The system\nfields (canvas_id, id) are added by Storytelling, which extends this model.",
   "properties": {
-    "canvas_id": {
-      "description": "Identifier of the canvas this storytelling element is associated with.",
-      "examples": [
-        "canvas_001"
-      ],
-      "title": "Canvas Id",
-      "type": "string"
-    },
     "canvas_references": {
       "description": "A list of references to specific sections and cards on the canvas that are relevant to the storytelling element.",
       "examples": [
@@ -121,14 +113,6 @@
         "pitching_investors"
       ]
     },
-    "id": {
-      "description": "Unique identifier for the storytelling element.",
-      "examples": [
-        "storytelling_001"
-      ],
-      "title": "Id",
-      "type": "string"
-    },
     "narrative_text": {
       "description": "The narrative text of the storytelling element.",
       "examples": [
@@ -150,10 +134,8 @@
     "goal",
     "format",
     "narrative_text",
-    "canvas_references",
-    "id",
-    "canvas_id"
+    "canvas_references"
   ],
-  "title": "Storytelling",
+  "title": "StorytellingGenerated",
   "type": "object"
 }

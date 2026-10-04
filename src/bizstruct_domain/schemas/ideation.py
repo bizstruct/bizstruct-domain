@@ -1,5 +1,5 @@
 from pydantic import Field, model_validator
-from .fields import SanitizedModel
+from .fields import FromGeneratedMixin, SanitizedModel
 
 from .enums import Epicenter
 
@@ -57,20 +57,11 @@ class EpicenterClassification(SanitizedModel):
         return self
 
 
-class Ideation(SanitizedModel):
+class IdeationGenerated(SanitizedModel):
     """
-        Represents an ideation instance in a business context.
+        Generation contract of Ideation: only what the LLM writes. The system
+        fields (empathy_map_id, id) are added by Ideation, which extends this model.
     """
-    id: str = Field(
-        ...,
-        description="Unique identifier for the ideation instance.",
-        examples=["ideation_001"],
-    )
-    empathy_map_id: str = Field(
-        ...,
-        description="Identifier of the empathy map this ideation instance is associated with.",
-        examples=["empathy_map_001"],
-    )
     epicenter: EpicenterClassification = Field(
         ...,
         description="The classification of the epicenter for this ideation instance.",
@@ -84,6 +75,22 @@ class Ideation(SanitizedModel):
             "What if we could deliver our product in half the time?",
             "What if we could offer a subscription model for our service?",
         ]],
+    )
+
+
+class Ideation(IdeationGenerated, FromGeneratedMixin):
+    """
+        Represents an ideation instance in a business context.
+    """
+    id: str = Field(
+        ...,
+        description="Unique identifier for the ideation instance.",
+        examples=["ideation_001"],
+    )
+    empathy_map_id: str = Field(
+        ...,
+        description="Identifier of the empathy map this ideation instance is associated with.",
+        examples=["empathy_map_001"],
     )
 
     

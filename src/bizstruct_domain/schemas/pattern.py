@@ -1,3 +1,5 @@
+from collections.abc import Iterable, Mapping, Sequence
+
 from pydantic import Field, model_validator
 from .fields import SanitizedModel
 
@@ -36,19 +38,11 @@ class SegmentPair(SanitizedModel):
         return self
 
 
-class PairwiseSegmentScore(SanitizedModel):
+class _PairwiseScores(SanitizedModel):
     """
-        Represents a score between two segments in a business context.
-
-        Bounds follow the BMG document's NetScore formula: synergy 0..+5,
-        conflict -7..0. Thresholds for branch/pattern decisions (e.g.
-        Multi-Sided at net_score >= +3) are calibrated against this range;
-        widening it invalidates those thresholds.
+        The two scores shared by the persisted and the generation-time pair
+        score; which pair they belong to is added by the subclass.
     """
-    segment_pair: SegmentPair = Field(
-        ...,
-        description="The pair of segments being scored.",
-    )
     synergy: int = Field(
         ...,
         ge=0,
@@ -67,6 +61,21 @@ class PairwiseSegmentScore(SanitizedModel):
     @property
     def net_score(self) -> int:
         return self.synergy + self.conflict
+
+
+class PairwiseSegmentScore(_PairwiseScores):
+    """
+        Represents a score between two segments in a business context.
+
+        Bounds follow the BMG document's NetScore formula: synergy 0..+5,
+        conflict -7..0. Thresholds for branch/pattern decisions (e.g.
+        Multi-Sided at net_score >= +3) are calibrated against this range;
+        widening it invalidates those thresholds.
+    """
+    segment_pair: SegmentPair = Field(
+        ...,
+        description="The pair of segments being scored.",
+    )
 
 
 class CanvasGroup(SanitizedModel):
@@ -145,6 +154,28 @@ class PatternTag(SanitizedModel):
                 f"The subtype must be None for the pattern {self.pattern.value}."
             )
         return self
+
+
+def _check_multi_sided_platform(
+    tags: Iterable["PatternTag"],
+    groups: Iterable[tuple[SegmentRelationType, int]],
+) -> None:
+    """MULTI_SIDED_PLATFORM needs a group that is BOTH relation_type MULTI_SIDED
+    AND has at least two segments. `groups` is (relation_type, segment count)."""
+    if not any(t.pattern == Pattern.MULTI_SIDED_PLATFORM for t in tags):
+        return
+    if not any(rel == SegmentRelationType.MULTI_SIDED and size >= 2 for rel, size in groups):
+        raise ValueError(
+            "A multi-sided platform pattern requires at least one group with two or more empathy maps."
+        )
+
+
+def _check_unique_patterns(tags: Iterable["PatternTag"]) -> None:
+    """Each business model pattern is tagged at most once."""
+    seen = [t.pattern for t in tags]
+    repeated = sorted({p.value for p in seen if seen.count(p) > 1})
+    if repeated:
+        raise ValueError(f"Each pattern may be tagged only once. Repeated: {', '.join(repeated)}.")
 
 
 class Patterns(SanitizedModel):
@@ -251,18 +282,9 @@ class Patterns(SanitizedModel):
         """
             Validates that a multi-sided platform pattern requires at least two empathy maps.
         """
-        has_multi_sided_tag = any(t.pattern == Pattern.MULTI_SIDED_PLATFORM for t in self.pattern_tags)
-        if not has_multi_sided_tag:
-            return self
-
-        has_matching_group = any(
-            g.relation_type == SegmentRelationType.MULTI_SIDED and len(g.empathy_map_ids) >= 2
-            for g in self.groups
+        _check_multi_sided_platform(
+            self.pattern_tags, [(g.relation_type, len(g.empathy_map_ids)) for g in self.groups]
         )
-        if not has_matching_group:
-            raise ValueError(
-                "A multi-sided platform pattern requires at least one group with two or more empathy maps."
-            )
         return self
 
     @model_validator(mode="after")
@@ -270,8 +292,199 @@ class Patterns(SanitizedModel):
         """
             Validates that each business model pattern is tagged at most once.
         """
-        seen = [t.pattern for t in self.pattern_tags]
-        repeated = sorted({p.value for p in seen if seen.count(p) > 1})
-        if repeated:
-            raise ValueError(f"Each pattern may be tagged only once. Repeated: {', '.join(repeated)}.")
+        _check_unique_patterns(self.pattern_tags)
         return self
+
+
+class SegmentPairGenerated(SanitizedModel):
+    """
+        A pair of segments as the generator writes it: by alias, never by real id.
+    """
+    segment_alias_a: str = Field(
+        ...,
+        min_length=1,
+        description="Alias of the first segment, exactly as defined in the prompt (for example \"S1\").",
+        examples=["S1"],
+    )
+    segment_alias_b: str = Field(
+        ...,
+        min_length=1,
+        description="Alias of the second segment, exactly as defined in the prompt (for example \"S2\").",
+        examples=["S2"],
+    )
+
+    @model_validator(mode="after")
+    def aliases_must_differ(self) -> "SegmentPairGenerated":
+        """
+            Validates that the two aliases are different.
+        """
+        if self.segment_alias_a == self.segment_alias_b:
+            raise ValueError("The two segment aliases must be different.")
+        return self
+
+
+class PairwiseSegmentScoreGenerated(_PairwiseScores):
+    """
+        A pairwise score as the generator writes it: the pair is given by aliases.
+        Same bounds as PairwiseSegmentScore (synergy 0..5, conflict -7..0).
+    """
+    segment_pair: SegmentPairGenerated = Field(
+        ...,
+        description="The pair of segments being scored, by alias.",
+    )
+
+
+class CanvasGroupGenerated(SanitizedModel):
+    """
+        A group of segments as the generator writes it: by alias, without an id
+        (group ids are assigned by the system).
+    """
+    segment_aliases: list[str] = Field(
+        ...,
+        min_length=1,
+        description="Aliases of the segments that belong to this group, as defined in the prompt.",
+        examples=[["S1", "S2"]],
+    )
+    relation_type: SegmentRelationType = Field(
+        ...,
+        description="The type of relationship between the segments in this group.",
+        examples=[
+            SegmentRelationType.MULTI_SIDED,
+            SegmentRelationType.SEGMENTED,
+            SegmentRelationType.DIVERSIFIED,
+        ],
+    )
+
+
+class PatternsGenerated(SanitizedModel):
+    """
+        Generation contract of Patterns: only what the LLM writes. Segments are
+        referenced by ALIASES defined in the prompt, never by real ids. Group ids
+        are assigned by the system and `branch_decision` is derived from the number
+        of groups (one group: unified_model, otherwise split_model); use
+        `patterns_from_generated` to build the persisted Patterns.
+    """
+    pairwise_scores: list[PairwiseSegmentScoreGenerated] = Field(
+        ...,
+        description="A list of pairwise segment scores, one per pair of segments, by alias.",
+        examples=[
+            [
+                PairwiseSegmentScoreGenerated(
+                    segment_pair=SegmentPairGenerated(segment_alias_a="S1", segment_alias_b="S2"),
+                    synergy=4,
+                    conflict=-2,
+                ),
+            ],
+        ],
+    )
+    groups: list[CanvasGroupGenerated] = Field(
+        ...,
+        min_length=1,
+        description="The canvas groups of the segments, by alias.",
+        examples=[
+            [
+                CanvasGroupGenerated(
+                    segment_aliases=["S1", "S2"],
+                    relation_type=SegmentRelationType.MULTI_SIDED,
+                ),
+                CanvasGroupGenerated(
+                    segment_aliases=["S3"],
+                    relation_type=SegmentRelationType.SEGMENTED,
+                ),
+            ],
+        ],
+    )
+    pattern_tags: list[PatternTag] = Field(
+        ...,
+        max_length=5,
+        description="A list of pattern tags for the business model patterns, each pattern at most once.",
+        examples=[
+            [
+                PatternTag(
+                    pattern=Pattern.MULTI_SIDED_PLATFORM,
+                    subtype=None,
+                    rationale="Two interdependent customer groups need each other.",
+                ),
+            ],
+        ],
+    )
+
+    @model_validator(mode="after")
+    def multi_sided_requires_two_segments(self) -> "PatternsGenerated":
+        """
+            Validates that a multi-sided platform pattern requires a MULTI_SIDED group with two or more segments.
+        """
+        _check_multi_sided_platform(
+            self.pattern_tags, [(g.relation_type, len(g.segment_aliases)) for g in self.groups]
+        )
+        return self
+
+    @model_validator(mode="after")
+    def pattern_tags_are_unique(self) -> "PatternsGenerated":
+        """
+            Validates that each business model pattern is tagged at most once.
+        """
+        _check_unique_patterns(self.pattern_tags)
+        return self
+
+
+def patterns_from_generated(
+    generated: PatternsGenerated,
+    *,
+    id: str,
+    project_id: str,
+    segment_ids: Mapping[str, str],
+    group_ids: Sequence[str],
+) -> Patterns:
+    """Build the persisted Patterns from its generation contract (pure, no I/O).
+
+    `segment_ids` maps every alias used in the prompt to the real empathy map id;
+    `group_ids` gives one id per generated group, in order. `branch_decision` is
+    derived (one group: unified_model, otherwise split_model).
+
+    Raises:
+        ValueError: on an alias missing from `segment_ids`, or when
+            `len(group_ids)` differs from the number of groups. A pydantic
+            ValidationError (also a ValueError) signals that the mapped result
+            breaks a persisted validator, e.g. two aliases mapped to one id.
+    """
+    if len(group_ids) != len(generated.groups):
+        raise ValueError(
+            f"Expected {len(generated.groups)} group ids (one per generated group), got {len(group_ids)}."
+        )
+
+    def real(alias: str) -> str:
+        try:
+            return segment_ids[alias]
+        except KeyError:
+            raise ValueError(f"Unknown segment alias '{alias}'.") from None
+
+    return Patterns.model_validate(
+        {
+            "id": id,
+            "project_id": project_id,
+            "pairwise_scores": [
+                {
+                    "segment_pair": {
+                        "empathy_map_id_a": real(score.segment_pair.segment_alias_a),
+                        "empathy_map_id_b": real(score.segment_pair.segment_alias_b),
+                    },
+                    "synergy": score.synergy,
+                    "conflict": score.conflict,
+                }
+                for score in generated.pairwise_scores
+            ],
+            "groups": [
+                {
+                    "id": group_id,
+                    "empathy_map_ids": [real(alias) for alias in group.segment_aliases],
+                    "relation_type": group.relation_type,
+                }
+                for group_id, group in zip(group_ids, generated.groups, strict=True)
+            ],
+            "branch_decision": (
+                CanvasBranch.UNIFIED_MODEL if len(generated.groups) == 1 else CanvasBranch.SPLIT_MODEL
+            ),
+            "pattern_tags": [tag.model_dump() for tag in generated.pattern_tags],
+        }
+    )

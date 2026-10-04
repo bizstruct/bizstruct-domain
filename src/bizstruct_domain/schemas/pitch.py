@@ -1,8 +1,51 @@
 from pydantic import Field, model_validator
-from .fields import SanitizedModel
+from .fields import FromGeneratedMixin, SanitizedModel
 
 
-class Pitch(SanitizedModel):
+class PitchGenerated(SanitizedModel):
+    """
+        Generation contract of Pitch: only what the LLM writes. The system
+        fields (business_case_id, canvas_id, id, project_id, storytelling_id, swot_id, team_info_id) are added by Pitch, which extends this model.
+    """
+    hook: str = Field(
+        ...,
+        description="A brief and compelling hook for the pitch.",
+        examples=["Revolutionizing the way we connect with our customers."],
+    )
+    business_model_summary: str = Field(
+        ...,
+        description="A concise summary of the business model being pitched.",
+        examples=["Our platform leverages AI to provide personalized recommendations to users."],
+    )
+    competitive_advantages: list[str] = Field(
+        ...,
+        min_length=1,
+        description="A list of competitive advantages that differentiate the business from its competitors.",
+        examples=[
+            ["Proprietary AI algorithms", "Strong brand recognition", "Exclusive partnerships"],
+        ],
+    )
+    risk_analysis: list[str] = Field(
+        ...,
+        min_length=1,
+        description="A list of potential risks associated with the business and strategies to mitigate them.",
+        examples=[
+            ["Market volatility: Diversify product offerings to reduce dependency on a single market segment."],
+        ],
+    )
+    team_section: str | None = Field(
+        None,
+        description="A section highlighting the team behind the business, if applicable.",
+        examples=["Our team consists of experienced professionals with a proven track record in the industry."],
+    )
+    financial_analysis_section: str | None = Field(
+        None,
+        description="A section providing a financial analysis of the business, if applicable.",
+        examples=["Our financial projections indicate a steady growth trajectory over the next five years."],
+    )
+
+
+class Pitch(PitchGenerated, FromGeneratedMixin):
     """
         Represents a business pitch with various attributes and sections.
     """
@@ -40,42 +83,6 @@ class Pitch(SanitizedModel):
         None,
         description="Identifier of the business case this pitch is associated with, if applicable.",
         examples=["business_case_001"],
-    )
-    hook: str = Field(
-        ...,
-        description="A brief and compelling hook for the pitch.",
-        examples=["Revolutionizing the way we connect with our customers."],
-    )
-    business_model_summary: str = Field(
-        ...,
-        description="A concise summary of the business model being pitched.",
-        examples=["Our platform leverages AI to provide personalized recommendations to users."],
-    )
-    competitive_advantages: list[str] = Field(
-        ...,
-        min_length=1,
-        description="A list of competitive advantages that differentiate the business from its competitors.",
-        examples=[
-            ["Proprietary AI algorithms", "Strong brand recognition", "Exclusive partnerships"],
-        ],
-    )
-    risk_analysis: list[str] = Field(
-        ...,
-        min_length=1,
-        description="A list of potential risks associated with the business and strategies to mitigate them.",
-        examples=[
-            ["Market volatility: Diversify product offerings to reduce dependency on a single market segment."],
-        ],
-    )
-    team_section: str | None = Field(
-        None,
-        description="A section highlighting the team behind the business, if applicable.",
-        examples=["Our team consists of experienced professionals with a proven track record in the industry."],
-    )
-    financial_analysis_section: str | None = Field(
-        None,
-        description="A section providing a financial analysis of the business, if applicable.",
-        examples=["Our financial projections indicate a steady growth trajectory over the next five years."],
     )
 
     @model_validator(mode="after")

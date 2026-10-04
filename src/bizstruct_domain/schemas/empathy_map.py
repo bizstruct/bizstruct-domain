@@ -1,18 +1,12 @@
 from pydantic import Field
-from .fields import SanitizedModel
+from .fields import FromGeneratedMixin, SanitizedModel
 
 
-class EmpathyMap(SanitizedModel):
-    id: str = Field(
-        ...,
-        description="Unique identifier for the empathy map.",
-        examples=["empathy_map_001"],
-    )
-    project_id: str = Field(
-        ...,
-        description="Identifier of the project this empathy map belongs to.",
-        examples=["project_001"],
-    )
+class EmpathyMapGenerated(SanitizedModel):
+    """
+        Generation contract of EmpathyMap: only what the LLM writes. The system
+        fields (id, project_id) are added by EmpathyMap, which extends this model.
+    """
     persona_name: str = Field(
         ...,
         description="Name of the persona for whom the empathy map is created.",
@@ -72,4 +66,17 @@ class EmpathyMap(SanitizedModel):
             ["Wants apps that provide value"],
             ["Wants apps that respect privacy"],
         ],
+    )
+
+
+class EmpathyMap(EmpathyMapGenerated, FromGeneratedMixin):
+    id: str = Field(
+        ...,
+        description="Unique identifier for the empathy map.",
+        examples=["empathy_map_001"],
+    )
+    project_id: str = Field(
+        ...,
+        description="Identifier of the project this empathy map belongs to.",
+        examples=["project_001"],
     )

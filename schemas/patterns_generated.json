@@ -1,55 +1,38 @@
 {
   "$defs": {
-    "CanvasBranch": {
-      "enum": [
-        "unified_model",
-        "split_model"
-      ],
-      "title": "CanvasBranch",
-      "type": "string"
-    },
-    "CanvasGroup": {
-      "description": "Represents a group of segments in a business context.",
+    "CanvasGroupGenerated": {
+      "description": "A group of segments as the generator writes it: by alias, without an id\n(group ids are assigned by the system).",
       "properties": {
-        "empathy_map_ids": {
-          "description": "A list of empathy map identifiers that belong to this canvas group.",
+        "relation_type": {
+          "$ref": "#/$defs/SegmentRelationType",
+          "description": "The type of relationship between the segments in this group.",
+          "examples": [
+            "multi_sided",
+            "segmented",
+            "diversified"
+          ]
+        },
+        "segment_aliases": {
+          "description": "Aliases of the segments that belong to this group, as defined in the prompt.",
           "examples": [
             [
-              "empathy_map_001",
-              "empathy_map_002"
+              "S1",
+              "S2"
             ]
           ],
           "items": {
             "type": "string"
           },
           "minItems": 1,
-          "title": "Empathy Map Ids",
+          "title": "Segment Aliases",
           "type": "array"
-        },
-        "id": {
-          "description": "Unique identifier for the canvas group (referenced by Canvas.group_id).",
-          "examples": [
-            "canvas_group_001"
-          ],
-          "title": "Id",
-          "type": "string"
-        },
-        "relation_type": {
-          "$ref": "#/$defs/SegmentRelationType",
-          "description": "The type of relationship between the segments in this canvas group.",
-          "examples": [
-            "multi_sided",
-            "segmented",
-            "diversified"
-          ]
         }
       },
       "required": [
-        "id",
-        "empathy_map_ids",
+        "segment_aliases",
         "relation_type"
       ],
-      "title": "CanvasGroup",
+      "title": "CanvasGroupGenerated",
       "type": "object"
     },
     "FreePatternSubtype": {
@@ -71,8 +54,8 @@
       "title": "OpenBusinessModelPatternSubtype",
       "type": "string"
     },
-    "PairwiseSegmentScore": {
-      "description": "Represents a score between two segments in a business context.\n\nBounds follow the BMG document's NetScore formula: synergy 0..+5,\nconflict -7..0. Thresholds for branch/pattern decisions (e.g.\nMulti-Sided at net_score >= +3) are calibrated against this range;\nwidening it invalidates those thresholds.",
+    "PairwiseSegmentScoreGenerated": {
+      "description": "A pairwise score as the generator writes it: the pair is given by aliases.\nSame bounds as PairwiseSegmentScore (synergy 0..5, conflict -7..0).",
       "properties": {
         "conflict": {
           "description": "A score representing the conflict between the two segments, on a scale from -7 to 0.",
@@ -87,8 +70,8 @@
           "type": "integer"
         },
         "segment_pair": {
-          "$ref": "#/$defs/SegmentPair",
-          "description": "The pair of segments being scored."
+          "$ref": "#/$defs/SegmentPairGenerated",
+          "description": "The pair of segments being scored, by alias."
         },
         "synergy": {
           "description": "A score representing the synergy between the two segments, on a scale from 0 to 5.",
@@ -108,7 +91,7 @@
         "conflict",
         "segment_pair"
       ],
-      "title": "PairwiseSegmentScore",
+      "title": "PairwiseSegmentScoreGenerated",
       "type": "object"
     },
     "Pattern": {
@@ -174,31 +157,33 @@
       "title": "PatternTag",
       "type": "object"
     },
-    "SegmentPair": {
-      "description": "Represents a pair of segments in a business context.",
+    "SegmentPairGenerated": {
+      "description": "A pair of segments as the generator writes it: by alias, never by real id.",
       "properties": {
-        "empathy_map_id_a": {
-          "description": "Identifier of the first empathy map in the segment pair.",
+        "segment_alias_a": {
+          "description": "Alias of the first segment, exactly as defined in the prompt (for example \"S1\").",
           "examples": [
-            "empathy_map_001"
+            "S1"
           ],
-          "title": "Empathy Map Id A",
+          "minLength": 1,
+          "title": "Segment Alias A",
           "type": "string"
         },
-        "empathy_map_id_b": {
-          "description": "Identifier of the second empathy map in the segment pair.",
+        "segment_alias_b": {
+          "description": "Alias of the second segment, exactly as defined in the prompt (for example \"S2\").",
           "examples": [
-            "empathy_map_002"
+            "S2"
           ],
-          "title": "Empathy Map Id B",
+          "minLength": 1,
+          "title": "Segment Alias B",
           "type": "string"
         }
       },
       "required": [
-        "empathy_map_id_a",
-        "empathy_map_id_b"
+        "segment_alias_a",
+        "segment_alias_b"
       ],
-      "title": "SegmentPair",
+      "title": "SegmentPairGenerated",
       "type": "object"
     },
     "SegmentRelationType": {
@@ -212,94 +197,62 @@
       "type": "string"
     }
   },
-  "description": "Represents a collection of patterns in a business context.",
+  "description": "Generation contract of Patterns: only what the LLM writes. Segments are\nreferenced by ALIASES defined in the prompt, never by real ids. Group ids\nare assigned by the system and `branch_decision` is derived from the number\nof groups (one group: unified_model, otherwise split_model); use\n`patterns_from_generated` to build the persisted Patterns.",
   "properties": {
-    "branch_decision": {
-      "$ref": "#/$defs/CanvasBranch",
-      "description": "The branch decision for the canvas in this patterns instance.",
-      "examples": [
-        "unified_model",
-        "split_model"
-      ]
-    },
     "groups": {
-      "description": "A list of canvas groups for the segments in this patterns instance.",
+      "description": "The canvas groups of the segments, by alias.",
       "examples": [
         [
           {
-            "empathy_map_ids": [
-              "empathy_map_001",
-              "empathy_map_002"
-            ],
-            "id": "canvas_group_001",
-            "relation_type": "multi_sided"
+            "relation_type": "multi_sided",
+            "segment_aliases": [
+              "S1",
+              "S2"
+            ]
           },
           {
-            "empathy_map_ids": [
-              "empathy_map_003",
-              "empathy_map_004"
-            ],
-            "id": "canvas_group_002",
-            "relation_type": "segmented"
+            "relation_type": "segmented",
+            "segment_aliases": [
+              "S3"
+            ]
           }
         ]
       ],
       "items": {
-        "$ref": "#/$defs/CanvasGroup"
+        "$ref": "#/$defs/CanvasGroupGenerated"
       },
       "minItems": 1,
       "title": "Groups",
       "type": "array"
     },
-    "id": {
-      "description": "Unique identifier for the patterns instance.",
-      "examples": [
-        "patterns_001"
-      ],
-      "title": "Id",
-      "type": "string"
-    },
     "pairwise_scores": {
-      "description": "A list of pairwise segment scores for the segments in this patterns instance.",
+      "description": "A list of pairwise segment scores, one per pair of segments, by alias.",
       "examples": [
         [
           {
             "conflict": -2,
             "segment_pair": {
-              "empathy_map_id_a": "empathy_map_001",
-              "empathy_map_id_b": "empathy_map_002"
+              "segment_alias_a": "S1",
+              "segment_alias_b": "S2"
             },
             "synergy": 4
-          },
-          {
-            "conflict": -1,
-            "segment_pair": {
-              "empathy_map_id_a": "empathy_map_001",
-              "empathy_map_id_b": "empathy_map_003"
-            },
-            "synergy": 5
           }
         ]
       ],
       "items": {
-        "$ref": "#/$defs/PairwiseSegmentScore"
+        "$ref": "#/$defs/PairwiseSegmentScoreGenerated"
       },
       "title": "Pairwise Scores",
       "type": "array"
     },
     "pattern_tags": {
-      "description": "A list of pattern tags for the business model patterns in this patterns instance.",
+      "description": "A list of pattern tags for the business model patterns, each pattern at most once.",
       "examples": [
         [
           {
-            "pattern": "free",
-            "rationale": "The business model is primarily driven by customer needs and feedback.",
-            "subtype": "freemium"
-          },
-          {
-            "pattern": "open_business_model",
-            "rationale": "The business model is primarily driven by external resources and partnerships.",
-            "subtype": "outside_in"
+            "pattern": "multi_sided_platform",
+            "rationale": "Two interdependent customer groups need each other.",
+            "subtype": null
           }
         ]
       ],
@@ -309,24 +262,13 @@
       "maxItems": 5,
       "title": "Pattern Tags",
       "type": "array"
-    },
-    "project_id": {
-      "description": "Identifier of the project this patterns instance is associated with.",
-      "examples": [
-        "project_001"
-      ],
-      "title": "Project Id",
-      "type": "string"
     }
   },
   "required": [
-    "id",
-    "project_id",
     "pairwise_scores",
     "groups",
-    "branch_decision",
     "pattern_tags"
   ],
-  "title": "Patterns",
+  "title": "PatternsGenerated",
   "type": "object"
 }

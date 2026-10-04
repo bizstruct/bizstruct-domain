@@ -112,34 +112,8 @@
       "type": "object"
     }
   },
-  "description": "Represents an error correction (ERRC) analysis for a business model canvas.",
+  "description": "Generation contract of Errc: only what the LLM writes. The system\nfields (canvas_id, from_version, id, result_canvas_id, swot_id, to_version) are added by Errc, which extends this model.",
   "properties": {
-    "canvas_id": {
-      "description": "Identifier of the canvas this ERRC analysis is associated with.",
-      "examples": [
-        "canvas_001"
-      ],
-      "title": "Canvas Id",
-      "type": "string"
-    },
-    "from_version": {
-      "description": "The version of the canvas from which this ERRC analysis is derived.",
-      "examples": [
-        1
-      ],
-      "maximum": 5,
-      "minimum": 1,
-      "title": "From Version",
-      "type": "integer"
-    },
-    "id": {
-      "description": "Unique identifier for the ERRC analysis.",
-      "examples": [
-        "errc_001"
-      ],
-      "title": "Id",
-      "type": "string"
-    },
     "moves": {
       "description": "The moves of the ERRC analysis: between 1 and 6.",
       "examples": [
@@ -169,43 +143,11 @@
       "minItems": 1,
       "title": "Moves",
       "type": "array"
-    },
-    "result_canvas_id": {
-      "description": "Identifier of the resulting canvas after applying this ERRC analysis.",
-      "examples": [
-        "canvas_002"
-      ],
-      "title": "Result Canvas Id",
-      "type": "string"
-    },
-    "swot_id": {
-      "description": "Identifier of the SWOT analysis whose signals informed these moves. SWOT always precedes ERRC in the swot_errc_cycle, so this is required, not optional.",
-      "examples": [
-        "swot_001"
-      ],
-      "title": "Swot Id",
-      "type": "string"
-    },
-    "to_version": {
-      "description": "The version of the canvas to which this ERRC analysis is applied.",
-      "examples": [
-        2
-      ],
-      "maximum": 5,
-      "minimum": 2,
-      "title": "To Version",
-      "type": "integer"
     }
   },
   "required": [
-    "moves",
-    "id",
-    "canvas_id",
-    "swot_id",
-    "from_version",
-    "to_version",
-    "result_canvas_id"
+    "moves"
   ],
-  "title": "Errc",
+  "title": "ErrcGenerated",
   "type": "object"
 }

@@ -1,23 +1,13 @@
 from pydantic import Field
-from .fields import SanitizedModel
+from .fields import FromGeneratedMixin, SanitizedModel
 
 from .enums import PricingTier
 
-class CustomerScenario(SanitizedModel):
+class CustomerScenarioGenerated(SanitizedModel):
     """
-        A customer scenario describes a specific situation or 
-        context in which a customer interacts with a product or service.
+        Generation contract of CustomerScenario: only what the LLM writes. The system
+        fields (empathy_map_id, id) are added by CustomerScenario, which extends this model.
     """
-    id: str = Field(
-        ...,
-        description="Unique identifier for the customer scenario.",
-        examples=["customer_scenario_001"],
-    )
-    empathy_map_id: str = Field(
-        ...,
-        description="Identifier of the empathy map this customer scenario is associated with.",
-        examples=["empathy_map_001"],
-    )
     situation_narrative: str = Field(
         ...,
         description="A narrative describing the situation or context of the customer scenario.",
@@ -48,5 +38,22 @@ class CustomerScenario(SanitizedModel):
         examples=[
             ["How can we improve the online ordering experience for busy professionals?"],
         ],
+    )
+
+
+class CustomerScenario(CustomerScenarioGenerated, FromGeneratedMixin):
+    """
+        A customer scenario describes a specific situation or 
+        context in which a customer interacts with a product or service.
+    """
+    id: str = Field(
+        ...,
+        description="Unique identifier for the customer scenario.",
+        examples=["customer_scenario_001"],
+    )
+    empathy_map_id: str = Field(
+        ...,
+        description="Identifier of the empathy map this customer scenario is associated with.",
+        examples=["empathy_map_001"],
     )
 
