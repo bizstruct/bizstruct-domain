@@ -41,6 +41,10 @@ from bizstruct_domain.schemas import (
     Swot,
     SwotGenerated,
     TeamInfo,
+    ProjectSnapshot,
+    QueueMessage,
+    StageEvent,
+    StageResult,
     ValidateModelResult,
 )
 from bizstruct_domain.stage_machine import STAGE_TRANSITIONS
@@ -84,6 +88,15 @@ GENERATION_MODELS = {
     "environment_scan_generated": EnvironmentScanGenerated,
 }
 
+# Wire contract between bizstruct-be and bizstruct-ml (ADR-0011); nested wire
+# models travel inside these via $defs.
+WIRE_MODELS = {
+    "queue_message": QueueMessage,
+    "stage_result": StageResult,
+    "project_snapshot": ProjectSnapshot,
+    "stage_event": StageEvent,
+}
+
 # Not a stage artifact: a side-channel task result (see schemas/validate_model.py).
 NON_ARTIFACT_MODELS = {
     "validate_model": ValidateModelResult,
@@ -103,7 +116,7 @@ def build_schemas() -> dict[str, str]:
     """File name -> exact file content, for every schema this script owns."""
     files: dict[str, str] = {}
 
-    models = {**ARTIFACT_MODELS, **GENERATION_MODELS, **NON_ARTIFACT_MODELS}
+    models = {**ARTIFACT_MODELS, **GENERATION_MODELS, **WIRE_MODELS, **NON_ARTIFACT_MODELS}
     for name, model in models.items():
         files[f"{name}.json"] = _dumps(model.model_json_schema())
 
