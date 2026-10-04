@@ -1,92 +1,155 @@
 {
-  "$defs": {
-    "EmpathyItem": {
-      "additionalProperties": false,
-      "description": "One observation within an empathy map section.",
-      "properties": {
-        "id": {
-          "description": "1-based position within its section.",
-          "title": "Id",
-          "type": "integer"
-        },
-        "text": {
-          "maxLength": 200,
-          "minLength": 10,
-          "title": "Text",
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "text"
-      ],
-      "title": "EmpathyItem",
-      "type": "object"
-    }
-  },
-  "additionalProperties": false,
-  "description": "Output of the `empathy_map` stage: the first block generated, with no\nprior context — see bizstruct_domain.chain.STAGES.",
   "properties": {
-    "does": {
-      "items": {
-        "$ref": "#/$defs/EmpathyItem"
-      },
-      "maxItems": 6,
-      "minItems": 3,
-      "title": "Does",
-      "type": "array"
-    },
-    "feels": {
-      "items": {
-        "$ref": "#/$defs/EmpathyItem"
-      },
-      "maxItems": 6,
-      "minItems": 3,
-      "title": "Feels",
-      "type": "array"
-    },
     "gains": {
+      "description": "The persona's gains or desires.",
+      "examples": [
+        [
+          "Wants apps that are easy to use"
+        ],
+        [
+          "Wants apps that provide value"
+        ],
+        [
+          "Wants apps that respect privacy"
+        ]
+      ],
       "items": {
-        "$ref": "#/$defs/EmpathyItem"
+        "type": "string"
       },
-      "maxItems": 6,
-      "minItems": 3,
+      "minItems": 1,
       "title": "Gains",
       "type": "array"
     },
-    "pains": {
+    "hears": {
+      "description": "What the persona hears from others.",
+      "examples": [
+        [
+          "Friends discussing new apps"
+        ],
+        [
+          "Podcasts about technology trends"
+        ]
+      ],
       "items": {
-        "$ref": "#/$defs/EmpathyItem"
+        "type": "string"
       },
-      "maxItems": 6,
-      "minItems": 3,
+      "minItems": 1,
+      "title": "Hears",
+      "type": "array"
+    },
+    "id": {
+      "description": "Unique identifier for the empathy map.",
+      "examples": [
+        "empathy_map_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "pains": {
+      "description": "The persona's pains or frustrations.",
+      "examples": [
+        [
+          "Overwhelmed by too many app choices"
+        ],
+        [
+          "Frustrated with apps that have poor user experience"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
       "title": "Pains",
       "type": "array"
     },
-    "says": {
+    "persona_demographics": {
+      "description": "Demographic information of the persona.",
+      "examples": [
+        "Age: 25-35, Urban, College-educated"
+      ],
+      "title": "Persona Demographics",
+      "type": "string"
+    },
+    "persona_name": {
+      "description": "Name of the persona for whom the empathy map is created.",
+      "examples": [
+        "Tech-Savvy Millennial"
+      ],
+      "title": "Persona Name",
+      "type": "string"
+    },
+    "project_id": {
+      "description": "Identifier of the project this empathy map belongs to.",
+      "examples": [
+        "project_001"
+      ],
+      "title": "Project Id",
+      "type": "string"
+    },
+    "says_and_does": {
+      "description": "What the persona says and does.",
+      "examples": [
+        [
+          "Shares tech news on social media"
+        ],
+        [
+          "Participates in online tech forums"
+        ]
+      ],
       "items": {
-        "$ref": "#/$defs/EmpathyItem"
+        "type": "string"
       },
-      "maxItems": 6,
-      "minItems": 3,
-      "title": "Says",
+      "minItems": 1,
+      "title": "Says And Does",
       "type": "array"
     },
-    "thinks": {
+    "sees": {
+      "description": "What the persona sees in their environment.",
+      "examples": [
+        [
+          "Advertisements for new apps and gadgets"
+        ],
+        [
+          "Friends using the latest technology"
+        ],
+        [
+          "Tech blogs and news articles"
+        ]
+      ],
       "items": {
-        "$ref": "#/$defs/EmpathyItem"
+        "type": "string"
       },
-      "maxItems": 6,
-      "minItems": 3,
-      "title": "Thinks",
+      "minItems": 1,
+      "title": "Sees",
+      "type": "array"
+    },
+    "thinks_and_feels": {
+      "description": "What the persona thinks and feels.",
+      "examples": [
+        [
+          "Excited about new technology"
+        ],
+        [
+          "Concerned about privacy and data security"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Thinks And Feels",
       "type": "array"
     }
   },
   "required": [
-    "says",
-    "thinks",
-    "does",
-    "feels",
+    "id",
+    "project_id",
+    "persona_name",
+    "persona_demographics",
+    "sees",
+    "hears",
+    "thinks_and_feels",
+    "says_and_does",
     "pains",
     "gains"
   ],

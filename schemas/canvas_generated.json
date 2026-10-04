@@ -1,0 +1,233 @@
+{
+  "$defs": {
+    "CanvasCardDraft": {
+      "description": "A card as the generator produces it: text only. The card id and\nerrc_marker are assigned by the backend when it persists the card\nas a CanvasCard, so the generator never invents identifiers.",
+      "properties": {
+        "text": {
+          "description": "The text of the card: one short, concrete idea.",
+          "examples": [
+            "Weekly box of seasonal produce from local farms"
+          ],
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "CanvasCardDraft",
+      "type": "object"
+    },
+    "CanvasSectionsGenerated": {
+      "description": "The nine canvas sections as the generator must produce them. Unlike\nCanvasSections (the persisted shape, which accepts any number of\ncards), every section here is bound to 2-4 cards in the schema\nitself, so the bound reaches the model through response_format\ninstead of being checked only after the fact.",
+      "properties": {
+        "channels": {
+          "description": "Cards for the Channels section: between 2 and 4 short, distinct cards, one idea per card.",
+          "examples": [
+            [
+              {
+                "text": "Mobile app for ordering and tracking"
+              },
+              {
+                "text": "Pick-up points at farmers' markets"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCardDraft"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Channels",
+          "type": "array"
+        },
+        "cost_structure": {
+          "description": "Cards for the Cost Structure section: between 2 and 4 short, distinct cards, one idea per card.",
+          "examples": [
+            [
+              {
+                "text": "Courier and fuel costs"
+              },
+              {
+                "text": "Platform development and hosting"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCardDraft"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Cost Structure",
+          "type": "array"
+        },
+        "customer_relationships": {
+          "description": "Cards for the Customer Relationships section: between 2 and 4 short, distinct cards, one idea per card.",
+          "examples": [
+            [
+              {
+                "text": "Self-service subscription management"
+              },
+              {
+                "text": "Direct messaging with the farm"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCardDraft"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Customer Relationships",
+          "type": "array"
+        },
+        "customer_segments": {
+          "description": "Cards for the Customer Segments section: between 2 and 4 short, distinct cards, one idea per card.",
+          "examples": [
+            [
+              {
+                "text": "Health-conscious urban households"
+              },
+              {
+                "text": "Small restaurants sourcing locally"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCardDraft"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Customer Segments",
+          "type": "array"
+        },
+        "key_activities": {
+          "description": "Cards for the Key Activities section: between 2 and 4 short, distinct cards, one idea per card.",
+          "examples": [
+            [
+              {
+                "text": "Coordinating harvest and delivery schedules"
+              },
+              {
+                "text": "Maintaining the ordering app"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCardDraft"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Key Activities",
+          "type": "array"
+        },
+        "key_partnerships": {
+          "description": "Cards for the Key Partnerships section: between 2 and 4 short, distinct cards, one idea per card.",
+          "examples": [
+            [
+              {
+                "text": "Local farms and cooperatives"
+              },
+              {
+                "text": "Last-mile courier companies"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCardDraft"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Key Partnerships",
+          "type": "array"
+        },
+        "key_resources": {
+          "description": "Cards for the Key Resources section: between 2 and 4 short, distinct cards, one idea per card.",
+          "examples": [
+            [
+              {
+                "text": "Network of partner farms"
+              },
+              {
+                "text": "Delivery logistics platform"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCardDraft"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Key Resources",
+          "type": "array"
+        },
+        "revenue_streams": {
+          "description": "Cards for the Revenue Streams section: between 2 and 4 short, distinct cards, one idea per card.",
+          "examples": [
+            [
+              {
+                "text": "Monthly subscription fee"
+              },
+              {
+                "text": "Delivery fee per order"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCardDraft"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Revenue Streams",
+          "type": "array"
+        },
+        "value_propositions": {
+          "description": "Cards for the Value Propositions section: between 2 and 4 short, distinct cards, one idea per card.",
+          "examples": [
+            [
+              {
+                "text": "Weekly box of seasonal produce from local farms"
+              },
+              {
+                "text": "Delivery slot chosen by the customer"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCardDraft"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Value Propositions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "value_propositions",
+        "customer_segments",
+        "channels",
+        "customer_relationships",
+        "revenue_streams",
+        "key_resources",
+        "key_activities",
+        "key_partnerships",
+        "cost_structure"
+      ],
+      "title": "CanvasSectionsGenerated",
+      "type": "object"
+    }
+  },
+  "description": "Generation-time contract for the canvas stage: the response_format\nbizstruct-ml asks the model for. It carries content only; group_id,\nempathy_map_ids, version and card ids are known to or assigned by\nthe orchestrator, not generated. The persisted shape is Canvas.",
+  "properties": {
+    "sections": {
+      "$ref": "#/$defs/CanvasSectionsGenerated",
+      "description": "The nine canvas sections, each with 2-4 cards."
+    }
+  },
+  "required": [
+    "sections"
+  ],
+  "title": "CanvasGenerated",
+  "type": "object"
+}

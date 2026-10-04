@@ -1,12 +1,11 @@
 """bizstruct-domain: single source of truth for the BizStruct domain model.
 
-Re-exports enums, generation-chain definitions, and block models so
-consumers (bizstruct-ml, bizstruct-be) can `import bizstruct_domain as bd`.
+Re-exports the BMG schemas (`bizstruct_domain.schemas`) and the stage state
+machine so consumers (bizstruct-ml, bizstruct-be) can `import bizstruct_domain as bd`.
 """
 
-from bizstruct_domain import enums
-from bizstruct_domain.chain import STAGES, Stage, StageMode, stages_for_mode, topological_order
-from bizstruct_domain.enums import StageAction, StageErrorCode, StageStatus
+from bizstruct_domain import schemas
+from bizstruct_domain.schemas import *  # noqa: F401,F403
 from bizstruct_domain.stage_machine import (
     STAGE_IDS,
     STAGE_TRANSITIONS,
@@ -16,28 +15,9 @@ from bizstruct_domain.stage_machine import (
     is_valid_transition,
     ready_stages,
 )
-from bizstruct_domain.blocks.architecture import Architecture
-from bizstruct_domain.blocks.empathy_map import EmpathyMap
-from bizstruct_domain.blocks.scenario import Scenario
-from bizstruct_domain.blocks.pitch import Pitch
-from bizstruct_domain.blocks.hypotheses import Hypothesis, Hypotheses
-from bizstruct_domain.blocks.models_options import BusinessModelOption, ModelsOptions
-from bizstruct_domain.blocks.canvas import CanvasCard, Canvas, CanvasGenerated
-from bizstruct_domain.blocks.what_if import ERRCMove, WhatIfAlternative, WhatIf, WhatIfGenerated
-from bizstruct_domain.sanitize import SanitizedModel
-from bizstruct_domain.validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
-    "enums",
-    "SanitizedModel",
-    "STAGES",
-    "Stage",
-    "StageMode",
-    "stages_for_mode",
-    "topological_order",
-    "StageAction",
-    "StageErrorCode",
-    "StageStatus",
+    *schemas.__all__,
     "STAGE_IDS",
     "STAGE_TRANSITIONS",
     "StageLike",
@@ -45,23 +25,6 @@ __all__ = [
     "dependents_of",
     "is_valid_transition",
     "ready_stages",
-    "Architecture",
-    "EmpathyMap",
-    "Scenario",
-    "Pitch",
-    "Hypothesis",
-    "Hypotheses",
-    "BusinessModelOption",
-    "ModelsOptions",
-    "CanvasCard",
-    "Canvas",
-    "CanvasGenerated",
-    "ERRCMove",
-    "WhatIfAlternative",
-    "WhatIf",
-    "WhatIfGenerated",
-    "FieldFeedback",
-    "ValidateModelResult",
 ]
 
-__version__ = "0.10.0"
+__version__ = "0.12.0"

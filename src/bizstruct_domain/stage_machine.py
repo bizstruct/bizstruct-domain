@@ -1,20 +1,34 @@
-"""Stage state machine: allowed transitions, dependents, and user actions.
+"""Stage state machine: allowed transitions, dependents, readiness and user actions.
 
 Single source of truth for how a stage's `StageStatus` may change (thesis
-§2.3.4, decisions D17, D26). Consumers (bizstruct-be, bizstruct-fe via
-schemas/stage_states.json) must read the rules from here rather than
-re-deriving them.
+§2.3.4, decisions D17, D26) and for which stages can start. Consumers
+(bizstruct-be, bizstruct-fe via schemas/stage_states.json) must read the
+rules from here rather than re-deriving them. The stage graph itself comes
+from `bizstruct_domain.schemas.STAGE_REGISTRY`.
 """
 
 from collections.abc import Iterable
 from typing import Protocol
 
-from bizstruct_domain.chain import STAGES
-from bizstruct_domain.enums import StageAction, StageErrorCode, StageStatus
+from bizstruct_domain.schemas.chain import STAGE_REGISTRY
+from bizstruct_domain.schemas.enums import Stage, StageAction, StageErrorCode, StageStatus
 
-STAGE_IDS: tuple[str, ...] = tuple(stage.id for stage in STAGES)
+__all__ = [
+    "STAGE_IDS",
+    "STAGE_TRANSITIONS",
+    "StageAction",
+    "StageErrorCode",
+    "StageLike",
+    "StageStatus",
+    "available_actions",
+    "dependents_of",
+    "is_valid_transition",
+    "ready_stages",
+]
 
-_DEPENDS_ON: dict[str, tuple[str, ...]] = {stage.id: stage.depends_on for stage in STAGES}
+# Graph order (every stage after all its inputs). `Stage` is a StrEnum, so
+# members compare and hash equal to their plain string values.
+STAGE_IDS: tuple[Stage, ...] = tuple(STAGE_REGISTRY.topological_order())
 
 
 class StageLike(Protocol):
@@ -26,6 +40,7 @@ class StageLike(Protocol):
 
     type: str
     status: StageStatus
+
 
 # The 16 allowed (from, to) transitions, in a fixed order so exports (e.g.
 # schemas/stage_states.json) are deterministic. `needs_retry -> error` does
@@ -41,8 +56,8 @@ STAGE_TRANSITIONS: tuple[tuple[StageStatus, StageStatus], ...] = (
     (StageStatus.RUNNING, StageStatus.ERROR),  # generation failed
     (StageStatus.RUNNING, StageStatus.PENDING),  # upstream reset
     # consistency_check
-    (StageStatus.CONSISTENCY_CHECK, StageStatus.DONE),  # no violations, agent mode
-    (StageStatus.CONSISTENCY_CHECK, StageStatus.AWAITING_DECISION),  # no violations, or retry limit reached with violations attached
+    (StageStatus.CONSISTENCY_CHECK, StageStatus.DONE),  # no violations, no user decision needed
+    (StageStatus.CONSISTENCY_CHECK, StageStatus.AWAITING_DECISION),  # no violations and a user decision is wanted, or retry limit reached with violations attached
     (StageStatus.CONSISTENCY_CHECK, StageStatus.NEEDS_RETRY),  # violation in this stage
     (StageStatus.CONSISTENCY_CHECK, StageStatus.PENDING),  # violation in an upstream stage
     (StageStatus.CONSISTENCY_CHECK, StageStatus.ERROR),  # check failed
@@ -67,69 +82,112 @@ _ACTIONS_BY_STATUS: dict[StageStatus, tuple[StageAction, ...]] = {
 }
 
 
+def _parse_stage(stage_id: str) -> Stage:
+    try:
+        return Stage(stage_id)
+    except ValueError:
+        raise ValueError(f"unknown stage id: '{stage_id}'") from None
+
+
 def is_valid_transition(current: StageStatus, target: StageStatus) -> bool:
     """Whether a stage may move from `current` to `target`."""
     return (current, target) in _STAGE_TRANSITIONS_SET
 
 
-def dependents_of(stage_id: str) -> tuple[str, ...]:
+def dependents_of(stage_id: str) -> tuple[Stage, ...]:
     """The transitive dependents of `stage_id`, in graph order.
 
-    A dependent is any stage whose `depends_on` includes `stage_id`,
-    directly or through another dependent. `stage_id` itself is excluded.
-    """
-    if stage_id not in STAGE_IDS:
-        raise ValueError(f"unknown stage id: '{stage_id}'")
-
-    direct_dependents: dict[str, set[str]] = {stage.id: set() for stage in STAGES}
-    for stage in STAGES:
-        for dep in stage.depends_on:
-            if dep in direct_dependents:
-                direct_dependents[dep].add(stage.id)
-
-    dependents: set[str] = set()
-    frontier = {stage_id}
-    while frontier:
-        next_frontier: set[str] = set()
-        for current_id in frontier:
-            for dependent_id in direct_dependents.get(current_id, ()):
-                if dependent_id not in dependents:
-                    dependents.add(dependent_id)
-                    next_frontier.add(dependent_id)
-        frontier = next_frontier
-
-    return tuple(stage.id for stage in STAGES if stage.id in dependents)
-
-
-def ready_stages(stages: Iterable[StageLike]) -> tuple[str, ...]:
-    """Stage ids that are `pending` with every direct dependency `done`.
-
-    The orchestration-facing counterpart to `dependents_of`: given the
-    current status of every stage in a project, which ones can start
-    right now (D17, D19, D29). Retry state, gates, and *why* a stage is
-    pending are the caller's business, not this function's.
-
-    A dependency that is not present in `stages` is treated as not done
-    (not raised on), so this is safe to call with a partial stage list.
-
-    Returns stage ids in domain graph order, not input order.
+    A dependent is any stage whose `depends_on` or `optional_depends_on`
+    includes `stage_id`, directly or through another dependent. Optional
+    edges count here because this answers "which results may be stale if
+    `stage_id` changes": a stage that consumed an optional input is stale
+    when that input changes. Whether the consumer actually used the optional
+    input in its last run is bizstruct-be's knowledge, not this package's.
+    `stage_id` itself is excluded.
 
     Raises:
-        ValueError: If a stage's `type` is not a known stage id.
+        ValueError: If `stage_id` is not a known stage id.
     """
-    status_by_id: dict[str, StageStatus] = {}
-    for stage in stages:
-        if stage.type not in _DEPENDS_ON:
-            raise ValueError(f"unknown stage id: '{stage.type}'")
-        status_by_id[stage.type] = stage.status
+    start = _parse_stage(stage_id)
 
-    ready = {
-        stage_id
-        for stage_id, status in status_by_id.items()
-        if status == StageStatus.PENDING
-        and all(status_by_id.get(dep) == StageStatus.DONE for dep in _DEPENDS_ON[stage_id])
-    }
-    return tuple(stage_id for stage_id in STAGE_IDS if stage_id in ready)
+    direct_dependents: dict[Stage, set[Stage]] = {s: set() for s in STAGE_IDS}
+    for stage, definition in STAGE_REGISTRY.stages.items():
+        for dep in (*definition.depends_on, *definition.optional_depends_on):
+            direct_dependents[dep].add(stage)
+
+    dependents: set[Stage] = set()
+    frontier = {start}
+    while frontier:
+        next_frontier: set[Stage] = set()
+        for current in frontier:
+            for dependent in direct_dependents[current]:
+                if dependent not in dependents:
+                    dependents.add(dependent)
+                    next_frontier.add(dependent)
+        frontier = next_frontier
+
+    return tuple(s for s in STAGE_IDS if s in dependents)
+
+
+def ready_stages(
+    stages: Iterable[StageLike],
+    enabled_optional: set[Stage] | None = None,
+) -> tuple[Stage, ...]:
+    """Stage types that can start now, given the project's stage rows.
+
+    Rows may share a type when the stage allows multiple instances (e.g.
+    one empathy_map per segment). Readiness is decided per *type*:
+
+    - A type is *done* iff it has at least one row and every one of its rows
+      is `done`.
+    - A type is *ready* iff it has at least one `pending` row and every
+      hard dependency (`depends_on`) type is done.
+    - An optional stage (`is_optional`) is only ready if it is in
+      `enabled_optional`.
+    - An optional dependency (`optional_depends_on`) blocks its consumer only
+      while it is enabled and not done. An enabled optional stage that has no
+      row yet is not done, so it blocks its consumer.
+
+    This is deliberately conservative: the graph has no instance links, so
+    per-segment progress cannot be expressed. With one `empathy_map` done and
+    another still pending, `empathy_map` is not done and nothing downstream
+    of it becomes ready, even though a segment-level pipeline could proceed.
+    Which rows belong together, retry state and gates are the caller's
+    business (bizstruct-be).
+
+    Returns types in graph order, not input order. A dependency type that has
+    no rows is treated as not done (so a partial list is safe).
+
+    Raises:
+        ValueError: If a row's `type` is not a known stage id, or
+            `enabled_optional` contains a stage that is not optional.
+    """
+    enabled = set(enabled_optional or ())
+    not_optional = {s for s in enabled if not STAGE_REGISTRY.stages[s].is_optional}
+    if not_optional:
+        raise ValueError(f"enabled_optional contains non-optional stages: {not_optional}")
+
+    statuses: dict[Stage, list[StageStatus]] = {}
+    for row in stages:
+        statuses.setdefault(_parse_stage(row.type), []).append(row.status)
+
+    def is_done(stage: Stage) -> bool:
+        rows = statuses.get(stage)
+        return bool(rows) and all(s == StageStatus.DONE for s in rows)
+
+    ready: set[Stage] = set()
+    for stage, rows in statuses.items():
+        definition = STAGE_REGISTRY.stages[stage]
+        if StageStatus.PENDING not in rows:
+            continue
+        if definition.is_optional and stage not in enabled:
+            continue
+        if not all(is_done(dep) for dep in definition.depends_on):
+            continue
+        if not all(is_done(dep) for dep in definition.optional_depends_on if dep in enabled):
+            continue
+        ready.add(stage)
+    return tuple(s for s in STAGE_IDS if s in ready)
 
 
 def available_actions(status: StageStatus) -> tuple[StageAction, ...]:

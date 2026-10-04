@@ -1,23 +1,39 @@
 {
   "$defs": {
     "CanvasCard": {
-      "additionalProperties": false,
-      "description": "A single card within one Business Model Canvas section.",
+      "description": "Represents a card in a business canvas, which can be used to capture key information or insights.",
       "properties": {
+        "errc_marker": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ERRCActionType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The ERRC action type associated with this canvas card, if applicable.",
+          "examples": [
+            "eliminate",
+            "reduce",
+            "raise",
+            "create"
+          ]
+        },
         "id": {
-          "format": "uuid",
+          "description": "Unique identifier for the canvas card.",
+          "examples": [
+            "canvas_card_001"
+          ],
           "title": "Id",
           "type": "string"
         },
-        "is_ai_generated": {
-          "default": true,
-          "description": "True if the LLM generated this card. Must be set to False whenever a user adds a card or edits an existing one's text.",
-          "title": "Is Ai Generated",
-          "type": "boolean"
-        },
         "text": {
-          "maxLength": 260,
-          "minLength": 5,
+          "description": "The text of the canvas card.",
+          "examples": [
+            "This card describes the value proposition for our new product."
+          ],
           "title": "Text",
           "type": "string"
         }
@@ -28,75 +44,342 @@
       ],
       "title": "CanvasCard",
       "type": "object"
+    },
+    "CanvasSections": {
+      "description": "Represents the sections of a business canvas, each containing a list of canvas cards.",
+      "properties": {
+        "channels": {
+          "description": "A list of canvas cards for the Channels section.",
+          "examples": [
+            [
+              {
+                "errc_marker": "raise",
+                "id": "canvas_card_004",
+                "text": "We use social media to reach our target audience."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCard"
+          },
+          "title": "Channels",
+          "type": "array"
+        },
+        "cost_structure": {
+          "description": "A list of canvas cards for the Cost Structure section.",
+          "examples": [
+            [
+              {
+                "errc_marker": "reduce",
+                "id": "canvas_card_010",
+                "text": "Our cost structure is optimized for scalability."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCard"
+          },
+          "title": "Cost Structure",
+          "type": "array"
+        },
+        "customer_relationships": {
+          "description": "A list of canvas cards for the Customer Relationships section.",
+          "examples": [
+            [
+              {
+                "errc_marker": "raise",
+                "id": "canvas_card_005",
+                "text": "We provide personalized support to our customers."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCard"
+          },
+          "title": "Customer Relationships",
+          "type": "array"
+        },
+        "customer_segments": {
+          "description": "A list of canvas cards for the Customer Segments section.",
+          "examples": [
+            [
+              {
+                "errc_marker": "raise",
+                "id": "canvas_card_003",
+                "text": "Our target customer is a tech-savvy professional."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCard"
+          },
+          "title": "Customer Segments",
+          "type": "array"
+        },
+        "key_activities": {
+          "description": "A list of canvas cards for the Key Activities section.",
+          "examples": [
+            [
+              {
+                "errc_marker": "raise",
+                "id": "canvas_card_008",
+                "text": "Our key activity is continuous product development."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCard"
+          },
+          "title": "Key Activities",
+          "type": "array"
+        },
+        "key_partnerships": {
+          "description": "A list of canvas cards for the Key Partnerships section.",
+          "examples": [
+            [
+              {
+                "errc_marker": "raise",
+                "id": "canvas_card_009",
+                "text": "We partner with industry leaders to enhance our offerings."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCard"
+          },
+          "title": "Key Partnerships",
+          "type": "array"
+        },
+        "key_resources": {
+          "description": "A list of canvas cards for the Key Resources section.",
+          "examples": [
+            [
+              {
+                "errc_marker": "raise",
+                "id": "canvas_card_007",
+                "text": "Our key resource is our proprietary technology."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCard"
+          },
+          "title": "Key Resources",
+          "type": "array"
+        },
+        "revenue_streams": {
+          "description": "A list of canvas cards for the Revenue Streams section.",
+          "examples": [
+            [
+              {
+                "errc_marker": "raise",
+                "id": "canvas_card_006",
+                "text": "We generate revenue through subscription models."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCard"
+          },
+          "title": "Revenue Streams",
+          "type": "array"
+        },
+        "value_propositions": {
+          "description": "A list of canvas cards for the Value Propositions section.",
+          "examples": [
+            [
+              {
+                "errc_marker": "create",
+                "id": "canvas_card_001",
+                "text": "Our product offers a unique solution to a common problem."
+              },
+              {
+                "errc_marker": "eliminate",
+                "id": "canvas_card_002",
+                "text": "We eliminate unnecessary features to simplify the user experience."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/CanvasCard"
+          },
+          "title": "Value Propositions",
+          "type": "array"
+        }
+      },
+      "title": "CanvasSections",
+      "type": "object"
+    },
+    "ERRCActionType": {
+      "description": "An enumeration of the different types of ERRC actions.",
+      "enum": [
+        "eliminate",
+        "reduce",
+        "raise",
+        "create"
+      ],
+      "title": "ERRCActionType",
+      "type": "string"
     }
   },
-  "additionalProperties": false,
-  "description": "The nine Business Model Canvas sections, as persisted and edited via\nCRUD. No per-section cardinality constraint — see module docstring.",
+  "description": "Represents a business canvas, which is a visual representation of key elements of a business model.",
   "properties": {
-    "channels": {
+    "empathy_map_ids": {
+      "description": "A list of empathy map identifiers associated with this canvas.",
+      "examples": [
+        [
+          "empathy_map_001",
+          "empathy_map_002"
+        ]
+      ],
       "items": {
-        "$ref": "#/$defs/CanvasCard"
+        "type": "string"
       },
-      "title": "Channels",
+      "minItems": 1,
+      "title": "Empathy Map Ids",
       "type": "array"
     },
-    "cost_structure": {
-      "items": {
-        "$ref": "#/$defs/CanvasCard"
-      },
-      "title": "Cost Structure",
-      "type": "array"
+    "group_id": {
+      "description": "Identifier of the canvas group this canvas is associated with.",
+      "examples": [
+        "canvas_group_001"
+      ],
+      "title": "Group Id",
+      "type": "string"
     },
-    "customer_relationships": {
-      "items": {
-        "$ref": "#/$defs/CanvasCard"
-      },
-      "title": "Customer Relationships",
-      "type": "array"
+    "id": {
+      "description": "Unique identifier for the canvas.",
+      "examples": [
+        "canvas_001"
+      ],
+      "title": "Id",
+      "type": "string"
     },
-    "customer_segments": {
-      "items": {
-        "$ref": "#/$defs/CanvasCard"
-      },
-      "title": "Customer Segments",
-      "type": "array"
+    "is_final": {
+      "default": false,
+      "description": "Indicates whether this canvas is the final version.",
+      "examples": [
+        true,
+        false
+      ],
+      "title": "Is Final",
+      "type": "boolean"
     },
-    "key_activities": {
-      "items": {
-        "$ref": "#/$defs/CanvasCard"
-      },
-      "title": "Key Activities",
-      "type": "array"
+    "is_generated": {
+      "default": true,
+      "description": "Informational. True when this version is exactly what the generator produced; False once a person edited it or ERRC moves were applied. No validation depends on it: the 2-4 cards per section bound applies to CanvasGenerated only.",
+      "examples": [
+        true,
+        false
+      ],
+      "title": "Is Generated",
+      "type": "boolean"
     },
-    "key_partners": {
-      "items": {
-        "$ref": "#/$defs/CanvasCard"
-      },
-      "title": "Key Partners",
-      "type": "array"
+    "previous_version_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Identifier of the previous version of this canvas, if applicable.",
+      "examples": [
+        "canvas_000"
+      ],
+      "title": "Previous Version Id"
     },
-    "key_resources": {
-      "items": {
-        "$ref": "#/$defs/CanvasCard"
-      },
-      "title": "Key Resources",
-      "type": "array"
+    "sections": {
+      "$ref": "#/$defs/CanvasSections",
+      "description": "The sections of the canvas, each containing a list of canvas cards.",
+      "examples": [
+        {
+          "channels": [
+            {
+              "errc_marker": "raise",
+              "id": "canvas_card_004",
+              "text": "We use social media to reach our target audience."
+            }
+          ],
+          "cost_structure": [
+            {
+              "errc_marker": "reduce",
+              "id": "canvas_card_010",
+              "text": "Our cost structure is optimized for scalability."
+            }
+          ],
+          "customer_relationships": [
+            {
+              "errc_marker": "raise",
+              "id": "canvas_card_005",
+              "text": "We provide personalized support to our customers."
+            }
+          ],
+          "customer_segments": [
+            {
+              "errc_marker": "raise",
+              "id": "canvas_card_003",
+              "text": "Our target customer is a tech-savvy professional."
+            }
+          ],
+          "key_activities": [
+            {
+              "errc_marker": "raise",
+              "id": "canvas_card_008",
+              "text": "Our key activity is continuous product development."
+            }
+          ],
+          "key_partnerships": [
+            {
+              "errc_marker": "raise",
+              "id": "canvas_card_009",
+              "text": "We partner with industry leaders to enhance our offerings."
+            }
+          ],
+          "key_resources": [
+            {
+              "errc_marker": "raise",
+              "id": "canvas_card_007",
+              "text": "Our key resource is our proprietary technology."
+            }
+          ],
+          "revenue_streams": [
+            {
+              "errc_marker": "raise",
+              "id": "canvas_card_006",
+              "text": "We generate revenue through subscription models."
+            }
+          ],
+          "value_propositions": [
+            {
+              "errc_marker": "create",
+              "id": "canvas_card_001",
+              "text": "Our product offers a unique solution to a common problem."
+            }
+          ]
+        }
+      ]
     },
-    "revenue_streams": {
-      "items": {
-        "$ref": "#/$defs/CanvasCard"
-      },
-      "title": "Revenue Streams",
-      "type": "array"
-    },
-    "value_propositions": {
-      "items": {
-        "$ref": "#/$defs/CanvasCard"
-      },
-      "title": "Value Propositions",
-      "type": "array"
+    "version": {
+      "description": "The version number of the canvas.",
+      "examples": [
+        1
+      ],
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
     }
   },
+  "required": [
+    "id",
+    "group_id",
+    "empathy_map_ids",
+    "version",
+    "sections"
+  ],
   "title": "Canvas",
   "type": "object"
 }

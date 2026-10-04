@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR-0008](0008-bmg-domain-rewrite.md) — stage graph rewritten to follow BMG; `StageMode` removed.
 
 ## Context
 

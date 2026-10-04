@@ -1,0 +1,564 @@
+{
+  "$defs": {
+    "SwotAxisStatement": {
+      "description": "Represents a statement for a SWOT axis (Strengths, Weaknesses, Opportunities, Threats).",
+      "properties": {
+        "certainty": {
+          "description": "A score representing the certainty of the statement, ranging from 1 (least certain) to 10 (most certain).",
+          "examples": [
+            3,
+            7,
+            10
+          ],
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Certainty",
+          "type": "integer"
+        },
+        "importance": {
+          "description": "A score representing the importance of the statement, ranging from 1 (least important) to 10 (most important).",
+          "examples": [
+            2,
+            5,
+            9
+          ],
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Importance",
+          "type": "integer"
+        },
+        "negative_statement": {
+          "description": "A statement describing a negative aspect (Weakness or Threat).",
+          "examples": [
+            "Our production costs are higher than the industry average."
+          ],
+          "title": "Negative Statement",
+          "type": "string"
+        },
+        "positive_statement": {
+          "description": "A statement describing a positive aspect (Strength or Opportunity).",
+          "examples": [
+            "Our product has a unique feature that competitors lack."
+          ],
+          "title": "Positive Statement",
+          "type": "string"
+        },
+        "score": {
+          "description": "A score representing the impact of the statement, from -5 (very negative) to 5 (very positive). A forced choice: there is no neutral 0 (the book's bipolar scale), so every statement takes a side.",
+          "enum": [
+            -5,
+            -4,
+            -3,
+            -2,
+            -1,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "examples": [
+            -5,
+            -1,
+            1,
+            5
+          ],
+          "title": "Score",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "positive_statement",
+        "negative_statement",
+        "score",
+        "importance",
+        "certainty"
+      ],
+      "title": "SwotAxisStatement",
+      "type": "object"
+    },
+    "SwotCluster": {
+      "description": "An enumeration of the different clusters in a SWOT analysis.",
+      "enum": [
+        "value_proposition",
+        "cost_revenue",
+        "infrastructure",
+        "customer_interface"
+      ],
+      "title": "SwotCluster",
+      "type": "string"
+    },
+    "SwotClusterResult": {
+      "description": "Represents the result of a SWOT analysis for a specific cluster.",
+      "properties": {
+        "axis_statements": {
+          "description": "Statements for the SWOT axis within the specified cluster: between 2 and 5.",
+          "examples": [
+            [
+              {
+                "certainty": 7,
+                "importance": 8,
+                "negative_statement": "Our production costs are higher than the industry average.",
+                "positive_statement": "Our product has a unique feature that competitors lack.",
+                "score": 4
+              },
+              {
+                "certainty": 8,
+                "importance": 6,
+                "negative_statement": "Our customer support response time is slower than desired.",
+                "positive_statement": "We have a strong brand reputation in the market.",
+                "score": 3
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/SwotAxisStatement"
+          },
+          "maxItems": 5,
+          "minItems": 2,
+          "title": "Axis Statements",
+          "type": "array"
+        },
+        "cluster": {
+          "$ref": "#/$defs/SwotCluster",
+          "description": "The cluster of the SWOT analysis(e.g., Value Proposition, Cost & Revenue, Infrastructure, Customer Interface).",
+          "examples": [
+            "value_proposition"
+          ]
+        },
+        "opportunities": {
+          "description": "Identified opportunities for the specified cluster, each scored 1-5: between 1 and 7.",
+          "examples": [
+            [
+              {
+                "score": 4,
+                "text": "Expand into new geographic markets."
+              },
+              {
+                "score": 3,
+                "text": "Develop strategic partnerships with complementary businesses."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/SwotOpportunity"
+          },
+          "maxItems": 7,
+          "minItems": 1,
+          "title": "Opportunities",
+          "type": "array"
+        },
+        "threats": {
+          "description": "One rating per threat question of this cluster's catalog (2, 5, 7 or 7 questions depending on the cluster), each scored 1-5. Exactly the cluster's catalog, each question once, in any order.",
+          "examples": [
+            [
+              {
+                "question": "substitutes_available",
+                "score": 3,
+                "text": "Example assessment of the 'substitutes_available' threat."
+              },
+              {
+                "question": "competitor_price_or_value_pressure",
+                "score": 3,
+                "text": "Example assessment of the 'competitor_price_or_value_pressure' threat."
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/SwotThreat"
+          },
+          "maxItems": 7,
+          "minItems": 2,
+          "title": "Threats",
+          "type": "array"
+        }
+      },
+      "required": [
+        "cluster",
+        "axis_statements",
+        "opportunities",
+        "threats"
+      ],
+      "title": "SwotClusterResult",
+      "type": "object"
+    },
+    "SwotOpportunity": {
+      "description": "Represents a single Opportunity, per the BMG document's Evaluating\nBusiness Models format (pp. 220-223): each generative question is\npaired with a 1-5 scale. The book gives no caption for this scale; the\nworking interpretation used here is \"how strongly this applies to this\nmodel\" (1 = barely, 5 = very strongly).",
+      "properties": {
+        "score": {
+          "description": "How strongly this applies to this model: 1 (barely) to 5 (very strongly). Interpretation is a project decision; the book's pages give the scale with no caption.",
+          "examples": [
+            2,
+            3,
+            5
+          ],
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Score",
+          "type": "integer"
+        },
+        "text": {
+          "description": "The opportunity statement (typically phrased as, or derived from, one of the book's generative questions).",
+          "examples": [
+            "Could we generate recurring revenues by converting products into services?"
+          ],
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "score"
+      ],
+      "title": "SwotOpportunity",
+      "type": "object"
+    },
+    "SwotThreat": {
+      "description": "Represents the rating of ONE question of the fixed threat catalog\n(`ThreatQuestion`). Every SWOT iteration rates the same 21 questions, so\nthe sum of the scores is comparable between iterations. Same 1-5 scale\nand working interpretation as `SwotOpportunity`.",
+      "properties": {
+        "question": {
+          "$ref": "#/$defs/ThreatQuestion",
+          "description": "Which catalog threat this rates. Each cluster must rate exactly the questions of its own catalog, once each.",
+          "examples": [
+            "substitutes_available"
+          ]
+        },
+        "score": {
+          "description": "How strongly this threat applies to this model: 1 (barely) to 5 (very strongly). Interpretation is a project decision; the book's pages give the scale with no caption.",
+          "examples": [
+            2,
+            3,
+            5
+          ],
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Score",
+          "type": "integer"
+        },
+        "text": {
+          "description": "How this threat applies to this business model, in one or two sentences.",
+          "examples": [
+            "Customers can switch to a cheaper app that covers the same basic need."
+          ],
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "question",
+        "text",
+        "score"
+      ],
+      "title": "SwotThreat",
+      "type": "object"
+    },
+    "ThreatQuestion": {
+      "description": "The fixed catalog of 21 threats rated in every SWOT iteration, so the\nthreat part of `weighted_weakness_threat_score` always sums over the\nsame questions (range 21..105) and is comparable between iterations.\nThe values are stable contract ids. The comments are paraphrases, one\nper question, of the threat the id stands for.",
+      "enum": [
+        "substitutes_available",
+        "competitor_price_or_value_pressure",
+        "margin_pressure",
+        "revenue_concentration",
+        "revenue_stream_decline",
+        "cost_unpredictability",
+        "cost_outgrowing_revenue",
+        "resource_supply_disruption",
+        "resource_quality_risk",
+        "key_activity_disruption",
+        "activity_quality_risk",
+        "partner_loss",
+        "partner_defection_to_competitors",
+        "partner_over_dependence",
+        "market_saturation",
+        "market_share_pressure",
+        "customer_defection",
+        "competition_intensifying",
+        "channel_threat_from_competitors",
+        "channel_irrelevance",
+        "relationship_deterioration"
+      ],
+      "title": "ThreatQuestion",
+      "type": "string"
+    }
+  },
+  "description": "Represents a SWOT analysis for a business model, organized by clusters.",
+  "properties": {
+    "canvas_id": {
+      "description": "Identifier of the canvas this SWOT analysis is associated with.",
+      "examples": [
+        "canvas_001"
+      ],
+      "title": "Canvas Id",
+      "type": "string"
+    },
+    "canvas_version": {
+      "description": "Version of the canvas this SWOT analysis is associated with.",
+      "examples": [
+        1
+      ],
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Canvas Version",
+      "type": "integer"
+    },
+    "clusters": {
+      "description": "A list of SWOT cluster results, one for each cluster.",
+      "examples": [
+        [
+          {
+            "axis_statements": [
+              {
+                "certainty": 7,
+                "importance": 8,
+                "negative_statement": "Our production costs are higher than the industry average.",
+                "positive_statement": "Our product has a unique feature that competitors lack.",
+                "score": 4
+              },
+              {
+                "certainty": 6,
+                "importance": 5,
+                "negative_statement": "The core offer is easy to copy.",
+                "positive_statement": "Customers value the core offer.",
+                "score": 2
+              }
+            ],
+            "cluster": "value_proposition",
+            "opportunities": [
+              {
+                "score": 4,
+                "text": "Expand into new geographic markets."
+              }
+            ],
+            "threats": [
+              {
+                "question": "substitutes_available",
+                "score": 3,
+                "text": "Example assessment of the 'substitutes_available' threat."
+              },
+              {
+                "question": "competitor_price_or_value_pressure",
+                "score": 3,
+                "text": "Example assessment of the 'competitor_price_or_value_pressure' threat."
+              }
+            ]
+          },
+          {
+            "axis_statements": [
+              {
+                "certainty": 8,
+                "importance": 6,
+                "negative_statement": "Our customer support response time is slower than desired.",
+                "positive_statement": "We have a strong brand reputation in the market.",
+                "score": 3
+              },
+              {
+                "certainty": 6,
+                "importance": 5,
+                "negative_statement": "The core offer is easy to copy.",
+                "positive_statement": "Customers value the core offer.",
+                "score": 2
+              }
+            ],
+            "cluster": "cost_revenue",
+            "opportunities": [
+              {
+                "score": 3,
+                "text": "Develop strategic partnerships with complementary businesses."
+              }
+            ],
+            "threats": [
+              {
+                "question": "margin_pressure",
+                "score": 3,
+                "text": "Example assessment of the 'margin_pressure' threat."
+              },
+              {
+                "question": "revenue_concentration",
+                "score": 3,
+                "text": "Example assessment of the 'revenue_concentration' threat."
+              },
+              {
+                "question": "revenue_stream_decline",
+                "score": 3,
+                "text": "Example assessment of the 'revenue_stream_decline' threat."
+              },
+              {
+                "question": "cost_unpredictability",
+                "score": 3,
+                "text": "Example assessment of the 'cost_unpredictability' threat."
+              },
+              {
+                "question": "cost_outgrowing_revenue",
+                "score": 3,
+                "text": "Example assessment of the 'cost_outgrowing_revenue' threat."
+              }
+            ]
+          },
+          {
+            "axis_statements": [
+              {
+                "certainty": 6,
+                "importance": 7,
+                "negative_statement": "We have limited scalability in our current infrastructure.",
+                "positive_statement": "Our supply chain is highly efficient and reliable.",
+                "score": 2
+              },
+              {
+                "certainty": 6,
+                "importance": 5,
+                "negative_statement": "The core offer is easy to copy.",
+                "positive_statement": "Customers value the core offer.",
+                "score": 2
+              }
+            ],
+            "cluster": "infrastructure",
+            "opportunities": [
+              {
+                "score": 3,
+                "text": "Invest in scalable infrastructure solutions."
+              }
+            ],
+            "threats": [
+              {
+                "question": "resource_supply_disruption",
+                "score": 3,
+                "text": "Example assessment of the 'resource_supply_disruption' threat."
+              },
+              {
+                "question": "resource_quality_risk",
+                "score": 3,
+                "text": "Example assessment of the 'resource_quality_risk' threat."
+              },
+              {
+                "question": "key_activity_disruption",
+                "score": 3,
+                "text": "Example assessment of the 'key_activity_disruption' threat."
+              },
+              {
+                "question": "activity_quality_risk",
+                "score": 3,
+                "text": "Example assessment of the 'activity_quality_risk' threat."
+              },
+              {
+                "question": "partner_loss",
+                "score": 3,
+                "text": "Example assessment of the 'partner_loss' threat."
+              },
+              {
+                "question": "partner_defection_to_competitors",
+                "score": 3,
+                "text": "Example assessment of the 'partner_defection_to_competitors' threat."
+              },
+              {
+                "question": "partner_over_dependence",
+                "score": 3,
+                "text": "Example assessment of the 'partner_over_dependence' threat."
+              }
+            ]
+          },
+          {
+            "axis_statements": [
+              {
+                "certainty": 7,
+                "importance": 5,
+                "negative_statement": "Our user interface is not as intuitive as competitors'.",
+                "positive_statement": "We have a loyal customer base with high retention rates.",
+                "score": 1
+              },
+              {
+                "certainty": 6,
+                "importance": 5,
+                "negative_statement": "The core offer is easy to copy.",
+                "positive_statement": "Customers value the core offer.",
+                "score": 2
+              }
+            ],
+            "cluster": "customer_interface",
+            "opportunities": [
+              {
+                "score": 2,
+                "text": "Enhance the user experience through design improvements."
+              }
+            ],
+            "threats": [
+              {
+                "question": "market_saturation",
+                "score": 3,
+                "text": "Example assessment of the 'market_saturation' threat."
+              },
+              {
+                "question": "market_share_pressure",
+                "score": 3,
+                "text": "Example assessment of the 'market_share_pressure' threat."
+              },
+              {
+                "question": "customer_defection",
+                "score": 3,
+                "text": "Example assessment of the 'customer_defection' threat."
+              },
+              {
+                "question": "competition_intensifying",
+                "score": 3,
+                "text": "Example assessment of the 'competition_intensifying' threat."
+              },
+              {
+                "question": "channel_threat_from_competitors",
+                "score": 3,
+                "text": "Example assessment of the 'channel_threat_from_competitors' threat."
+              },
+              {
+                "question": "channel_irrelevance",
+                "score": 3,
+                "text": "Example assessment of the 'channel_irrelevance' threat."
+              },
+              {
+                "question": "relationship_deterioration",
+                "score": 3,
+                "text": "Example assessment of the 'relationship_deterioration' threat."
+              }
+            ]
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/SwotClusterResult"
+      },
+      "maxItems": 4,
+      "minItems": 4,
+      "title": "Clusters",
+      "type": "array"
+    },
+    "environment_scan_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Identifier of the EnvironmentScan used to inform Opportunities/Threats for this cluster set, if any. Strengths/Weaknesses are always derived solely from the canvas.",
+      "examples": [
+        "environment_scan_001"
+      ],
+      "title": "Environment Scan Id"
+    },
+    "id": {
+      "description": "Unique identifier for the SWOT analysis.",
+      "examples": [
+        "swot_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "canvas_id",
+    "canvas_version",
+    "clusters"
+  ],
+  "title": "Swot",
+  "type": "object"
+}

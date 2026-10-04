@@ -1,0 +1,204 @@
+{
+  "$defs": {
+    "SalesScenario": {
+      "description": "Represents a sales scenario in a business context.",
+      "properties": {
+        "description": {
+          "description": "A brief description of the sales scenario.",
+          "examples": [
+            "In this scenario, the company experiences high demand for its products due to market trends and customer preferences.",
+            "In this scenario, the company faces low demand for its products due to market saturation and changing customer preferences."
+          ],
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the sales scenario.",
+          "examples": [
+            "High Demand Scenario",
+            "Low Demand Scenario"
+          ],
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description"
+      ],
+      "title": "SalesScenario",
+      "type": "object"
+    },
+    "Source": {
+      "description": "Represents an external source backing a quantitative claim in\nEnvironmentScan or BusinessCase. Required so that \"obtained from\nexternal sources\" is verifiable rather than merely claimed.",
+      "properties": {
+        "note": {
+          "description": "What this source specifically supports (which figure or claim).",
+          "examples": [
+            "Basis for the projected 10% annual growth rate figure."
+          ],
+          "title": "Note",
+          "type": "string"
+        },
+        "retrieved_at": {
+          "description": "The date the figure or claim was retrieved from the source (ISO date). Required next to every external quantitative claim (ADR-0005): market figures go stale and the source alone does not say how old they are.",
+          "examples": [
+            "2026-09-30"
+          ],
+          "format": "date",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "title": {
+          "description": "Short label for the source (publication, report, or site name).",
+          "examples": [
+            "Statista: SaaS Market Size 2026",
+            "IBISWorld Industry Report"
+          ],
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Link to the source, if available.",
+          "examples": [
+            "https://www.statista.com/..."
+          ],
+          "title": "Url"
+        }
+      },
+      "required": [
+        "title",
+        "retrieved_at",
+        "note"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "description": "Represents a business case in a business context.",
+  "properties": {
+    "breakeven_formula": {
+      "description": "The formula used to calculate the breakeven point for the business case.",
+      "examples": [
+        "Breakeven Point = Fixed Costs / (Selling Price per Unit - Variable Cost per Unit)",
+        "Breakeven Point = Total Fixed Costs / (Unit Selling Price - Unit Variable Cost)"
+      ],
+      "title": "Breakeven Formula",
+      "type": "string"
+    },
+    "capital_and_operating_costs": {
+      "description": "A brief description of the capital and operating costs associated with the business case.",
+      "examples": [
+        "The capital costs include the purchase of new machinery and equipment, while the operating costs cover expenses such as labor, utilities, and raw materials.",
+        "The capital costs involve the construction of a new production facility, while the operating costs encompass maintenance, staffing, and supply chain management."
+      ],
+      "title": "Capital And Operating Costs",
+      "type": "string"
+    },
+    "funding_requirements": {
+      "description": "A brief description of the funding requirements for the business case.",
+      "examples": [
+        "The funding requirements include securing a loan of $500,000 to cover initial capital expenditures and working capital needs.",
+        "The funding requirements involve raising $1 million in equity investment to support the expansion of production capacity and market entry strategies."
+      ],
+      "title": "Funding Requirements",
+      "type": "string"
+    },
+    "id": {
+      "description": "Unique identifier for the business case.",
+      "examples": [
+        "business_case_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "market_benchmarks": {
+      "description": "A brief description of the market benchmarks relevant to the business case.",
+      "examples": [
+        "The market benchmarks indicate a growing demand for eco-friendly products, with a projected annual growth rate of 10% over the next five years.",
+        "The market benchmarks suggest a declining trend in consumer interest for traditional products, with a projected annual decrease of 5% in sales over the next three years."
+      ],
+      "title": "Market Benchmarks",
+      "type": "string"
+    },
+    "profit_potential_notes": {
+      "description": "Notes on the profit potential of the business case.",
+      "examples": [
+        "The profit potential is significant, with projected net profits of $200,000 in the first year and a steady increase in profitability over the next five years.",
+        "The profit potential is moderate, with expected net profits of $50,000 in the first year and gradual growth as market share increases and operational efficiencies are realized."
+      ],
+      "title": "Profit Potential Notes",
+      "type": "string"
+    },
+    "project_id": {
+      "description": "Identifier of the project this business case is associated with.",
+      "examples": [
+        "project_001"
+      ],
+      "title": "Project Id",
+      "type": "string"
+    },
+    "sales_scenarios": {
+      "description": "A list of sales scenarios relevant to the business case.",
+      "examples": [
+        [
+          {
+            "description": "In this scenario, the company experiences high demand for its products due to market trends and customer preferences.",
+            "name": "High Demand Scenario"
+          },
+          {
+            "description": "In this scenario, the company faces low demand for its products due to market saturation and changing customer preferences.",
+            "name": "Low Demand Scenario"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/SalesScenario"
+      },
+      "minItems": 1,
+      "title": "Sales Scenarios",
+      "type": "array"
+    },
+    "sources": {
+      "description": "External sources backing the market benchmarks. A generation with no sources is treated as a failed generation, not as a valid empty result.",
+      "examples": [
+        [
+          {
+            "note": "Basis for the projected 10% annual growth rate figure.",
+            "retrieved_at": "2026-09-30",
+            "title": "Statista: SaaS Market Size 2026",
+            "url": "https://www.statista.com/..."
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/Source"
+      },
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "market_benchmarks",
+    "sources",
+    "breakeven_formula",
+    "sales_scenarios",
+    "capital_and_operating_costs",
+    "funding_requirements",
+    "profit_potential_notes"
+  ],
+  "title": "BusinessCase",
+  "type": "object"
+}

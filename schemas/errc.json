@@ -1,0 +1,211 @@
+{
+  "$defs": {
+    "CanvasSection": {
+      "description": "An enumeration of the different sections of a business model canvas.",
+      "enum": [
+        "value_propositions",
+        "customer_segments",
+        "channels",
+        "customer_relationships",
+        "revenue_streams",
+        "key_resources",
+        "key_activities",
+        "key_partnerships",
+        "cost_structure"
+      ],
+      "title": "CanvasSection",
+      "type": "string"
+    },
+    "ERRCActionType": {
+      "description": "An enumeration of the different types of ERRC actions.",
+      "enum": [
+        "eliminate",
+        "reduce",
+        "raise",
+        "create"
+      ],
+      "title": "ERRCActionType",
+      "type": "string"
+    },
+    "ErrcMove": {
+      "description": "Represents a move in the error correction system.",
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/ERRCActionType",
+          "description": "The action to be taken for error correction.",
+          "examples": [
+            "eliminate",
+            "reduce",
+            "raise",
+            "create"
+          ]
+        },
+        "new_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The new text to be used for the card after the action is applied, if applicable.",
+          "examples": [
+            "Implement a new customer onboarding process",
+            "Reduce production costs by 15%"
+          ],
+          "title": "New Text"
+        },
+        "opposite_side_impact": {
+          "description": "A description of how the action will impact the opposite side of the canvas.",
+          "examples": [
+            "Eliminating this feature may reduce customer satisfaction.",
+            "Raising the price may increase revenue but could decrease demand."
+          ],
+          "title": "Opposite Side Impact",
+          "type": "string"
+        },
+        "rationale": {
+          "description": "The rationale behind the action, explaining why it is necessary.",
+          "examples": [
+            "This feature is not aligned with our core value proposition.",
+            "Reducing production costs will improve our profit margins."
+          ],
+          "title": "Rationale",
+          "type": "string"
+        },
+        "target_card_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The text of the card that the action targets, if applicable.",
+          "examples": [
+            "Improve customer onboarding process",
+            "Reduce production costs"
+          ],
+          "title": "Target Card Text"
+        },
+        "target_section": {
+          "$ref": "#/$defs/CanvasSection",
+          "description": "The section of the canvas that the action targets.",
+          "examples": [
+            "customer_segments",
+            "value_propositions",
+            "channels"
+          ]
+        }
+      },
+      "required": [
+        "action",
+        "target_section",
+        "opposite_side_impact",
+        "rationale"
+      ],
+      "title": "ErrcMove",
+      "type": "object"
+    }
+  },
+  "description": "Represents an error correction (ERRC) analysis for a business model canvas.",
+  "properties": {
+    "canvas_id": {
+      "description": "Identifier of the canvas this ERRC analysis is associated with.",
+      "examples": [
+        "canvas_001"
+      ],
+      "title": "Canvas Id",
+      "type": "string"
+    },
+    "from_version": {
+      "description": "The version of the canvas from which this ERRC analysis is derived.",
+      "examples": [
+        1
+      ],
+      "maximum": 5,
+      "minimum": 1,
+      "title": "From Version",
+      "type": "integer"
+    },
+    "id": {
+      "description": "Unique identifier for the ERRC analysis.",
+      "examples": [
+        "errc_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "moves": {
+      "description": "The moves of the ERRC analysis: between 1 and 6.",
+      "examples": [
+        [
+          {
+            "action": "eliminate",
+            "new_text": null,
+            "opposite_side_impact": "Eliminating this segment may reduce revenue.",
+            "rationale": "This segment is no longer profitable.",
+            "target_card_text": "Old customer segment",
+            "target_section": "customer_segments"
+          },
+          {
+            "action": "create",
+            "new_text": "New value proposition",
+            "opposite_side_impact": "Creating this proposition may attract new customers.",
+            "rationale": "This proposition addresses a new market need.",
+            "target_card_text": null,
+            "target_section": "value_propositions"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/ErrcMove"
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "title": "Moves",
+      "type": "array"
+    },
+    "result_canvas_id": {
+      "description": "Identifier of the resulting canvas after applying this ERRC analysis.",
+      "examples": [
+        "canvas_002"
+      ],
+      "title": "Result Canvas Id",
+      "type": "string"
+    },
+    "swot_id": {
+      "description": "Identifier of the SWOT analysis whose signals informed these moves. SWOT always precedes ERRC in the swot_errc_cycle, so this is required, not optional.",
+      "examples": [
+        "swot_001"
+      ],
+      "title": "Swot Id",
+      "type": "string"
+    },
+    "to_version": {
+      "description": "The version of the canvas to which this ERRC analysis is applied.",
+      "examples": [
+        2
+      ],
+      "maximum": 5,
+      "minimum": 2,
+      "title": "To Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "canvas_id",
+    "swot_id",
+    "from_version",
+    "to_version",
+    "result_canvas_id",
+    "moves"
+  ],
+  "title": "Errc",
+  "type": "object"
+}

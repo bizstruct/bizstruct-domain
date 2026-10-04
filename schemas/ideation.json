@@ -1,0 +1,101 @@
+{
+  "$defs": {
+    "Epicenter": {
+      "description": "An enumeration of the different types of epicenters.",
+      "enum": [
+        "resource_driven",
+        "offer_driven",
+        "customer_driven",
+        "finance_driven",
+        "multiple_epicenter"
+      ],
+      "title": "Epicenter",
+      "type": "string"
+    },
+    "EpicenterClassification": {
+      "description": "Represents the classification of an epicenter in a business context.",
+      "properties": {
+        "rationale": {
+          "description": "A rationale explaining the reasoning behind the epicenter classification.",
+          "examples": [
+            "The business model is primarily driven by customer needs and feedback."
+          ],
+          "title": "Rationale",
+          "type": "string"
+        },
+        "tags": {
+          "description": "The epicenter tags: one or more distinct concrete epicenters. When there are two or more, MULTIPLE_EPICENTER must also be listed; with a single concrete tag it must not be.",
+          "examples": [
+            [
+              "finance_driven"
+            ],
+            [
+              "resource_driven",
+              "offer_driven",
+              "multiple_epicenter"
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/Epicenter"
+          },
+          "minItems": 1,
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "tags",
+        "rationale"
+      ],
+      "title": "EpicenterClassification",
+      "type": "object"
+    }
+  },
+  "description": "Represents an ideation instance in a business context.",
+  "properties": {
+    "empathy_map_id": {
+      "description": "Identifier of the empathy map this ideation instance is associated with.",
+      "examples": [
+        "empathy_map_001"
+      ],
+      "title": "Empathy Map Id",
+      "type": "string"
+    },
+    "epicenter": {
+      "$ref": "#/$defs/EpicenterClassification",
+      "description": "The classification of the epicenter for this ideation instance."
+    },
+    "id": {
+      "description": "Unique identifier for the ideation instance.",
+      "examples": [
+        "ideation_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "what_if_questions": {
+      "description": "'What if' questions that explore potential scenarios or ideas: between 1 and 10.",
+      "examples": [
+        [
+          "What if we could deliver our product in half the time?",
+          "What if we could offer a subscription model for our service?"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "title": "What If Questions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "empathy_map_id",
+    "epicenter",
+    "what_if_questions"
+  ],
+  "title": "Ideation",
+  "type": "object"
+}

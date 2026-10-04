@@ -1,0 +1,159 @@
+{
+  "$defs": {
+    "CanvasReference": {
+      "description": "Represents a reference to a specific section and card on the canvas.",
+      "properties": {
+        "note": {
+          "description": "A note or description related to the specific section and card.",
+          "examples": [
+            "This customer segment is highly profitable.",
+            "The value proposition needs to be more compelling."
+          ],
+          "title": "Note",
+          "type": "string"
+        },
+        "section": {
+          "$ref": "#/$defs/CanvasSection",
+          "description": "The section of the canvas (e.g., 'Customer Segments', 'Value Propositions').",
+          "examples": [
+            "customer_segments",
+            "value_propositions"
+          ]
+        }
+      },
+      "required": [
+        "section",
+        "note"
+      ],
+      "title": "CanvasReference",
+      "type": "object"
+    },
+    "CanvasSection": {
+      "description": "An enumeration of the different sections of a business model canvas.",
+      "enum": [
+        "value_propositions",
+        "customer_segments",
+        "channels",
+        "customer_relationships",
+        "revenue_streams",
+        "key_resources",
+        "key_activities",
+        "key_partnerships",
+        "cost_structure"
+      ],
+      "title": "CanvasSection",
+      "type": "string"
+    },
+    "StorytellingFormat": {
+      "description": "An enumeration of the different formats in storytelling.",
+      "enum": [
+        "talk_and_image",
+        "video_clip",
+        "role_play",
+        "text_and_image",
+        "comic_strip"
+      ],
+      "title": "StorytellingFormat",
+      "type": "string"
+    },
+    "StorytellingGoal": {
+      "description": "An enumeration of the different goals in storytelling.",
+      "enum": [
+        "introducing_new",
+        "engaging_employees",
+        "pitching_investors"
+      ],
+      "title": "StorytellingGoal",
+      "type": "string"
+    },
+    "StorytellingPerspective": {
+      "description": "An enumeration of the different perspectives in storytelling.",
+      "enum": [
+        "company",
+        "customer"
+      ],
+      "title": "StorytellingPerspective",
+      "type": "string"
+    }
+  },
+  "description": "Represents a storytelling element for a business model canvas.",
+  "properties": {
+    "canvas_id": {
+      "description": "Identifier of the canvas this storytelling element is associated with.",
+      "examples": [
+        "canvas_001"
+      ],
+      "title": "Canvas Id",
+      "type": "string"
+    },
+    "canvas_references": {
+      "description": "A list of references to specific sections and cards on the canvas that are relevant to the storytelling element.",
+      "examples": [
+        [
+          {
+            "note": "This value proposition highlights our unique selling points.",
+            "section": "value_propositions"
+          },
+          {
+            "note": "This customer segment is the primary target for our new product.",
+            "section": "customer_segments"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/CanvasReference"
+      },
+      "minItems": 1,
+      "title": "Canvas References",
+      "type": "array"
+    },
+    "format": {
+      "$ref": "#/$defs/StorytellingFormat",
+      "description": "The format of the storytelling (e.g.,, 'Video Clip', 'TALK AND IMAGE').",
+      "examples": [
+        "video_clip"
+      ]
+    },
+    "goal": {
+      "$ref": "#/$defs/StorytellingGoal",
+      "description": "The goal of the storytelling (e.g., 'Introducing New', 'Engaging Employees', 'Pitching Investors').",
+      "examples": [
+        "pitching_investors"
+      ]
+    },
+    "id": {
+      "description": "Unique identifier for the storytelling element.",
+      "examples": [
+        "storytelling_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "narrative_text": {
+      "description": "The narrative text of the storytelling element.",
+      "examples": [
+        "Our innovative solution addresses a critical market need by providing unparalleled value to our customers."
+      ],
+      "title": "Narrative Text",
+      "type": "string"
+    },
+    "perspective": {
+      "$ref": "#/$defs/StorytellingPerspective",
+      "description": "The perspective from which the storytelling is presented (e.g., 'Company', 'Customer').",
+      "examples": [
+        "company"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "canvas_id",
+    "perspective",
+    "goal",
+    "format",
+    "narrative_text",
+    "canvas_references"
+  ],
+  "title": "Storytelling",
+  "type": "object"
+}

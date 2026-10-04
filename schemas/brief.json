@@ -1,0 +1,92 @@
+{
+  "description": "A brief description of a business structure.",
+  "properties": {
+    "customer_segment_candidates": {
+      "description": "A list of potential customer segments for the business.",
+      "examples": [
+        [
+          "Health-conscious consumers",
+          "Local restaurants",
+          "Farmers' markets"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Customer Segment Candidates",
+      "type": "array"
+    },
+    "existing_resources": {
+      "description": "A list of existing resources that the business can leverage.",
+      "examples": [
+        [
+          "Local farm partnerships",
+          "Delivery logistics network",
+          "Mobile app platform"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "title": "Existing Resources",
+      "type": "array"
+    },
+    "gaps": {
+      "description": "A list of gaps or challenges that the business needs to address.",
+      "examples": [
+        [
+          "Limited delivery radius",
+          "Seasonal availability of produce",
+          "Competition from established grocery delivery services"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "title": "Gaps",
+      "type": "array"
+    },
+    "idea_summary": {
+      "description": "A brief summary of the business idea.",
+      "examples": [
+        "A platform that connects local farmers with consumers for fresh produce delivery."
+      ],
+      "title": "Idea Summary",
+      "type": "string"
+    },
+    "industry": {
+      "description": "The industry in which the business operates.",
+      "examples": [
+        "Agriculture and Food Delivery"
+      ],
+      "title": "Industry",
+      "type": "string"
+    },
+    "monetization_hint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "A hint about how the business can generate revenue.",
+      "examples": [
+        "Subscription model for regular customers"
+      ],
+      "title": "Monetization Hint"
+    }
+  },
+  "required": [
+    "idea_summary",
+    "industry",
+    "customer_segment_candidates",
+    "existing_resources",
+    "gaps"
+  ],
+  "title": "Brief",
+  "type": "object"
+}

@@ -1,0 +1,185 @@
+{
+  "$defs": {
+    "AdaptationQuestion": {
+      "description": "Represents an adaptation question related to a specific section of the business model canvas.",
+      "properties": {
+        "question": {
+          "description": "The adaptation question related to the specified canvas section.",
+          "examples": [
+            "How can we adapt our value proposition to better meet the needs of our target customer segments?",
+            "What changes can we make to our customer segments to better align with our value proposition?"
+          ],
+          "title": "Question",
+          "type": "string"
+        },
+        "section": {
+          "$ref": "#/$defs/CanvasSection",
+          "description": "The section of the canvas to which this adaptation question pertains.",
+          "examples": [
+            "customer_segments",
+            "value_propositions"
+          ]
+        }
+      },
+      "required": [
+        "section",
+        "question"
+      ],
+      "title": "AdaptationQuestion",
+      "type": "object"
+    },
+    "CanvasSection": {
+      "description": "An enumeration of the different sections of a business model canvas.",
+      "enum": [
+        "value_propositions",
+        "customer_segments",
+        "channels",
+        "customer_relationships",
+        "revenue_streams",
+        "key_resources",
+        "key_activities",
+        "key_partnerships",
+        "cost_structure"
+      ],
+      "title": "CanvasSection",
+      "type": "string"
+    },
+    "FutureScenarioVariant": {
+      "description": "Represents a variant of a future scenario in a business context.",
+      "properties": {
+        "adaptation_questions": {
+          "description": "A list of adaptation questions related to this future scenario variant.",
+          "examples": [
+            [
+              {
+                "question": "How can we adapt our customer segments to better align with the changing market conditions?",
+                "section": "customer_segments"
+              },
+              {
+                "question": "What changes can we make to our value propositions to better meet the evolving needs of our customers?",
+                "section": "value_propositions"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/AdaptationQuestion"
+          },
+          "minItems": 1,
+          "title": "Adaptation Questions",
+          "type": "array"
+        },
+        "name": {
+          "description": "The name of the future scenario variant.",
+          "examples": [
+            "Optimistic Growth",
+            "Pessimistic Decline",
+            "Steady State"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "narrative": {
+          "description": "A narrative describing the future scenario variant.",
+          "examples": [
+            "In this scenario, the company experiences rapid growth due to market expansion and increased customer demand.",
+            "In this scenario, the company faces challenges due to economic downturns and increased competition."
+          ],
+          "title": "Narrative",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "narrative",
+        "adaptation_questions"
+      ],
+      "title": "FutureScenarioVariant",
+      "type": "object"
+    }
+  },
+  "description": "Represents a future scenario in a business context.",
+  "properties": {
+    "canvas_id": {
+      "description": "Identifier of the canvas this future scenario is associated with.",
+      "examples": [
+        "canvas_001"
+      ],
+      "title": "Canvas Id",
+      "type": "string"
+    },
+    "id": {
+      "description": "Unique identifier for the future scenario.",
+      "examples": [
+        "future_scenario_001"
+      ],
+      "title": "Id",
+      "type": "string"
+    },
+    "uncertainty_drivers": {
+      "description": "Uncertainty drivers that may impact the future scenario: between 2 and 4.",
+      "examples": [
+        [
+          "Market volatility",
+          "Regulatory changes"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 4,
+      "minItems": 2,
+      "title": "Uncertainty Drivers",
+      "type": "array"
+    },
+    "variants": {
+      "description": "A list of variants for this future scenario.",
+      "examples": [
+        [
+          {
+            "adaptation_questions": [
+              {
+                "question": "How can we adapt our customer segments to better align with the changing market conditions?",
+                "section": "customer_segments"
+              },
+              {
+                "question": "What changes can we make to our value propositions to better meet the evolving needs of our customers?",
+                "section": "value_propositions"
+              }
+            ],
+            "name": "Optimistic Growth",
+            "narrative": "In this scenario, the company experiences rapid growth due to market expansion and increased customer demand."
+          },
+          {
+            "adaptation_questions": [
+              {
+                "question": "How can we adapt our customer segments to mitigate the impact of economic downturns?",
+                "section": "customer_segments"
+              },
+              {
+                "question": "What changes can we make to our value propositions to remain competitive in a declining market?",
+                "section": "value_propositions"
+              }
+            ],
+            "name": "Pessimistic Decline",
+            "narrative": "In this scenario, the company faces challenges due to economic downturns and increased competition."
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/FutureScenarioVariant"
+      },
+      "maxItems": 4,
+      "minItems": 2,
+      "title": "Variants",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "canvas_id",
+    "uncertainty_drivers",
+    "variants"
+  ],
+  "title": "FutureScenario",
+  "type": "object"
+}
