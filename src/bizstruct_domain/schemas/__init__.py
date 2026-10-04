@@ -5,7 +5,7 @@ Import from here rather than from the individual modules:
     from bizstruct_domain.schemas import Canvas, STAGE_REGISTRY, Stage
 """
 
-from .brief import Brief
+from .brief import MAX_SEGMENTS, Brief
 from .canvas import (
     GENERATED_CARDS_PER_SECTION_MAX,
     GENERATED_CARDS_PER_SECTION_MIN,
@@ -86,6 +86,7 @@ from .swot import Swot, SwotAxisStatement, SwotClusterResult, SwotGenerated, Swo
 from .validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
+    "MAX_SEGMENTS",
     "SWOT_CLUSTER_SECTIONS",
     "THREAT_QUESTIONS_BY_CLUSTER",
     "ThreatQuestion",

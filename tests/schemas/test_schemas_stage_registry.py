@@ -52,6 +52,54 @@ class TestRegistryContent:
         assert STAGE_REGISTRY.stages[stage].depends_on == [Stage.BRIEF]
 
 
+MULTI_INSTANCE = {
+    Stage.EMPATHY_MAP,
+    Stage.CUSTOMER_SCENARIO,
+    Stage.IDEATION,
+    Stage.CANVAS,
+    Stage.SWOT_ERRC_CYCLE,
+    Stage.STORYTELLING,
+    Stage.FUTURE_SCENARIO,
+    Stage.PITCH,
+}
+
+
+class TestMultiplicityFlags:
+    def test_exact_set_of_multi_instance_stages(self):
+        flagged = {s for s, d in STAGE_REGISTRY.stages.items() if d.allows_multiple_instances}
+        assert flagged == MULTI_INSTANCE
+
+    @pytest.mark.parametrize(
+        "stage",
+        [Stage.BRIEF, Stage.PATTERNS, Stage.TEAM_INFO, Stage.BUSINESS_CASE, Stage.ENVIRONMENT_SCAN],
+    )
+    def test_single_instance_stages(self, stage):
+        assert STAGE_REGISTRY.stages[stage].allows_multiple_instances is False
+
+    def test_the_flag_is_a_declaration_the_graph_logic_does_not_read(self):
+        # Flipping every flag must not change topological order, next_available
+        # or the stage machine's ready_stages / dependents_of.
+        from bizstruct_domain.stage_machine import dependents_of, ready_stages
+
+        flipped = _definitions()
+        for definition in flipped.values():
+            definition.allows_multiple_instances = not definition.allows_multiple_instances
+        other = StageRegistry(stages=flipped)
+        assert other.topological_order() == STAGE_REGISTRY.topological_order()
+        orders = STAGE_REGISTRY.topological_order()
+        for i in range(len(orders) + 1):
+            completed = set(orders[:i])
+            for enabled in (set(), {Stage.ENVIRONMENT_SCAN}, {Stage.TEAM_INFO, Stage.BUSINESS_CASE}):
+                assert other.next_available(completed, enabled) == STAGE_REGISTRY.next_available(completed, enabled)
+        # stage_machine reads STAGE_REGISTRY only for dependencies, never the flag
+        import bizstruct_domain.stage_machine as machine
+        import inspect
+
+        assert "allows_multiple_instances" not in inspect.getsource(machine)
+        assert dependents_of("canvas")
+        assert ready_stages([]) == ()
+
+
 class TestNextAvailable:
     @pytest.mark.parametrize("missing", CANVAS_DEPS)
     def test_canvas_blocked_until_all_five_deps_completed(self, missing):

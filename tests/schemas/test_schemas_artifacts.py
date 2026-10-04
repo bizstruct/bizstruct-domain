@@ -7,6 +7,7 @@ import pytest
 from pydantic import BaseModel, ValidationError, create_model
 
 import bizstruct_domain.schemas.canvas as canvas_module
+from bizstruct_domain.schemas.brief import MAX_SEGMENTS, Brief
 from bizstruct_domain.schemas.canvas import (
     GENERATED_CARDS_PER_SECTION_MAX,
     GENERATED_CARDS_PER_SECTION_MIN,
@@ -58,6 +59,41 @@ import schema_builders as b
 
 MULTI = SegmentRelationType.MULTI_SIDED
 SEGMENTED = SegmentRelationType.SEGMENTED
+
+
+# --------------------------------------------------------------------------- brief
+
+
+class TestBriefSegmentCap:
+    @staticmethod
+    def _brief(n: int) -> Brief:
+        return Brief(
+            idea_summary="i",
+            industry="x",
+            customer_segment_candidates=[f"segment {i}" for i in range(n)],
+            existing_resources=[],
+            gaps=[],
+        )
+
+    def test_constant(self):
+        assert MAX_SEGMENTS == 3
+
+    @pytest.mark.parametrize("n", [1, 2, 3])
+    def test_one_to_three_segments_accepted(self, n):
+        assert len(self._brief(n).customer_segment_candidates) == n
+
+    @pytest.mark.parametrize("n", [0, 4, 10])
+    def test_zero_and_more_than_three_rejected(self, n):
+        with pytest.raises(ValidationError):
+            self._brief(n)
+
+    def test_json_schema_carries_the_bounds(self):
+        prop = Brief.model_json_schema()["properties"]["customer_segment_candidates"]
+        assert (prop["minItems"], prop["maxItems"]) == (1, MAX_SEGMENTS)
+
+    def test_the_field_example_respects_the_cap(self):
+        for example in Brief.model_fields["customer_segment_candidates"].examples:
+            assert 1 <= len(example) <= MAX_SEGMENTS
 
 
 # --------------------------------------------------------------------------- patterns

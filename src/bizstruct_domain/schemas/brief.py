@@ -2,6 +2,11 @@ from pydantic import Field
 from .fields import SanitizedModel
 
 
+# Upper bound on customer segments: one empathy map, customer scenario and
+# ideation per segment, so it caps the width of the whole graph.
+MAX_SEGMENTS = 3
+
+
 class Brief(SanitizedModel):
     """
         A brief description of a business structure.
@@ -18,7 +23,9 @@ class Brief(SanitizedModel):
     )
     customer_segment_candidates: list[str] = Field(
         min_length=1,
-        description="A list of potential customer segments for the business.",
+        max_length=MAX_SEGMENTS,
+        description="Potential customer segments for the business: between 1 and 3. "
+                     "Each one gets its own empathy map, customer scenario and ideation.",
         examples=[["Health-conscious consumers", "Local restaurants", "Farmers' markets"]],
     )
     existing_resources: list[str] = Field(

@@ -2,7 +2,7 @@
   "description": "A brief description of a business structure.",
   "properties": {
     "customer_segment_candidates": {
-      "description": "A list of potential customer segments for the business.",
+      "description": "Potential customer segments for the business: between 1 and 3. Each one gets its own empathy map, customer scenario and ideation.",
       "examples": [
         [
           "Health-conscious consumers",
@@ -13,6 +13,7 @@
       "items": {
         "type": "string"
       },
+      "maxItems": 3,
       "minItems": 1,
       "title": "Customer Segment Candidates",
       "type": "array"
