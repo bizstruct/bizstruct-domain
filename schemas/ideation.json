@@ -24,7 +24,7 @@
           "type": "string"
         },
         "tags": {
-          "description": "A list of tags associated with the epicenter classification.",
+          "description": "The epicenter tags: one or more distinct concrete epicenters. When there are two or more, MULTIPLE_EPICENTER must also be listed; with a single concrete tag it must not be.",
           "examples": [
             [
               "finance_driven"

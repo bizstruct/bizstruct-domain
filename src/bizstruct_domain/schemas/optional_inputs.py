@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import Field
 from .fields import SanitizedModel
 
@@ -87,6 +89,13 @@ class Source(SanitizedModel):
         description="Link to the source, if available.",
         examples=["https://www.statista.com/..."],
     )
+    retrieved_at: date = Field(
+        ...,
+        description="The date the figure or claim was retrieved from the source (ISO date). "
+                     "Required next to every external quantitative claim (ADR-0005): "
+                     "market figures go stale and the source alone does not say how old they are.",
+        examples=["2026-09-30"],
+    )
     note: str = Field(
         ...,
         description="What this source specifically supports (which figure or claim).",
@@ -144,6 +153,7 @@ class BusinessCase(SanitizedModel):
             Source(
                 title="Statista: SaaS Market Size 2026",
                 url="https://www.statista.com/...",
+                retrieved_at="2026-09-30",
                 note="Basis for the projected 10% annual growth rate figure.",
             ),
         ]],
@@ -223,6 +233,7 @@ class EnvironmentScan(SanitizedModel):
             Source(
                 title="IBISWorld Industry Report",
                 url=None,
+                retrieved_at="2026-09-30",
                 note="Basis for the industry_forces and key_trends entries.",
             ),
         ]],

@@ -88,6 +88,20 @@ class SwotCluster(StrEnum):
     CUSTOMER_INTERFACE = "customer_interface"  # CS + CH + CR
 
 
+# Which canvas sections each SWOT cluster covers (see the comments on
+# SwotCluster). Disjoint, and together exactly the nine sections.
+SWOT_CLUSTER_SECTIONS: dict[SwotCluster, frozenset[CanvasSection]] = {
+    SwotCluster.VALUE_PROPOSITION: frozenset({CanvasSection.VALUE_PROPOSITIONS}),
+    SwotCluster.COST_REVENUE: frozenset({CanvasSection.REVENUE_STREAMS, CanvasSection.COST_STRUCTURE}),
+    SwotCluster.INFRASTRUCTURE: frozenset(
+        {CanvasSection.KEY_RESOURCES, CanvasSection.KEY_ACTIVITIES, CanvasSection.KEY_PARTNERSHIPS}
+    ),
+    SwotCluster.CUSTOMER_INTERFACE: frozenset(
+        {CanvasSection.CUSTOMER_SEGMENTS, CanvasSection.CHANNELS, CanvasSection.CUSTOMER_RELATIONSHIPS}
+    ),
+}
+
+
 class ERRCActionType(StrEnum):
     """
         An enumeration of the different types of ERRC actions.

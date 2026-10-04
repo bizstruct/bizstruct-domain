@@ -165,7 +165,7 @@ def errc(moves: list[ErrcMove] | None = None, **overrides: Any) -> Errc:
 
 
 def source() -> Source:
-    return Source(title="Report", note="supports figure")
+    return Source(title="Report", retrieved_at="2026-09-30", note="supports figure")
 
 
 def environment_scan(id: str = "environment_scan_001") -> EnvironmentScan:
