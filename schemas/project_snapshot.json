@@ -1,0 +1,464 @@
+{
+  "$defs": {
+    "ArtifactRecord": {
+      "description": "One persisted artifact on the wire: its id, its type and its data.",
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "description": "The artifact as the persisted model dumps it (validate with `parse_artifact`).",
+          "examples": [
+            {
+              "id": "0b1a2c3d",
+              "persona_name": "Tech-Savvy Millennial"
+            }
+          ],
+          "title": "Data",
+          "type": "object"
+        },
+        "id": {
+          "description": "Artifact id; derived with `derive_artifact_id`.",
+          "examples": [
+            "0b1a2c3d-4e5f-5a6b-8c7d-9e0f1a2b3c4d"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/ArtifactType",
+          "description": "Which persisted model `data` follows.",
+          "examples": [
+            "canvas"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "data"
+      ],
+      "title": "ArtifactRecord",
+      "type": "object"
+    },
+    "ArtifactType": {
+      "description": "The 14 persisted artifact models. `swot` and `errc` both belong to the\n`swot_errc_cycle` stage.",
+      "enum": [
+        "brief",
+        "empathy_map",
+        "customer_scenario",
+        "ideation",
+        "patterns",
+        "canvas",
+        "swot",
+        "errc",
+        "storytelling",
+        "future_scenario",
+        "pitch",
+        "team_info",
+        "business_case",
+        "environment_scan"
+      ],
+      "title": "ArtifactType",
+      "type": "string"
+    },
+    "ConsistencyReport": {
+      "description": "Result of running one or more rules against a set of artifacts.",
+      "properties": {
+        "score": {
+          "description": "1 (severely inconsistent) to 5 (fully consistent). How the caller derives this from `violations` (e.g. from a judge model, or from counting errors) is not fixed here.",
+          "examples": [
+            4
+          ],
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Score",
+          "type": "integer"
+        },
+        "violations": {
+          "items": {
+            "$ref": "#/$defs/ConsistencyViolation"
+          },
+          "title": "Violations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score"
+      ],
+      "title": "ConsistencyReport",
+      "type": "object"
+    },
+    "ConsistencyViolation": {
+      "description": "One thing a rule found wrong, or worth flagging, between artifacts.",
+      "properties": {
+        "artifact_ids": {
+          "description": "ids of the specific artifact instances involved, so the caller can point the user at them.",
+          "examples": [
+            [
+              "patterns_001",
+              "customer_scenario_001",
+              "customer_scenario_002"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Artifact Ids",
+          "type": "array"
+        },
+        "message": {
+          "description": "Human-readable explanation, specific enough to act on.",
+          "examples": [
+            "Patterns tags MULTI_SIDED_PLATFORM, but none of the CustomerScenario instances for this project has interdependence_signal=True."
+          ],
+          "title": "Message",
+          "type": "string"
+        },
+        "rule_id": {
+          "description": "Which rule raised this (matches ConsistencyRule.id).",
+          "examples": [
+            "multi_sided_requires_signal"
+          ],
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "severity": {
+          "description": "'error': the artifacts are actually inconsistent. 'warning': plausible but worth a second look (mainly reserved for judge-model results, not deterministic rules, which should mostly raise errors precisely because they're checking a hard condition).",
+          "enum": [
+            "error",
+            "warning"
+          ],
+          "examples": [
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_id",
+        "severity",
+        "message",
+        "artifact_ids"
+      ],
+      "title": "ConsistencyViolation",
+      "type": "object"
+    },
+    "Stage": {
+      "description": "Enum representing the different stages of a chain.",
+      "enum": [
+        "brief",
+        "empathy_map",
+        "customer_scenario",
+        "ideation",
+        "patterns",
+        "canvas",
+        "swot_errc_cycle",
+        "storytelling",
+        "future_scenario",
+        "pitch",
+        "team_info",
+        "business_case",
+        "environment_scan"
+      ],
+      "title": "Stage",
+      "type": "string"
+    },
+    "StageErrorCode": {
+      "description": "Reason a stage entered `StageStatus.ERROR`.\n\n`error` is reserved for external failures and cancellation, never for\nreaching the retry limit (that goes to `awaiting_decision` instead).",
+      "enum": [
+        "generation_failed",
+        "check_failed",
+        "queue_unavailable",
+        "canceled_by_user",
+        "stuck_timeout"
+      ],
+      "title": "StageErrorCode",
+      "type": "string"
+    },
+    "StageRow": {
+      "description": "A stage row as be keeps it: state plus the artifacts it produced.",
+      "properties": {
+        "artifacts": {
+          "description": "Artifacts this row produced (empty until it has a result).",
+          "examples": [
+            [
+              {
+                "data": {
+                  "id": "a1"
+                },
+                "id": "a1",
+                "type": "team_info"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/ArtifactRecord"
+          },
+          "title": "Artifacts",
+          "type": "array"
+        },
+        "attempt_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Id of the current attempt, issued by be on every attempt of its own.",
+          "examples": [
+            "attempt_001"
+          ],
+          "title": "Attempt Id"
+        },
+        "consistency": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConsistencyReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The last consistency report for this row, if any.",
+          "examples": [
+            {
+              "score": 5,
+              "violations": []
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Human-readable error text, if any.",
+          "examples": [
+            "Generated content failed validation."
+          ],
+          "title": "Error"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StageErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Why the row is in ERROR, if it is.",
+          "examples": [
+            "generation_failed"
+          ]
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When the row last finished.",
+          "examples": [
+            "2026-10-04T12:01:30Z"
+          ],
+          "title": "Finished At"
+        },
+        "id": {
+          "description": "Row id, assigned by be.",
+          "examples": [
+            "row_empathy_map_0"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "instance_index": {
+          "default": 0,
+          "description": "0-based order among rows of the same stage under the same parent; for empathy_map, row k covers Brief.customer_segment_candidates[k].",
+          "examples": [
+            0,
+            1
+          ],
+          "minimum": 0,
+          "title": "Instance Index",
+          "type": "integer"
+        },
+        "refs": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": "Upstream stage -> ids of the rows this row draws from.",
+          "examples": [
+            {
+              "empathy_map": [
+                "row_empathy_map_0"
+              ]
+            }
+          ],
+          "propertyNames": {
+            "$ref": "#/$defs/Stage"
+          },
+          "title": "Refs",
+          "type": "object"
+        },
+        "retry_count": {
+          "default": 0,
+          "description": "How many retries be has counted for this row.",
+          "examples": [
+            0,
+            1
+          ],
+          "minimum": 0,
+          "title": "Retry Count",
+          "type": "integer"
+        },
+        "stage": {
+          "$ref": "#/$defs/Stage",
+          "description": "The stage this row is an instance of.",
+          "examples": [
+            "empathy_map"
+          ]
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When the current attempt started.",
+          "examples": [
+            "2026-10-04T12:00:00Z"
+          ],
+          "title": "Started At"
+        },
+        "status": {
+          "$ref": "#/$defs/StageStatus",
+          "description": "Current status; only be changes it.",
+          "examples": [
+            "pending"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "stage",
+        "status"
+      ],
+      "title": "StageRow",
+      "type": "object"
+    },
+    "StageStatus": {
+      "description": "Lifecycle status of a single stage in the generation chain.\n\nSee `bizstruct_domain.stage_machine` for the allowed-transition table\nbetween these statuses.",
+      "enum": [
+        "pending",
+        "running",
+        "consistency_check",
+        "awaiting_decision",
+        "needs_retry",
+        "done",
+        "error"
+      ],
+      "title": "StageStatus",
+      "type": "string"
+    }
+  },
+  "description": "What ml (and the experiment tool) reads: project fields and all rows.",
+  "properties": {
+    "enabled_optional": {
+      "description": "Optional stages enabled for this project; the only place this is carried.",
+      "examples": [
+        [
+          "environment_scan",
+          "team_info"
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/Stage"
+      },
+      "title": "Enabled Optional",
+      "type": "array"
+    },
+    "idea": {
+      "description": "The user's business idea.",
+      "examples": [
+        "A platform that connects local farmers with consumers."
+      ],
+      "title": "Idea",
+      "type": "string"
+    },
+    "language": {
+      "description": "Generation language of the project ('uk' or 'en').",
+      "examples": [
+        "en"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "project_id": {
+      "description": "Project id.",
+      "examples": [
+        "project_001"
+      ],
+      "title": "Project Id",
+      "type": "string"
+    },
+    "rows": {
+      "description": "All rows of the project (or, with ?row=<id>, that row and the closure of its refs).",
+      "examples": [
+        [
+          {
+            "artifacts": [],
+            "attempt_id": null,
+            "consistency": null,
+            "error": null,
+            "error_code": null,
+            "finished_at": null,
+            "id": "row_brief",
+            "instance_index": 0,
+            "refs": {},
+            "retry_count": 0,
+            "stage": "brief",
+            "started_at": null,
+            "status": "done"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/StageRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "idea",
+    "language"
+  ],
+  "title": "ProjectSnapshot",
+  "type": "object"
+}

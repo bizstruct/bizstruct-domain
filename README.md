@@ -33,6 +33,7 @@ src/bizstruct_domain/
                      artifact models, one module per stage
     consistency.py   cross-artifact rules and judge-check declarations
     generation.py    GENERATION_CONTRACTS: what the LLM writes, per stage (ADR-0010)
+    wire.py          be <-> ml wire contract: rows, messages, results, row logic (ADR-0011)
     validate_model.py  side-channel result contract (not a stage)
 scripts/export_schemas.py   regenerates schemas/*.json
 schemas/                    generated JSON Schemas (committed)
@@ -77,6 +78,40 @@ npx json-schema-to-typescript schemas/patterns.json > src/types/patterns.ts
 `schemas/stages.json` is the serialized `STAGE_REGISTRY` (topological order, with
 `depends_on` / `optional_depends_on`), for building stage navigation from the
 same source instead of a hand-maintained list.
+
+## Wire contract (bizstruct-be <-> bizstruct-ml)
+
+[ADR-0011](docs/adr/0011-wire-contract.md). The unit of work is a **stage row**: be
+creates rows, assigns row ids, and records in `refs` which rows each row draws from.
+ml receives a `QueueMessage`, reads the `ProjectSnapshot`, generates, checks
+consistency and answers with a `StageResult`; **ml never writes statuses**, be applies
+the stage-machine transitions. All wire models are snake_case, ids are `str`, and
+every model inherits `SanitizedModel`. JSON Schemas: `queue_message.json`,
+`stage_result.json`, `project_snapshot.json`, `stage_event.json`.
+
+| Model | Purpose |
+|---|---|
+| `ArtifactType` (14), `ARTIFACT_STAGE`, `ARTIFACT_MODELS` | the persisted artifacts, their stage and model |
+| `ArtifactRecord` | `id`, `type`, `data` of one artifact on the wire |
+| `StageRow` | row state: `id`, `stage`, `instance_index`, `status`, `attempt_id`, `refs`, `artifacts`, `consistency`, `retry_count`, `error_code`, `error`, timestamps |
+| `ProjectSnapshot` | `project_id`, `idea`, `language`, `enabled_optional`, `rows` (be -> ml) |
+| `RowTarget`, `QueueMessage` | `project_id`, `language`, `targets` (>= 1; the pipeline sends one) |
+| `StageFailure`, `StageResult` | ml -> be: `success` needs artifacts, `failed` needs an error; carries the final `ConsistencyReport` |
+| `StageEvent` | be -> fe pubsub after a transition |
+| `CanvasRowSpec` | one canvas row to create, from a `Patterns` group |
+
+| Function (pure, no I/O) | Purpose |
+|---|---|
+| `derive_artifact_id(stage_row_id, artifact_type, index=0)` | deterministic uuid5 artifact id, so regeneration keeps foreign keys valid; `index` is the canvas version for `canvas`/`swot_errc_cycle` |
+| `validate_row_refs(stage, refs)` | keys must be dependencies; every hard dependency non-empty |
+| `ready_rows(rows, enabled_optional)` | rows that can start now (per row, not per type); an enabled optional dependency that is not `DONE` blocks its consumer; a `PENDING` row of a stage without a generation contract (`team_info`) is never ready |
+| `dependent_rows(row_id, rows)` | transitive dependents through `refs`, to mark stale rows |
+| `project_status(rows, enabled_optional)` | `completed` / `failed` / `running` |
+| `canvas_rows_for(patterns)` | one `CanvasRowSpec` per group |
+| `row_of_artifact(rows, artifact_id)` | the row holding an artifact |
+| `parse_artifact(record)` | validate `record.data` with the persisted model |
+
+`team_info` is user input: be creates its row directly in `DONE` when the user submits.
 
 ## Development
 

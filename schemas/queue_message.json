@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "RowTarget": {
+      "description": "One row a queue message asks ml to work on.",
+      "properties": {
+        "attempt_id": {
+          "description": "The attempt this message belongs to; unchanged on redelivery.",
+          "examples": [
+            "attempt_001"
+          ],
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "stage": {
+          "$ref": "#/$defs/Stage",
+          "description": "The stage of that row (for routing and early dead-lettering).",
+          "examples": [
+            "empathy_map"
+          ]
+        },
+        "stage_row_id": {
+          "description": "The row to generate.",
+          "examples": [
+            "row_empathy_map_0"
+          ],
+          "title": "Stage Row Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "stage_row_id",
+        "stage",
+        "attempt_id"
+      ],
+      "title": "RowTarget",
+      "type": "object"
+    },
+    "Stage": {
+      "description": "Enum representing the different stages of a chain.",
+      "enum": [
+        "brief",
+        "empathy_map",
+        "customer_scenario",
+        "ideation",
+        "patterns",
+        "canvas",
+        "swot_errc_cycle",
+        "storytelling",
+        "future_scenario",
+        "pitch",
+        "team_info",
+        "business_case",
+        "environment_scan"
+      ],
+      "title": "Stage",
+      "type": "string"
+    }
+  },
+  "description": "be -> ml. The pipeline sends exactly one target; several are reserved for the agent phase.",
+  "properties": {
+    "language": {
+      "description": "Generation language ('uk' or 'en'), for early trace attribution.",
+      "examples": [
+        "en"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "project_id": {
+      "description": "Project id.",
+      "examples": [
+        "project_001"
+      ],
+      "title": "Project Id",
+      "type": "string"
+    },
+    "targets": {
+      "description": "The rows to work on; at least one.",
+      "examples": [
+        [
+          {
+            "attempt_id": "attempt_001",
+            "stage": "empathy_map",
+            "stage_row_id": "row_empathy_map_0"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/RowTarget"
+      },
+      "minItems": 1,
+      "title": "Targets",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "language",
+    "targets"
+  ],
+  "title": "QueueMessage",
+  "type": "object"
+}

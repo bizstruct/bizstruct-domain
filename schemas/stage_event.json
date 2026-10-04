@@ -1,0 +1,89 @@
+{
+  "$defs": {
+    "Stage": {
+      "description": "Enum representing the different stages of a chain.",
+      "enum": [
+        "brief",
+        "empathy_map",
+        "customer_scenario",
+        "ideation",
+        "patterns",
+        "canvas",
+        "swot_errc_cycle",
+        "storytelling",
+        "future_scenario",
+        "pitch",
+        "team_info",
+        "business_case",
+        "environment_scan"
+      ],
+      "title": "Stage",
+      "type": "string"
+    },
+    "StageStatus": {
+      "description": "Lifecycle status of a single stage in the generation chain.\n\nSee `bizstruct_domain.stage_machine` for the allowed-transition table\nbetween these statuses.",
+      "enum": [
+        "pending",
+        "running",
+        "consistency_check",
+        "awaiting_decision",
+        "needs_retry",
+        "done",
+        "error"
+      ],
+      "title": "StageStatus",
+      "type": "string"
+    }
+  },
+  "description": "be -> fe via pubsub, published after be applied a transition.",
+  "properties": {
+    "project_id": {
+      "description": "Project id.",
+      "examples": [
+        "project_001"
+      ],
+      "title": "Project Id",
+      "type": "string"
+    },
+    "stage": {
+      "$ref": "#/$defs/Stage",
+      "description": "The stage of that row.",
+      "examples": [
+        "empathy_map"
+      ]
+    },
+    "stage_row_id": {
+      "description": "The row whose status changed.",
+      "examples": [
+        "row_empathy_map_0"
+      ],
+      "title": "Stage Row Id",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/StageStatus",
+      "description": "The row's new status.",
+      "examples": [
+        "done"
+      ]
+    },
+    "type": {
+      "const": "stage_status",
+      "default": "stage_status",
+      "description": "Event type.",
+      "examples": [
+        "stage_status"
+      ],
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "stage_row_id",
+    "stage",
+    "status"
+  ],
+  "title": "StageEvent",
+  "type": "object"
+}

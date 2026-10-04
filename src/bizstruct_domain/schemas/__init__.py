@@ -84,6 +84,29 @@ from .stage_registry import StageRegistry
 from .storytelling import CanvasReference, Storytelling, StorytellingGenerated
 from .swot import Swot, SwotAxisStatement, SwotClusterResult, SwotGenerated, SwotOpportunity, SwotThreat
 from .validate_model import FieldFeedback, ValidateModelResult
+from .wire import (
+    ARTIFACT_ID_NAMESPACE,
+    ARTIFACT_MODELS,
+    ARTIFACT_STAGE,
+    ArtifactRecord,
+    ArtifactType,
+    CanvasRowSpec,
+    ProjectSnapshot,
+    QueueMessage,
+    RowTarget,
+    StageEvent,
+    StageFailure,
+    StageResult,
+    StageRow,
+    canvas_rows_for,
+    dependent_rows,
+    derive_artifact_id,
+    parse_artifact,
+    project_status,
+    ready_rows,
+    row_of_artifact,
+    validate_row_refs,
+)
 
 __all__ = [
     "MAX_SEGMENTS",
@@ -172,6 +195,28 @@ __all__ = [
     # side-channel contract (not a stage)
     "FieldFeedback",
     "ValidateModelResult",
+    # wire contract between bizstruct-be and bizstruct-ml (ADR-0011, see wire.py)
+    "ArtifactType",
+    "ARTIFACT_STAGE",
+    "ARTIFACT_MODELS",
+    "ARTIFACT_ID_NAMESPACE",
+    "ArtifactRecord",
+    "StageRow",
+    "ProjectSnapshot",
+    "RowTarget",
+    "QueueMessage",
+    "StageFailure",
+    "StageResult",
+    "StageEvent",
+    "CanvasRowSpec",
+    "derive_artifact_id",
+    "validate_row_refs",
+    "ready_rows",
+    "dependent_rows",
+    "project_status",
+    "canvas_rows_for",
+    "row_of_artifact",
+    "parse_artifact",
     # sanitizing base class
     "SanitizedModel",
     "strip_control_chars",

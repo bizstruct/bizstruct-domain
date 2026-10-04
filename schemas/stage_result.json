@@ -1,0 +1,288 @@
+{
+  "$defs": {
+    "ArtifactRecord": {
+      "description": "One persisted artifact on the wire: its id, its type and its data.",
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "description": "The artifact as the persisted model dumps it (validate with `parse_artifact`).",
+          "examples": [
+            {
+              "id": "0b1a2c3d",
+              "persona_name": "Tech-Savvy Millennial"
+            }
+          ],
+          "title": "Data",
+          "type": "object"
+        },
+        "id": {
+          "description": "Artifact id; derived with `derive_artifact_id`.",
+          "examples": [
+            "0b1a2c3d-4e5f-5a6b-8c7d-9e0f1a2b3c4d"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/ArtifactType",
+          "description": "Which persisted model `data` follows.",
+          "examples": [
+            "canvas"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "data"
+      ],
+      "title": "ArtifactRecord",
+      "type": "object"
+    },
+    "ArtifactType": {
+      "description": "The 14 persisted artifact models. `swot` and `errc` both belong to the\n`swot_errc_cycle` stage.",
+      "enum": [
+        "brief",
+        "empathy_map",
+        "customer_scenario",
+        "ideation",
+        "patterns",
+        "canvas",
+        "swot",
+        "errc",
+        "storytelling",
+        "future_scenario",
+        "pitch",
+        "team_info",
+        "business_case",
+        "environment_scan"
+      ],
+      "title": "ArtifactType",
+      "type": "string"
+    },
+    "ConsistencyReport": {
+      "description": "Result of running one or more rules against a set of artifacts.",
+      "properties": {
+        "score": {
+          "description": "1 (severely inconsistent) to 5 (fully consistent). How the caller derives this from `violations` (e.g. from a judge model, or from counting errors) is not fixed here.",
+          "examples": [
+            4
+          ],
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Score",
+          "type": "integer"
+        },
+        "violations": {
+          "items": {
+            "$ref": "#/$defs/ConsistencyViolation"
+          },
+          "title": "Violations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score"
+      ],
+      "title": "ConsistencyReport",
+      "type": "object"
+    },
+    "ConsistencyViolation": {
+      "description": "One thing a rule found wrong, or worth flagging, between artifacts.",
+      "properties": {
+        "artifact_ids": {
+          "description": "ids of the specific artifact instances involved, so the caller can point the user at them.",
+          "examples": [
+            [
+              "patterns_001",
+              "customer_scenario_001",
+              "customer_scenario_002"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Artifact Ids",
+          "type": "array"
+        },
+        "message": {
+          "description": "Human-readable explanation, specific enough to act on.",
+          "examples": [
+            "Patterns tags MULTI_SIDED_PLATFORM, but none of the CustomerScenario instances for this project has interdependence_signal=True."
+          ],
+          "title": "Message",
+          "type": "string"
+        },
+        "rule_id": {
+          "description": "Which rule raised this (matches ConsistencyRule.id).",
+          "examples": [
+            "multi_sided_requires_signal"
+          ],
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "severity": {
+          "description": "'error': the artifacts are actually inconsistent. 'warning': plausible but worth a second look (mainly reserved for judge-model results, not deterministic rules, which should mostly raise errors precisely because they're checking a hard condition).",
+          "enum": [
+            "error",
+            "warning"
+          ],
+          "examples": [
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_id",
+        "severity",
+        "message",
+        "artifact_ids"
+      ],
+      "title": "ConsistencyViolation",
+      "type": "object"
+    },
+    "StageErrorCode": {
+      "description": "Reason a stage entered `StageStatus.ERROR`.\n\n`error` is reserved for external failures and cancellation, never for\nreaching the retry limit (that goes to `awaiting_decision` instead).",
+      "enum": [
+        "generation_failed",
+        "check_failed",
+        "queue_unavailable",
+        "canceled_by_user",
+        "stuck_timeout"
+      ],
+      "title": "StageErrorCode",
+      "type": "string"
+    },
+    "StageFailure": {
+      "description": "Why a row failed.",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/StageErrorCode",
+          "description": "Failure code.",
+          "examples": [
+            "generation_failed"
+          ]
+        },
+        "message": {
+          "description": "Human-readable explanation.",
+          "examples": [
+            "The model returned content that does not match the contract."
+          ],
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "StageFailure",
+      "type": "object"
+    }
+  },
+  "description": "ml -> be (hook). The final outcome of a row; ml never writes statuses.",
+  "properties": {
+    "artifacts": {
+      "description": "All artifacts of the row (for the cycle: every version). Required for success.",
+      "examples": [
+        [
+          {
+            "data": {
+              "id": "a1"
+            },
+            "id": "a1",
+            "type": "team_info"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/ArtifactRecord"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "attempt_id": {
+      "description": "The attempt this result belongs to.",
+      "examples": [
+        "attempt_001"
+      ],
+      "title": "Attempt Id",
+      "type": "string"
+    },
+    "consistency": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ConsistencyReport"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The final consistency report after ml's own retries.",
+      "examples": [
+        {
+          "score": 4,
+          "violations": []
+        }
+      ]
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StageFailure"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Required for failed.",
+      "examples": [
+        {
+          "code": "generation_failed",
+          "message": "Invalid output."
+        }
+      ]
+    },
+    "project_id": {
+      "description": "Project id.",
+      "examples": [
+        "project_001"
+      ],
+      "title": "Project Id",
+      "type": "string"
+    },
+    "stage_row_id": {
+      "description": "The row this result is for.",
+      "examples": [
+        "row_empathy_map_0"
+      ],
+      "title": "Stage Row Id",
+      "type": "string"
+    },
+    "status": {
+      "description": "Outcome of the generation.",
+      "enum": [
+        "success",
+        "failed"
+      ],
+      "examples": [
+        "success"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "stage_row_id",
+    "attempt_id",
+    "status"
+  ],
+  "title": "StageResult",
+  "type": "object"
+}
