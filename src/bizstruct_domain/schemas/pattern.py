@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
+from .fields import SanitizedModel
 
 from .enums import (
     SegmentRelationType,
@@ -8,7 +9,7 @@ from .enums import (
     CanvasBranch,
 )
 
-class SegmentPair(BaseModel):
+class SegmentPair(SanitizedModel):
     """
         Represents a pair of segments in a business context.
     """
@@ -35,7 +36,7 @@ class SegmentPair(BaseModel):
         return self
 
 
-class PairwiseSegmentScore(BaseModel):
+class PairwiseSegmentScore(SanitizedModel):
     """
         Represents a score between two segments in a business context.
 
@@ -68,7 +69,7 @@ class PairwiseSegmentScore(BaseModel):
         return self.synergy + self.conflict
 
 
-class CanvasGroup(BaseModel):
+class CanvasGroup(SanitizedModel):
     """
         Represents a group of segments in a business context.
     """
@@ -94,7 +95,7 @@ class CanvasGroup(BaseModel):
     )
 
 
-class PatternTag(BaseModel):
+class PatternTag(SanitizedModel):
     """
         Represents a tag for a business model pattern in a business context.
     """
@@ -146,7 +147,7 @@ class PatternTag(BaseModel):
         return self
 
 
-class Patterns(BaseModel):
+class Patterns(SanitizedModel):
     """
         Represents a collection of patterns in a business context.
     """

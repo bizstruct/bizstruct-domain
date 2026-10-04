@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
+from .fields import SanitizedModel
 
 from .enums import (
     Stage,
 )
 
-class StageDefinition(BaseModel):
+class StageDefinition(SanitizedModel):
     """
         A definition of a stage in the application.
     """

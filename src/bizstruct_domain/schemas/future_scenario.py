@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
+from .fields import SanitizedModel
 
 from .enums import (
     CanvasSection,
 )
 
-class AdaptationQuestion(BaseModel):
+class AdaptationQuestion(SanitizedModel):
     """
         Represents an adaptation question related to a specific section of the business model canvas.
     """
@@ -26,7 +27,7 @@ class AdaptationQuestion(BaseModel):
     )
 
 
-class FutureScenarioVariant(BaseModel):
+class FutureScenarioVariant(SanitizedModel):
     """
         Represents a variant of a future scenario in a business context.
     """
@@ -62,7 +63,7 @@ class FutureScenarioVariant(BaseModel):
     )
     
 
-class FutureScenario(BaseModel):
+class FutureScenario(SanitizedModel):
     """
         Represents a future scenario in a business context.
     """

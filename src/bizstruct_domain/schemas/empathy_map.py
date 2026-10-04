@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
+from .fields import SanitizedModel
 
 
-class EmpathyMap(BaseModel):
+class EmpathyMap(SanitizedModel):
     id: str = Field(
         ...,
         description="Unique identifier for the empathy map.",

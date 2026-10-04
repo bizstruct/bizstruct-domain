@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
+from .fields import SanitizedModel
 
 
-class Pitch(BaseModel):
+class Pitch(SanitizedModel):
     """
         Represents a business pitch with various attributes and sections.
     """

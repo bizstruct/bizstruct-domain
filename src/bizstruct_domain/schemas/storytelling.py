@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
+from .fields import SanitizedModel
 
 from .enums import (
     CanvasSection,
@@ -8,7 +9,7 @@ from .enums import (
 )
 
 
-class CanvasReference(BaseModel):
+class CanvasReference(SanitizedModel):
     """
         Represents a reference to a specific section and card on the canvas.
     """
@@ -30,7 +31,7 @@ class CanvasReference(BaseModel):
     )
 
 
-class Storytelling(BaseModel):
+class Storytelling(SanitizedModel):
     """
         Represents a storytelling element for a business model canvas.
     """

@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
+from .fields import SanitizedModel
 
 from .enums import (
     Stage,
@@ -7,7 +8,7 @@ from .enums import (
 from .stage_definition import StageDefinition
 
 
-class StageRegistry(BaseModel):
+class StageRegistry(SanitizedModel):
     """
         A registry of stages in the application.
     """

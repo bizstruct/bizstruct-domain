@@ -1,9 +1,10 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
+from .fields import SanitizedModel
 
 from .enums import SwotCluster
 
 
-class SwotAxisStatement(BaseModel):
+class SwotAxisStatement(SanitizedModel):
     """
         Represents a statement for a SWOT axis (Strengths, Weaknesses, Opportunities, Threats).
     """
@@ -57,7 +58,7 @@ class SwotAxisStatement(BaseModel):
         return v
 
 
-class SwotOpportunityThreat(BaseModel):
+class SwotOpportunityThreat(SanitizedModel):
     """
         Represents a single Opportunity or Threat item, per the BMG document's
         Evaluating Business Models format (pp. 220-223): each generative
@@ -82,7 +83,7 @@ class SwotOpportunityThreat(BaseModel):
     )
 
 
-class SwotClusterResult(BaseModel):
+class SwotClusterResult(SanitizedModel):
     """
         Represents the result of a SWOT analysis for a specific cluster.
     """
@@ -135,7 +136,7 @@ class SwotClusterResult(BaseModel):
     )
 
 
-class Swot(BaseModel):
+class Swot(SanitizedModel):
     """
         Represents a SWOT analysis for a business model, organized by clusters.
     """

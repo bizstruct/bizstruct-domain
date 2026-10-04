@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
+from .fields import SanitizedModel
 
 
-class TeamMember(BaseModel):
+class TeamMember(SanitizedModel):
     """
         Represents a team member involved in the business structuring process.
     """
@@ -33,7 +34,7 @@ class TeamMember(BaseModel):
     )
 
 
-class TeamInfo(BaseModel):
+class TeamInfo(SanitizedModel):
     """
         Represents information about the team involved in the business structuring process.
     """
@@ -70,7 +71,7 @@ class TeamInfo(BaseModel):
     )
 
 
-class Source(BaseModel):
+class Source(SanitizedModel):
     """
         Represents an external source backing a quantitative claim in
         EnvironmentScan or BusinessCase. Required so that "obtained from
@@ -93,7 +94,7 @@ class Source(BaseModel):
     )
 
 
-class SalesScenario(BaseModel):
+class SalesScenario(SanitizedModel):
     """
         Represents a sales scenario in a business context.
     """
@@ -112,7 +113,7 @@ class SalesScenario(BaseModel):
     )
 
 
-class BusinessCase(BaseModel):
+class BusinessCase(SanitizedModel):
     """
         Represents a business case in a business context.
     """
@@ -198,7 +199,7 @@ class BusinessCase(BaseModel):
     )
 
 
-class EnvironmentScan(BaseModel):
+class EnvironmentScan(SanitizedModel):
     """
         Represents an environment scan in a business context.
     """

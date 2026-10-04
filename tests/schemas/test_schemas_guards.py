@@ -14,6 +14,7 @@ import pytest
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 import bizstruct_domain.schemas as schemas_pkg
+from bizstruct_domain.schemas.fields import SanitizedModel
 
 
 def _all_models() -> list[type[BaseModel]]:
@@ -21,7 +22,7 @@ def _all_models() -> list[type[BaseModel]]:
     for info in pkgutil.iter_modules(schemas_pkg.__path__):
         module = importlib.import_module(f"{schemas_pkg.__name__}.{info.name}")
         for _, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, BaseModel) and obj.__module__.startswith(schemas_pkg.__name__):
+            if issubclass(obj, BaseModel) and obj is not SanitizedModel and obj.__module__.startswith(schemas_pkg.__name__):
                 models[f"{obj.__module__}.{obj.__qualname__}"] = obj
     return sorted(models.values(), key=lambda m: (m.__module__, m.__qualname__))
 

@@ -1,9 +1,10 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
+from .fields import SanitizedModel
 
 from .enums import Epicenter
 
 
-class EpicenterClassification(BaseModel):
+class EpicenterClassification(SanitizedModel):
     """
         Represents the classification of an epicenter in a business context.
     """
@@ -38,7 +39,7 @@ class EpicenterClassification(BaseModel):
         return self
 
 
-class Ideation(BaseModel):
+class Ideation(SanitizedModel):
     """
         Represents an ideation instance in a business context.
     """
