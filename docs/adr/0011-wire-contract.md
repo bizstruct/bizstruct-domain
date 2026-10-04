@@ -1,17 +1,17 @@
 # ADR-0011: Контракт обміну між bizstruct-be і bizstruct-ml (wire contract)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-04
 - **Supersedes:** —
 - **Related:** ADR-0009 (граф, `ready_stages`, консистентність), ADR-0010 (контракти генерації, перевірки узгодженості в ml)
 
-> Це **лише дизайн**. Жодних моделей не реалізовано. Документ чекає на затвердження; після нього окремий PR додає моделі з розділу «Моделі, які треба додати в домен».
+> Рішення підтверджено мейнтейнером. Моделі й функції з розділу «Моделі й функції» **ще не реалізовано**: їх додає окремий PR (`schemas/wire.py`). Попередня редакція була в статусі Proposed (PR #17); цей текст її замінює.
 
 ---
 
 ## Context
 
-Форми повідомлень між `bizstruct-be` і `bizstruct-ml` сьогодні дубльовано в обох репозиторіях (у ml — `schemas/messages.py` і `schemas/project.py`, у be — власні Pydantic-схеми й ORM). Прочитано: `bizstruct-ml@main` (`schemas/messages.py`, `schemas/project.py`, `handler.py`, `backend_client.py`, `experiments/http.py`, `experiments/runner.py`) і локальну копію `bizstruct-be` (`app/models/stage.py`, `app/services/*`, `app/routers/internal.py`; це гілка зі `StageService`, не обов'язково `main`).
+Форми повідомлень між `bizstruct-be` і `bizstruct-ml` дубльовано в обох репозиторіях (у ml — `schemas/messages.py` і `schemas/project.py`, у be — власні Pydantic-схеми й ORM). Прочитано: `bizstruct-ml@main` (`schemas/messages.py`, `schemas/project.py`, `handler.py`, `backend_client.py`, `consumer.py`, `experiments/http.py`, `experiments/runner.py`) і локальну копію `bizstruct-be` (`app/models/stage.py`, `app/services/*`, `app/routers/internal.py`).
 
 ### Що є зараз
 
@@ -20,136 +20,159 @@
 | `QueueMessage` | ml | `project_id`, `block`, `payload`, `force`, `language` |
 | `HookPayload` | ml → be | `project_id`, `block`, `status: success\|failed`, `data`, `error` |
 | `PubSubEvent` | ml → fe через pubsub | `type="block_generated"`, `project_id`, `block`, `status` |
-| `ProjectState` | be → ml (`GET /api/internal/projects/{id}`) | `id`, `title`, `idea`, `status`, `language`, `translation_key` і по одному полю-словнику на **назву блоку** (`canvas`, `empathy_map`, …) |
+| `ProjectState` | be → ml (`GET /api/internal/projects/{id}`) | `id`, `title`, `idea`, `status`, `language`, `translation_key` і по одному полю-словнику на **назву блоку** |
 | `Stage` (ORM) | be | `id` (uuid7), `project_id`, `type`, `status`, `retry_count`, `error_code`, `error`, `started_at`, `finished_at`, `approved_at`; **`UNIQUE(project_id, type)`** |
 
-Поведінка: ml сам перевіряє ідемпотентність (`project.get_block(block) is not None` ⇒ `already_generated`, якщо не `force`); відповідь `422` на hook ⇒ повідомлення йде в dead-letter без повторів; `5xx`/таймаут ⇒ `abandon` і повторна доставка; після hook ml сам публікує pubsub-подію; `validate_model` — окремий спеціальний «блок». Інструмент експериментів (`experiments/`) ходить лише у **публічний** API (`POST /api/generation`, `GET /api/projects/{id}`), опитує `status == completed|failed` і читає блоки за назвою.
+Поведінка: ml сам перевіряє ідемпотентність (`project.get_block(block) is not None` ⇒ `already_generated`, якщо не `force`); відповідь `422` на hook ⇒ dead-letter без повторів, і рядок лишається `RUNNING`; `5xx`/таймаут ⇒ `abandon` і повторна доставка; після hook ml сам публікує pubsub-подію; `validate_model` — окремий спеціальний «блок». Інструмент експериментів ходить лише у **публічний** API (`POST /api/generation`, `GET /api/projects/{id}`) і опитує `status == completed|failed`.
 
-### Що це означає для нового графа
+### Рішення мейнтейнера, на яких побудовано контракт
 
-1. **Один блок на проєкт на назву** не вміщує багатоекземплярні етапи (`empathy_map`, `customer_scenario`, `ideation` мають `allows_multiple_instances=True`). `UNIQUE(project_id, type)` у be треба зняти.
-2. **Знахідка в домені (потребує окремого рішення).** `STAGE_REGISTRY` має `allows_multiple_instances=False` для `canvas`, `swot_errc_cycle`, `storytelling`, `future_scenario`, `pitch`, хоча `Canvas.group_id` і зовнішні ключі `canvas_id` у `Swot`/`Storytelling`/`FutureScenario`/`Pitch` означають по екземпляру на групу, коли `Patterns` вирішує `split_model`. Для `pitch` це неоднозначно (`canvas_id` + `swot_id` + `storytelling_id`): один на проєкт чи один на канву — питання до продукту. Поки прапорці не виправлено, `ready_stages` і цей контракт описують не весь реальний граф.
-3. **Ідентифікатори.** Домен використовує `str`, які видає бекенд; ORM — `uuid7`. На дроті — рядки.
-4. **`ready_stages` у домені працює на рівні типу** (ADR-0009 D2) і консервативний: прогрес по сегментах не виражається. Контракт нижче дає змогу виразити його через `refs`.
+1. **Pitch — по одному на канву**, зі спільними на проєкт `team_info` і `business_case`.
+2. **Кратність екземплярів** (ADR-0009, «Decisions made after acceptance», п. 4; `allows_multiple_instances` у домені 0.14.0):
 
-### Гіпотеза, яку критикую
+   | етап | кількість рядків |
+   |---|---|
+   | `brief` | 1 |
+   | `empathy_map` | по одному на кандидата сегмента (не більше `MAX_SEGMENTS = 3`) |
+   | `customer_scenario`, `ideation` | по одному на рядок `empathy_map` |
+   | `patterns` | 1 |
+   | `canvas` | по одному на групу `Patterns` |
+   | `swot_errc_cycle`, `storytelling`, `future_scenario`, `pitch` | по одному на канву |
+   | `team_info`, `business_case`, `environment_scan` | по одному на проєкт (лише якщо етап увімкнено) |
 
-Одиниця роботи — **рядок етапу**; `be` створює рядки (`pending`) до генерації, по одному на екземпляр, видає id і записує, з яких рядків кожен тягне вхід (`refs`: етап → id рядків). `QueueMessage`: `project_id`, `stage_row_id`, `stage`, `force`, `language`, `params`. `ProjectSnapshot` для ml: усі рядки з `id`, `stage`, `status`, `refs`, артефактом, плюс поля проєкту. `StageResult` (hook): `stage_row_id`, `status`, `artifact`, `error`, опційний `ConsistencyReport`. ml ніколи не пише статуси.
+3. **Спрощення:** id артефактів ml виводить детерміновано (uuid5), резервування в be немає; `StageProgress` і семантика багатьох цілей відкладені на фазу агента (список `targets` у формі повідомлення лишається, пайплайн надсилає рівно одну ціль); цикл повторів узгодженості (до 2 перегенерацій, повідомлення про порушення — як зворотний зв'язок) виконується **всередині ml** в одному повідомленні, be бачить лише фінальний результат; винним завжди вважається свіжозгенерований рядок (звинувачення вищого етапу відкладено).
+4. **be скидає базу даних** (без міграції даних) і прибирає `UNIQUE(project_id, type)`.
+5. **На `422` hook-у be сам переводить рядок у `ERROR`** (`generation_failed`).
+6. **Моделі дроту — snake_case**; camelCase належить публічним DTO бекенду.
 
-**Що я залишаю:** рядок як одиницю роботи; `refs`; «ml не пише статуси» (переходи стейт-машини застосовує лише be); `ConsistencyReport` у результаті.
-**Що пропоную змінити:** `force` → `attempt_id` (Q4); `artifact` → `artifacts: list` (рядок `swot_errc_cycle` дає кілька артефактів, Q6); повідомлення з **кількома цілями** замість одного рядка (agent mode, Q5); `refs` має валідуватися доменом і давати готовність **на рівні рядка**, а не типу (Q2); `block` → `stage`/`stage_row_id` усюди.
+## Decision
 
-## Decision (пропозиція, по питаннях)
+Одиниця роботи — **рядок етапу** (`StageRow`). be створює рядки (`pending`) і записує, з яких рядків кожен тягне вхід (`refs`: етап → id рядків). ml отримує повідомлення про рядок, читає знімок проєкту, генерує, перевіряє узгодженість і повертає результат; **ml ніколи не пише статуси**, переходи стейт-машини застосовує лише be.
 
-### Q1. Ідентичність рядка й артефакту: одне значення?
+### Q1. Ідентичність рядка й артефакту; ідентифікатори артефактів
 
-| Варіант | Суть | Мінуси |
-|---|---|---|
-| A. Так, `artifact.id == stage_row_id` | рядок = один артефакт | `swot_errc_cycle` дає Swot, Errc і нові версії Canvas; розбити на кілька рядків суперечить «один вузол» (ADR-0009 D1) |
-| B. Ні, окремі; be **резервує** id артефактів при створенні рядка | uniform; ml бере id із повідомлення | треба резервувати пул для циклу |
-| C. Збігаються для первинного артефакту, решта резервується | менше id | два правила замість одного |
+Рядок — стан і робота; артефакт — вміст, на який посилаються зовнішні ключі (`empathy_map_id`, `canvas_id`, …). Це різні ідентифікатори. Ідентифікатор артефакту виводить **ml** чистою функцією домену:
 
-**Рекомендація: B.** Рядок — стан і робота; артефакт — вміст, на який посилаються зовнішні ключі (`empathy_map_id`, `canvas_id`, …). Id артефактів видає be **при створенні рядка** і зберігає на ньому, тож повторна доставка й перегенерація використовують ті самі id (ідемпотентний upsert; зовнішні ключі нижчих етапів лишаються чинними, а застарілість позначає `dependents_of`). Пул для рядка визначає граф: один артефакт для більшості етапів; для циклу — до 5 Swot, 4 Errc і 4 нових версій Canvas (версії 1..5). Домен надає чисту функцію `reserved_artifact_counts(stage)`.
+```
+derive_artifact_id(stage_row_id: str, artifact_type: ArtifactType, index: int = 0) -> str
+```
 
-### Q2. Як задаються `refs` для багатоекземплярних етапів
+`uuid5` у фіксованому просторі імен (константа домену) від `f"{stage_row_id}:{artifact_type}:{index}"`. Значення `index`: `0` для рядків з одним артефактом; для `canvas` і `swot_errc_cycle` це **версія канви**: стартова `Canvas` v1 належить рядку `canvas` (`index=1`); версії 2..5 належать рядку циклу (`index=version`); `Swot` має `index = Swot.canvas_version`, `Errc` — `index = Errc.from_version`.
 
-`refs: dict[Stage, list[str]]` — id рядків, з яких тягне цей рядок. be створює рядки **поступово**, коли відомі кількості (варіант «усе наперед» неможливий: кількість груп/канв відома лише після `patterns`):
+**Чому так:** перегенерація рядка дає ті самі id, тож зовнішні ключі нижчих етапів лишаються чинними (а застарілість позначає `dependent_rows`); повторна доставка ідемпотентна без координації з be; резервування id у be не потрібне. Наслідок: коли перегенерація дає меншу кількість версій, be **замінює весь набір артефактів рядка** (видаляє ті, яких у новому результаті немає).
+
+Відхилено: резервування id у be (див. Alternatives).
+
+### Q2. `refs` для кожного етапу й створення рядків
+
+be створює рядки **поступово**, коли відомі кількості (кількість груп відома лише після `patterns`). Рядки для **увімкнених опційних етапів** be створює одразу. Кожен рядок має `instance_index` (0-based порядок серед рядків того самого етапу під тим самим батьком): для `empathy_map` рядок k покриває кандидата `Brief.customer_segment_candidates[k]`.
 
 | рядок | `refs` |
 |---|---|
-| `empathy_map` (по сегменту) | `{brief: [brief]}` |
-| `customer_scenario`, `ideation` (по рядку empathy_map) | `{empathy_map: [той самий рядок]}` — 1:1 |
+| `brief` | `{}` |
+| `empathy_map` (k-й сегмент) | `{brief: [brief]}` |
+| `customer_scenario`, `ideation` (по рядку empathy_map) | `{empathy_map: [відповідний рядок]}` |
 | `patterns` | `{customer_scenario: [усі], ideation: [усі]}` |
-| `canvas` (по групі) | `{brief, empathy_map: [рядки групи], customer_scenario: […], ideation: […], patterns}` |
+| `canvas` (по групі) | `{brief: [brief], empathy_map: [рядки групи], customer_scenario: [рядки групи], ideation: [рядки групи], patterns: [patterns]}` |
+| `swot_errc_cycle` (по канві) | `{canvas: [рядок канви]}`; якщо `environment_scan` увімкнено — ще `{environment_scan: [рядок]}` |
+| `storytelling`, `future_scenario` (по канві) | `{swot_errc_cycle: [рядок циклу тієї самої канви]}` |
+| `pitch` (по канві) | `{storytelling: [рядок тієї самої канви], swot_errc_cycle: [рядок тієї самої канви]}`; для увімкнених — ще `{team_info: [спільний рядок], business_case: [спільний рядок]}` |
+| `team_info` | `{}` |
+| `business_case`, `environment_scan` | `{brief: [brief]}` |
 
-Домен перевіряє `refs` чистою функцією `validate_row_refs(stage, refs)`: ключі ⊆ `depends_on ∪ optional_depends_on`, кожна тверда залежність непорожня. Готовність обчислюється **на рівні рядка**: `ready_rows(rows, enabled_optional)` — рядок `PENDING` і всі рядки з його `refs` для твердих залежностей `DONE` (увімкнена незавершена опційна залежність блокує, як у ADR-0009 D2). Це знімає консервативність `ready_stages`; `ready_stages` лишається для сумісності. Аналогічно `dependent_rows(row_id, rows)` для позначення застарілих рядків.
+Домен перевіряє `refs` чистою `validate_row_refs(stage, refs)`: ключі ⊆ `depends_on ∪ optional_depends_on`; кожна **тверда** залежність має непорожній список. Рядки канв будуються з `Patterns`: `canvas_rows_for(patterns) -> list[CanvasRowSpec]` (`CanvasRowSpec`: `group_id`, `empathy_map_ids`); відповідність id артефакту → рядок дає `row_of_artifact(rows, artifact_id)`.
+
+**`ready_rows(rows, enabled_optional)`** — точно: рядок готовий, якщо (1) його статус `PENDING`; (2) його `refs` проходять `validate_row_refs`; (3) для кожної твердої залежності всі рядки з `refs[dep]` існують у `rows` і мають статус `DONE`; (4) для кожної опційної залежності, що **увімкнена**, `refs[dep]` непорожній і всі ці рядки `DONE` — увімкнена опційна залежність, що не `DONE` (або рядка для якої ще немає), блокує споживача; (5) рядок опційного етапу, що не входить до `enabled_optional`, не готовий; **вимкнений** опційний етап не має рядка й ігнорується (навіть якщо `refs` його згадують). Результат — id рядків у порядку графа, далі в порядку входу. `ready_stages` лишається для сумісності. `dependent_rows(row_id, rows)` — транзитивні залежні рядки за `refs` (тверді й опційні ребра) для позначення застарілих.
+
+**`project_status(rows, enabled_optional)`** повертає `completed | failed | running`:
+- `failed` — є хоча б один рядок `ERROR`. Обґрунтування: за стейт-машиною `error` лишають лише через дію користувача (`error → pending`), тож без втручання проєкт не просунеться, а рядок без нащадків (наприклад, `future_scenario`) також не дозволяє досягти `completed`.
+- `completed` — немає рядків `ERROR`, усі рядки `DONE`, **і** розгортання завершено: кожен очікуваний етап має очікувану кількість рядків (одиничні етапи — 1, увімкнені опційні — 1, `empathy_map` ≥ 1, `customer_scenario` і `ideation` = кількість рядків `empathy_map`, `canvas` ≥ 1, `swot_errc_cycle`/`storytelling`/`future_scenario`/`pitch` = кількість рядків `canvas`). Без цієї умови проєкт із самим `brief` у стані `DONE` вважався б завершеним.
+- `running` — усе інше, зокрема рядки в `AWAITING_DECISION` (проєкт чекає користувача) і неповне розгортання.
 
 ### Q3. Як ml націлюється на екземпляр
 
-За `stage_row_id`. ml бере рядок із `ProjectSnapshot`, читає `refs`, збирає вхідні артефакти. Альтернатива «етап + ключ екземпляра» (наприклад, сегмент) крихка, бо ключа немає в домені. Для обмеження розміру відповіді — опційний параметр `?row=<id>`: повертає лише цей рядок і транзитивне замикання його `refs`.
+За `stage_row_id`. ml бере рядок зі знімка, читає `refs`, збирає вхідні артефакти. Запит знімка підтримує `?row=<id>` **з самого початку**: повертає цей рядок і транзитивне замикання його `refs` (плюс поля проєкту). Замикання достатнє для перевірок узгодженості: усі входи правил `MANY` лежать у замиканні (наприклад, усі версії Canvas — у рядку канви й рядку циклу).
 
-### Q4. Повторні спроби й ідемпотентність (`force`, повторна доставка)
+### Q4. Повторні спроби й ідемпотентність
 
-| Варіант | Суть | Проблема |
-|---|---|---|
-| A. `force: bool` (гіпотеза) | як сьогодні | повторна доставка повідомлення з `force=true` після успіху перегенерує вдруге й перезапише результат |
-| B. `attempt_id` | be видає новий `attempt_id` при кожній **своїй** спробі (перший запуск, перегенерація, `needs_retry`) і зберігає на рядку; повторна доставка того самого повідомлення має той самий `attempt_id` | трохи більше стану в be |
+be видає новий `attempt_id` при кожній **своїй** спробі (перший запуск, перегенерація, повтор) і зберігає його на рядку; повторна доставка того самого повідомлення має той самий `attempt_id`. ml при отриманні дивиться на рядок: `attempt_id` у повідомленні ≠ `row.attempt_id` ⇒ повідомлення застаріло ⇒ завершити без роботи; рядок `DONE` з тим самим `attempt_id` ⇒ уже застосовано ⇒ завершити. Hook несе `attempt_id`: be застосовує результат лише якщо збігається `attempt_id` і рядок `RUNNING`; дубль — `200` без змін; застарілий — `409`. Прапорця `force` немає (перегенерація = нова спроба, рішення be).
 
-**Рекомендація: B.** ml при отриманні дивиться на рядок: `attempt_id` у повідомленні ≠ `row.attempt_id` ⇒ повідомлення застаріло (замінене новішою спробою) ⇒ завершити без роботи; рядок `DONE` з тим самим `attempt_id` ⇒ уже застосовано ⇒ завершити. Hook несе `attempt_id`; be застосовує результат лише якщо `attempt_id` збігається і рядок `RUNNING`; дубль того самого результату — `200` без змін; застарілий — `409`. Прапорець `force` зникає (перегенерація = нова спроба, рішення be).
+### Q5. Повідомлення й цілі
 
-### Q5. Agent mode: одне повідомлення — багато рядків
+`QueueMessage.targets: list[RowTarget]` (≥ 1). **Пайплайн надсилає рівно одну ціль.** `StageProgress` і семантика багатьох цілей **зарезервовані для фази агента** і в цій версії не реалізуються. Цикл `swot_errc_cycle` у пайплайні повертає **усі версії** в `StageResult.artifacts` одним результатом.
 
-| Варіант | Суть |
-|---|---|
-| A. Повідомлення на рядок, агент усередині ml нічим не відрізняється для be | не виражає, що агент сам планує й виконує підграф за один прохід |
-| B. Повідомлення з `targets: list[RowTarget]` | pipeline — один target; agent — кілька |
+### Q6. Версії Canvas усередині `swot_errc_cycle`
 
-**Рекомендація: B.** `RowTarget = {stage_row_id, stage, attempt_id, artifact_ids}`. Статуси пише лише be: першу ціль be переводить у `RUNNING` при відправленні; решту ml сигналізує подією `StageProgress(event="started")`, і be застосовує `PENDING → RUNNING`. Проміжні артефакти (чернетки, ітерації) ml надсилає як `StageProgress(event="artifact", artifact=…)` — be робить upsert за id артефакту без зміни статусу. Фінальний `StageResult` надсилається **по кожному рядку**, щойно він готовий, у порядку залежностей. Відкрите питання: чи потрібен ліміт на розмір `targets`.
+Один рядок циклу на канву; версії — артефакти (`Canvas.version`/`previous_version_id`, `Swot.canvas_version`, `Errc.from_version`/`to_version`). Кількість ітерацій і критерій зупинки — оркестрація ml (ADR-0009). Стартова v1 належить рядку `canvas`, версії 2..5 — рядку циклу (Q1).
 
-### Q6. Версії Canvas усередині `swot_errc_cycle`: рядки чи версії артефакту?
+### Q7. Узгодженість і повтори всередині ml
 
-| Варіант | Суть | Мінус |
-|---|---|---|
-| A. Кожна ітерація — окремі рядки | рядки на кожну версію | суперечить «один вузол», ламає стейт-машину й граф |
-| B. Один рядок циклу; версії — артефакти (`Canvas.version`, `previous_version_id`, `Swot.canvas_version`, `Errc.from_version`/`to_version`) | цикл — оркестрація всередині рядка | рядок довго `RUNNING`; прогрес лише через `StageProgress` |
+Після генерації ml виконує детерміновані правила й judge-чеки, застосовні до свіжого рядка (ADR-0010 D6; входи `MANY` беруться із замикання `refs`). Якщо є порушення рівня `error`, ml **до 2 разів** перегенерує, подаючи тексти порушень у промпт; повторів у be не видно. Фінальний `ConsistencyReport` іде в `StageResult.consistency`. be застосовує **`RUNNING → CONSISTENCY_CHECK → DONE`**, якщо немає порушень рівня `error` (попередження не блокують), інакше **`RUNNING → CONSISTENCY_CHECK → AWAITING_DECISION`** (порушення додано до рядка). Перевірено за `stage_machine`: `RUNNING→CONSISTENCY_CHECK`, `CONSISTENCY_CHECK→DONE`, `CONSISTENCY_CHECK→AWAITING_DECISION` дозволені (тоді як `RUNNING→DONE` напряму — ні), тому be застосовує два переходи послідовно. `StageRow.consistency` зберігає останній звіт: ml читає його при ініційованому користувачем повторі, інструмент експериментів — для аналізу. Винним завжди вважається **свіжозгенерований рядок**; звинувачення вищого етапу відкладено. Ліміт повторів ml (2) не збільшує `retry_count` у be.
 
-**Рекомендація: B.** Версії уже є полями моделей; кількість ітерацій і критерій зупинки — оркестрація ml (ADR-0009). Кожен проміжний Swot/Errc/Canvas надсилається як `StageProgress(artifact)`; фінальний `StageResult` містить повний набір (`artifacts`). Рядок стає `DONE`, коли цикл завершено; стартова версія Canvas (v1) належить рядку `canvas`, версії 2..5 — рядку циклу. Зверніть увагу: якщо `canvas` стане багатоекземплярним (див. знахідку 2), цикл також виконується по канві.
+### Q8. Інструмент експериментів
 
-### Q7. Що потрібно інструменту експериментів від публічного API
+Використовує лише публічний API й той самий `ProjectSnapshot` (з опційними `started_at`/`finished_at`, `error_code`, `error`, `consistency`, усіма артефактами за типом, включно з екземплярами й версіями циклу); статус проєкту виводить `project_status`. Публічна форма віддається у camelCase (DTO бекенду); моделі дроту — snake_case.
 
-Інструмент використовує лише публічний API. Йому потрібен той самий `ProjectSnapshot` (одна модель на ml-внутрішній і публічний шляхи), з опційними `started_at`/`finished_at` на рядках: (1) завершеність проєкту; (2) тривалість етапів; (3) причина збою (`error_code`, `error`); (4) усі артефакти за типом, включно з екземплярами й проміжними версіями циклу; (5) `ConsistencyReport` рядків. Стан проєкту виводиться, а не зберігається: `project_status(rows, enabled_optional)` — `completed`, коли всі потрібні рядки `DONE`; `failed`, коли є рядок `ERROR` без шляху вперед. Відкрите питання: camelCase/snake_case у публічній відповіді (fe читає camelCase, внутрішній канал — snake_case).
-
-### Q8. Що валідується де (поведінка 422)
+### Q9. Що валідується де (поведінка 422)
 
 | Крок | Хто | Чим |
 |---|---|---|
 | вихід LLM | ml | контракт генерації (`GENERATION_CONTRACTS`, ADR-0010) |
 | конвертація | ml | `X.from_generated(…)`; `ValidationError` ⇒ збій генерації |
-| конверт повідомлення/результату | be | моделі дроту (`QueueMessage`, `StageResult`, …) |
-| вміст артефактів | be | `ARTIFACT_MODELS[type].model_validate(data)` для кожного артефакту |
-| міжартефактні правила | ml | `ConsistencyRule`/`JudgeCheck` (ADR-0010 D6) |
+| конверт повідомлення/результату | be | моделі дроту |
+| вміст артефактів | be | `ARTIFACT_MODELS[type].model_validate(data)` |
+| міжартефактні правила | ml | `ConsistencyRule`/`JudgeCheck` |
 | `refs`, готовність, переходи | be | `validate_row_refs`, `ready_rows`, `is_valid_transition` |
 
-Відповіді на hook: `200` — застосовано або дубль; `404` — проєкт/рядок зник (ml: dead-letter); **`422` — результат не проходить схему: be сам переводить рядок у `ERROR` (`generation_failed`, текст — зведення помилок) і відповідає `422`; ml завершує повідомлення в dead-letter, повторів немає**. Це закриває сьогоднішню прогалину: після dead-letter рядок не залишається вічно `RUNNING`. `409` — застаріла спроба або рядок уже не `RUNNING` (ml: завершити повідомлення). `5xx`/таймаут — `abandon`, повторна доставка (hook ідемпотентний завдяки `attempt_id`).
+Відповіді на hook: `200` — застосовано або дубль; `404` — проєкт/рядок зник (ml: dead-letter); **`422` — результат не проходить схему: be сам переводить рядок у `ERROR` (`generation_failed`, текст — зведення помилок) і відповідає `422`; ml завершує повідомлення в dead-letter**; `409` — застаріла спроба або рядок уже не `RUNNING` (ml завершує повідомлення); `5xx`/таймаут — `abandon`, повторна доставка (hook ідемпотентний через `attempt_id`).
 
-## Моделі, які треба додати в домен
+## Моделі й функції, які треба додати в домен
 
-Нова група `schemas/wire.py`, експорт із `bizstruct_domain.schemas`; усі успадковують `SanitizedModel`; ідентифікатори — `str`.
+Нова група `schemas/wire.py`, експорт із `bizstruct_domain.schemas`; усі успадковують `SanitizedModel`; ідентифікатори — `str`; часові мітки — `datetime | None`; поля — snake_case.
 
-1. **`ArtifactType(StrEnum)`** — 14 значень (`brief`, `empathy_map`, `customer_scenario`, `ideation`, `patterns`, `canvas`, `swot`, `errc`, `storytelling`, `future_scenario`, `pitch`, `team_info`, `business_case`, `environment_scan`); `ARTIFACT_STAGE: dict[ArtifactType, Stage]`; `ARTIFACT_MODELS: dict[ArtifactType, type[BaseModel]]`.
-2. **`ArtifactRecord`** — `id: str`, `type: ArtifactType`, `data: dict[str, Any]`; чиста `parse_artifact(record)` (валідація моделлю `ARTIFACT_MODELS[type]`).
-3. **`StageRow`** — `id`, `stage: Stage`, `status: StageStatus`, `attempt_id: str | None`, `refs: dict[Stage, list[str]]`, `artifacts: list[ArtifactRecord]`, `retry_count: int`, `error_code: StageErrorCode | None`, `error: str | None`, `started_at`/`finished_at` (опційні).
-4. **`ProjectSnapshot`** — `project_id`, `idea`, `language`, `enabled_optional: list[Stage]`, `rows: list[StageRow]`.
-5. **`RowTarget`** — `stage_row_id`, `stage`, `attempt_id`, `artifact_ids: dict[ArtifactType, list[str]]`.
-6. **`QueueMessage`** — `project_id`, `language`, `targets: list[RowTarget]` (≥ 1), `params: QueueParams` (`enabled_optional: list[Stage]`).
-7. **`StageFailure`** — `code: StageErrorCode`, `message: str`.
-8. **`StageResult`** — `project_id`, `stage_row_id`, `attempt_id`, `status: Literal["success","failed"]`, `artifacts: list[ArtifactRecord]`, `error: StageFailure | None`, `consistency: ConsistencyReport | None`.
-9. **`StageProgress`** — `project_id`, `stage_row_id`, `attempt_id`, `event: Literal["started","artifact"]`, `artifact: ArtifactRecord | None`.
-10. **`StageEvent`** (pubsub; публікує be після застосування переходу) — `type`, `project_id`, `stage_row_id`, `stage`, `status`.
-11. Чисті функції: `reserved_artifact_counts(stage)`, `validate_row_refs(stage, refs)`, `ready_rows(rows, enabled_optional)`, `dependent_rows(row_id, rows)`, `project_status(rows, enabled_optional)`.
+**Моделі й enum:**
+1. `ArtifactType(StrEnum)` — 14 значень; `ARTIFACT_STAGE: dict[ArtifactType, Stage]`; `ARTIFACT_MODELS: dict[ArtifactType, type[BaseModel]]` (збережені моделі).
+2. `ArtifactRecord` — `id`, `type: ArtifactType`, `data: dict[str, Any]`.
+3. `StageRow` — `id`, `stage: Stage`, `instance_index: int`, `status: StageStatus`, `attempt_id: str | None`, `refs: dict[Stage, list[str]]`, `artifacts: list[ArtifactRecord]`, `consistency: ConsistencyReport | None`, `retry_count: int`, `error_code: StageErrorCode | None`, `error: str | None`, `started_at`, `finished_at`.
+4. `ProjectSnapshot` — `project_id`, `idea`, `language`, `enabled_optional: list[Stage]`, `rows: list[StageRow]`.
+5. `RowTarget` — `stage_row_id`, `stage`, `attempt_id`.
+6. `QueueMessage` — `project_id`, `language`, `targets: list[RowTarget]` (≥ 1), `params: QueueParams` (`enabled_optional`).
+7. `StageFailure` — `code: StageErrorCode`, `message`.
+8. `StageResult` — `project_id`, `stage_row_id`, `attempt_id`, `status: Literal["success","failed"]`, `artifacts`, `error: StageFailure | None`, `consistency: ConsistencyReport | None`; узгодженість: `failed` вимагає `error`, `success` вимагає непорожніх `artifacts`.
+9. `StageEvent` (pubsub, публікує be після застосування переходу) — `type`, `project_id`, `stage_row_id`, `stage`, `status`.
+10. `CanvasRowSpec` — `group_id`, `empathy_map_ids`.
 
-Це заміняє в ml `QueueMessage`, `HookPayload`, `PubSubEvent`, `ProjectState`; специфіка ml (LLM-клієнт, трейсинг) лишається в ml. Моделі дроту — мінорна зміна версії (додавання API).
+**Чисті функції:** `derive_artifact_id`, `validate_row_refs`, `ready_rows`, `dependent_rows`, `project_status`, `canvas_rows_for`, `row_of_artifact`, `parse_artifact`.
+
+**Не входять у цю версію:** `StageProgress`, `reserved_artifact_counts`, `artifact_ids` у `RowTarget`.
+
+Це заміняє в ml `QueueMessage`, `HookPayload`, `PubSubEvent`, `ProjectState`; специфіка ml (LLM-клієнт, трейсинг) лишається в ml.
 
 ## Відкриті питання
 
-1. **Виправлення `allows_multiple_instances`** для `canvas`, `swot_errc_cycle`, `storytelling`, `future_scenario` (і, за рішенням продукту, `pitch`) — окремий PR до цього контракту.
-2. **Пул резервованих id для циклу** (5/4/4) — чи достатньо, і чи резервувати при створенні рядка, чи при старті спроби.
-3. **Розмір `targets` в agent mode** і чи може результат одного рядка залежати від проміжного артефакту іншого рядка того самого повідомлення.
-4. **`validate_model`** лишається поза цим контрактом (ADR-0009: чекає на рішення продукту).
-5. **Публічна форма** (camelCase vs snake_case) і чи віддавати артефакти повністю у публічному `GET`.
-6. Хто призначає `ConsistencyViolation.artifact_ids` → рядки для переходів «порушення у цьому/вищому етапі»: потрібна відповідність артефакт → рядок у be.
+1. **`validate_model`** лишається поза цим контрактом (ADR-0009: чекає на рішення продукту).
+2. **Фаза агента:** `StageProgress`, повідомлення з кількома цілями, подальший порядок результатів — окремий ADR.
+3. **Звинувачення вищого етапу** при порушеннях (відповідність артефакт → рядок уже є, але правило звинувачення відкладено).
+4. **Єдиний пітч компанії** (не по канві) — можливий пізніший етап, не зараз.
+
+## Ризики
+
+- **Тривалість рядка циклу проти блокування повідомлення.** Рядок `swot_errc_cycle` у пайплайні може виконуватись хвилинами, а `AutoLockRenewer` у ml жорстко обмежено `max_lock_renewal_duration=300` (`consumer.py`, рядки 75 і 83). Продовження блокування треба збільшити або зробити конфігурованим. Що саме відбувається при спливі блокування (повторна доставка іншому споживачеві, помилка при завершенні повідомлення), **не стверджується тут як факт**: це треба перевірити на Service Bus під час реалізації; `attempt_id` робить повторну доставку безпечною, але не прибирає зайвої роботи.
+- Знімок проєкту на кожне повідомлення: пом'якшується `?row=<id>` (Q3).
 
 ## Consequences
 
-- Стан і зміст розділено: be володіє рядками, статусами й id; ml володіє генерацією й перевірками.
-- Ідемпотентність не залежить від прапорця й від читання чужого поля: вирішується `attempt_id` і станом рядка.
-- Готовність на рівні рядка дає паралелізм по сегментах, якого не мав `ready_stages`.
-- be мусить змінити схему БД (зняти `UNIQUE(project_id, type)`, додати `attempt_id`, `refs`, резерв id), а ml — перейти з блоків на рядки.
-- Є ризик вузького місця: повний `ProjectSnapshot` на кожне повідомлення; пом'якшення — `?row=<id>`.
+- Стан і зміст розділено: be володіє рядками, статусами й переходами; ml — генерацією, перевірками й виведенням id артефактів.
+- Ідемпотентність не залежить від прапорця: вирішується `attempt_id` і станом рядка; id артефактів стабільні при перегенерації.
+- Готовність на рівні рядка дає паралелізм по сегментах і по канвах, якого не мав `ready_stages`.
+- **Для be:** нова схема рядків етапів (`instance_index`, `attempt_id`, `refs`, `consistency`, артефакти рядка); зняти `UNIQUE(project_id, type)`; створювати рядки поступово (після `brief`, після `patterns`) і одразу для увімкнених опційних етапів; hook відповідає `200/404/409/422` за Q9 і сам переводить рядок у `ERROR` при `422`; застосовувати `RUNNING → CONSISTENCY_CHECK → DONE|AWAITING_DECISION`; **БД скидається, міграції даних немає**.
+- **Для ml:** перейти з блоків на рядки; виводити id артефактів; виконувати повтори узгодженості всередині повідомлення; продовження блокування повідомлення (Ризики).
 
 ## Alternatives considered
 
+- **Резервування id артефактів у be** (пул на рядок): відхилено — потребує розміру пулу для циклу (5/4/4) і зберігання на рядку; детерміноване виведення дає ті самі властивості без координації.
+- **Цикл повторів узгодженості через be** (кожна перегенерація — нове повідомлення): відхилено — be мусив би тримати проміжні стани й лічильники, а ml усе одно має повний контекст.
 - **Лишити `block` як ключ і додати індекс екземпляра** (`empathy_map[2]`): не дає ідентичності для `refs`, `attempt_id` і зовнішніх ключів.
-- **ml записує статуси сам:** відхилено — стейт-машина і транзакції вже в be; два автори статусу дають розбіжності.
-- **Кожна ітерація циклу — рядок:** відхилено (Q6).
-- **`force` замість `attempt_id`:** відхилено (Q4).
+- **ml записує статуси сам:** відхилено — стейт-машина і транзакції вже в be.
+- **Кожна ітерація циклу — окремі рядки:** відхилено — суперечить «один вузол» (ADR-0009 D1) і ламає стейт-машину.
+- **`force` замість `attempt_id`:** відхилено — повторна доставка `force`-повідомлення перегенерувала б вдруге.
