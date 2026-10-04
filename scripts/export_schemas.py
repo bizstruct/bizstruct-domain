@@ -14,21 +14,32 @@ from pathlib import Path
 from bizstruct_domain.schemas import (
     Brief,
     BusinessCase,
+    BusinessCaseGenerated,
     Canvas,
     CanvasGenerated,
     CustomerScenario,
+    CustomerScenarioGenerated,
     EmpathyMap,
+    EmpathyMapGenerated,
     EnvironmentScan,
+    EnvironmentScanGenerated,
     Errc,
+    ErrcGenerated,
     FutureScenario,
+    FutureScenarioGenerated,
     Ideation,
+    IdeationGenerated,
     Patterns,
+    PatternsGenerated,
     Pitch,
+    PitchGenerated,
     STAGE_REGISTRY,
-    Storytelling,
     StageErrorCode,
     StageStatus,
+    Storytelling,
+    StorytellingGenerated,
     Swot,
+    SwotGenerated,
     TeamInfo,
     ValidateModelResult,
 )
@@ -56,10 +67,21 @@ ARTIFACT_MODELS = {
     "environment_scan": EnvironmentScan,
 }
 
-# Generation-time contract (2-4 text-only cards per section), not a persisted
-# shape. Exported because the 2-4 bound lives in its JSON Schema.
+# Generation contracts: what the LLM writes (the response_format), one file per
+# model of GENERATION_CONTRACTS. Brief is its own contract (brief.json).
 GENERATION_MODELS = {
+    "empathy_map_generated": EmpathyMapGenerated,
+    "customer_scenario_generated": CustomerScenarioGenerated,
+    "ideation_generated": IdeationGenerated,
+    "patterns_generated": PatternsGenerated,
     "canvas_generated": CanvasGenerated,
+    "swot_generated": SwotGenerated,
+    "errc_generated": ErrcGenerated,
+    "storytelling_generated": StorytellingGenerated,
+    "future_scenario_generated": FutureScenarioGenerated,
+    "pitch_generated": PitchGenerated,
+    "business_case_generated": BusinessCaseGenerated,
+    "environment_scan_generated": EnvironmentScanGenerated,
 }
 
 # Not a stage artifact: a side-channel task result (see schemas/validate_model.py).

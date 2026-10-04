@@ -28,63 +28,9 @@
       ],
       "title": "SalesScenario",
       "type": "object"
-    },
-    "Source": {
-      "description": "Represents an external source backing a quantitative claim in\nEnvironmentScan or BusinessCase. Required so that \"obtained from\nexternal sources\" is verifiable rather than merely claimed.",
-      "properties": {
-        "note": {
-          "description": "What this source specifically supports (which figure or claim).",
-          "examples": [
-            "Basis for the projected 10% annual growth rate figure."
-          ],
-          "title": "Note",
-          "type": "string"
-        },
-        "retrieved_at": {
-          "description": "The date the figure or claim was retrieved from the source (ISO date). Required next to every external quantitative claim (ADR-0005): market figures go stale and the source alone does not say how old they are.",
-          "examples": [
-            "2026-09-30"
-          ],
-          "format": "date",
-          "title": "Retrieved At",
-          "type": "string"
-        },
-        "title": {
-          "description": "Short label for the source (publication, report, or site name).",
-          "examples": [
-            "Statista: SaaS Market Size 2026",
-            "IBISWorld Industry Report"
-          ],
-          "title": "Title",
-          "type": "string"
-        },
-        "url": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Link to the source, if available.",
-          "examples": [
-            "https://www.statista.com/..."
-          ],
-          "title": "Url"
-        }
-      },
-      "required": [
-        "title",
-        "retrieved_at",
-        "note"
-      ],
-      "title": "Source",
-      "type": "object"
     }
   },
-  "description": "Represents a business case in a business context.",
+  "description": "Generation contract of BusinessCase: only what the LLM writes. The system\nfields (id, project_id, sources) are added by BusinessCase, which extends this model.",
   "properties": {
     "breakeven_formula": {
       "description": "The formula used to calculate the breakeven point for the business case.",
@@ -113,14 +59,6 @@
       "title": "Funding Requirements",
       "type": "string"
     },
-    "id": {
-      "description": "Unique identifier for the business case.",
-      "examples": [
-        "business_case_001"
-      ],
-      "title": "Id",
-      "type": "string"
-    },
     "market_benchmarks": {
       "description": "A brief description of the market benchmarks relevant to the business case.",
       "examples": [
@@ -137,14 +75,6 @@
         "The profit potential is moderate, with expected net profits of $50,000 in the first year and gradual growth as market share increases and operational efficiencies are realized."
       ],
       "title": "Profit Potential Notes",
-      "type": "string"
-    },
-    "project_id": {
-      "description": "Identifier of the project this business case is associated with.",
-      "examples": [
-        "project_001"
-      ],
-      "title": "Project Id",
       "type": "string"
     },
     "sales_scenarios": {
@@ -167,25 +97,6 @@
       "minItems": 1,
       "title": "Sales Scenarios",
       "type": "array"
-    },
-    "sources": {
-      "description": "External sources backing the market benchmarks. A generation with no sources is treated as a failed generation, not as a valid empty result.",
-      "examples": [
-        [
-          {
-            "note": "Basis for the projected 10% annual growth rate figure.",
-            "retrieved_at": "2026-09-30",
-            "title": "Statista: SaaS Market Size 2026",
-            "url": "https://www.statista.com/..."
-          }
-        ]
-      ],
-      "items": {
-        "$ref": "#/$defs/Source"
-      },
-      "minItems": 1,
-      "title": "Sources",
-      "type": "array"
     }
   },
   "required": [
@@ -194,11 +105,8 @@
     "sales_scenarios",
     "capital_and_operating_costs",
     "funding_requirements",
-    "profit_potential_notes",
-    "id",
-    "project_id",
-    "sources"
+    "profit_potential_notes"
   ],
-  "title": "BusinessCase",
+  "title": "BusinessCaseGenerated",
   "type": "object"
 }

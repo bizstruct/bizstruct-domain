@@ -1,5 +1,5 @@
 from pydantic import Field, model_validator
-from .fields import SanitizedModel
+from .fields import FromGeneratedMixin, SanitizedModel
 
 from .enums import (
     ERRCActionType,
@@ -80,7 +80,40 @@ class ErrcMove(SanitizedModel):
         return self
 
 
-class Errc(SanitizedModel):
+class ErrcGenerated(SanitizedModel):
+    """
+        Generation contract of Errc: only what the LLM writes. The system
+        fields (canvas_id, from_version, id, result_canvas_id, swot_id, to_version) are added by Errc, which extends this model.
+    """
+    moves: list[ErrcMove] = Field(
+        ...,
+        min_length=1,
+        max_length=6,
+        description="The moves of the ERRC analysis: between 1 and 6.",
+        examples=[
+            [
+                ErrcMove(
+                    action=ERRCActionType.ELIMINATE,
+                    target_section=CanvasSection.CUSTOMER_SEGMENTS,
+                    target_card_text="Old customer segment",
+                    new_text=None,
+                    opposite_side_impact="Eliminating this segment may reduce revenue.",
+                    rationale="This segment is no longer profitable.",
+                ),
+                ErrcMove(
+                    action=ERRCActionType.CREATE,
+                    target_section=CanvasSection.VALUE_PROPOSITIONS,
+                    target_card_text=None,
+                    new_text="New value proposition",
+                    opposite_side_impact="Creating this proposition may attract new customers.",
+                    rationale="This proposition addresses a new market need.",
+                ),
+            ],
+        ],
+    )
+
+
+class Errc(ErrcGenerated, FromGeneratedMixin):
     """
         Represents an error correction (ERRC) analysis for a business model canvas.
     """
@@ -119,32 +152,6 @@ class Errc(SanitizedModel):
         ...,
         description="Identifier of the resulting canvas after applying this ERRC analysis.",
         examples=["canvas_002"],
-    )
-    moves: list[ErrcMove] = Field(
-        ...,
-        min_length=1,
-        max_length=6,
-        description="The moves of the ERRC analysis: between 1 and 6.",
-        examples=[
-            [
-                ErrcMove(
-                    action=ERRCActionType.ELIMINATE,
-                    target_section=CanvasSection.CUSTOMER_SEGMENTS,
-                    target_card_text="Old customer segment",
-                    new_text=None,
-                    opposite_side_impact="Eliminating this segment may reduce revenue.",
-                    rationale="This segment is no longer profitable.",
-                ),
-                ErrcMove(
-                    action=ERRCActionType.CREATE,
-                    target_section=CanvasSection.VALUE_PROPOSITIONS,
-                    target_card_text=None,
-                    new_text="New value proposition",
-                    opposite_side_impact="Creating this proposition may attract new customers.",
-                    rationale="This proposition addresses a new market need.",
-                ),
-            ],
-        ],
     )
 
     @model_validator(mode="after")

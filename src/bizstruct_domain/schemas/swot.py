@@ -1,7 +1,7 @@
 from typing import Literal
 
 from pydantic import Field, model_validator
-from .fields import SanitizedModel
+from .fields import FromGeneratedMixin, SanitizedModel
 
 from .enums import THREAT_QUESTIONS_BY_CLUSTER, SwotCluster, ThreatQuestion
 
@@ -196,34 +196,11 @@ class SwotClusterResult(SanitizedModel):
         return self
 
 
-class Swot(SanitizedModel):
+class SwotGenerated(SanitizedModel):
     """
-        Represents a SWOT analysis for a business model, organized by clusters.
+        Generation contract of Swot: only what the LLM writes. The system
+        fields (canvas_id, canvas_version, environment_scan_id, id) are added by Swot, which extends this model.
     """
-    id: str = Field(
-        ...,
-        description="Unique identifier for the SWOT analysis.",
-        examples=["swot_001"],
-    )
-    canvas_id: str = Field(
-        ...,
-        description="Identifier of the canvas this SWOT analysis is associated with.",
-        examples=["canvas_001"],
-    )
-    canvas_version: int = Field(
-        ...,
-        ge=1,
-        le=5,
-        description="Version of the canvas this SWOT analysis is associated with.",
-        examples=[1],
-    )
-    environment_scan_id: str | None = Field(
-        None,
-        description="Identifier of the EnvironmentScan used to inform Opportunities/Threats "
-                     "for this cluster set, if any. Strengths/Weaknesses are always derived "
-                     "solely from the canvas.",
-        examples=["environment_scan_001"],
-    )
     clusters: list[SwotClusterResult] = Field(
         ...,
         min_length=4,
@@ -349,7 +326,7 @@ class Swot(SanitizedModel):
         return total
 
     @model_validator(mode="after")
-    def clusters_cover_all_types(self) -> "Swot":
+    def clusters_cover_all_types(self) -> "SwotGenerated":
         """
             Validates that all four SWOT clusters are represented in the analysis.
         """
@@ -360,3 +337,33 @@ class Swot(SanitizedModel):
                 f"All four SWOT clusters must be represented. Missing: {', '.join(missing)}"
             )
         return self
+
+
+class Swot(SwotGenerated, FromGeneratedMixin):
+    """
+        Represents a SWOT analysis for a business model, organized by clusters.
+    """
+    id: str = Field(
+        ...,
+        description="Unique identifier for the SWOT analysis.",
+        examples=["swot_001"],
+    )
+    canvas_id: str = Field(
+        ...,
+        description="Identifier of the canvas this SWOT analysis is associated with.",
+        examples=["canvas_001"],
+    )
+    canvas_version: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        description="Version of the canvas this SWOT analysis is associated with.",
+        examples=[1],
+    )
+    environment_scan_id: str | None = Field(
+        None,
+        description="Identifier of the EnvironmentScan used to inform Opportunities/Threats "
+                     "for this cluster set, if any. Strengths/Weaknesses are always derived "
+                     "solely from the canvas.",
+        examples=["environment_scan_001"],
+    )

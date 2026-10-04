@@ -1,5 +1,5 @@
 from pydantic import Field
-from .fields import SanitizedModel
+from .fields import FromGeneratedMixin, SanitizedModel
 
 from .enums import (
     CanvasSection,
@@ -31,20 +31,11 @@ class CanvasReference(SanitizedModel):
     )
 
 
-class Storytelling(SanitizedModel):
+class StorytellingGenerated(SanitizedModel):
     """
-        Represents a storytelling element for a business model canvas.
+        Generation contract of Storytelling: only what the LLM writes. The system
+        fields (canvas_id, id) are added by Storytelling, which extends this model.
     """
-    id: str = Field(
-        ...,
-        description="Unique identifier for the storytelling element.",
-        examples=["storytelling_001"],
-    )
-    canvas_id: str = Field(
-        ...,
-        description="Identifier of the canvas this storytelling element is associated with.",
-        examples=["canvas_001"],
-    )
     perspective: StorytellingPerspective = Field(
         ...,
         description="The perspective from which the storytelling is presented (e.g., 'Company', 'Customer').",
@@ -92,4 +83,20 @@ class Storytelling(SanitizedModel):
                 ),
             ],
         ],
+    )
+
+
+class Storytelling(StorytellingGenerated, FromGeneratedMixin):
+    """
+        Represents a storytelling element for a business model canvas.
+    """
+    id: str = Field(
+        ...,
+        description="Unique identifier for the storytelling element.",
+        examples=["storytelling_001"],
+    )
+    canvas_id: str = Field(
+        ...,
+        description="Identifier of the canvas this storytelling element is associated with.",
+        examples=["canvas_001"],
     )

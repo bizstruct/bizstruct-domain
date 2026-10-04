@@ -1,4 +1,5 @@
 {
+  "description": "Generation contract of EmpathyMap: only what the LLM writes. The system\nfields (id, project_id) are added by EmpathyMap, which extends this model.",
   "properties": {
     "gains": {
       "description": "The persona's gains or desires.",
@@ -37,14 +38,6 @@
       "title": "Hears",
       "type": "array"
     },
-    "id": {
-      "description": "Unique identifier for the empathy map.",
-      "examples": [
-        "empathy_map_001"
-      ],
-      "title": "Id",
-      "type": "string"
-    },
     "pains": {
       "description": "The persona's pains or frustrations.",
       "examples": [
@@ -76,14 +69,6 @@
         "Tech-Savvy Millennial"
       ],
       "title": "Persona Name",
-      "type": "string"
-    },
-    "project_id": {
-      "description": "Identifier of the project this empathy map belongs to.",
-      "examples": [
-        "project_001"
-      ],
-      "title": "Project Id",
       "type": "string"
     },
     "says_and_does": {
@@ -149,10 +134,8 @@
     "thinks_and_feels",
     "says_and_does",
     "pains",
-    "gains",
-    "id",
-    "project_id"
+    "gains"
   ],
-  "title": "EmpathyMap",
+  "title": "EmpathyMapGenerated",
   "type": "object"
 }

@@ -1,36 +1,12 @@
 {
-  "description": "Represents a business pitch with various attributes and sections.",
+  "description": "Generation contract of Pitch: only what the LLM writes. The system\nfields (business_case_id, canvas_id, id, project_id, storytelling_id, swot_id, team_info_id) are added by Pitch, which extends this model.",
   "properties": {
-    "business_case_id": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Identifier of the business case this pitch is associated with, if applicable.",
-      "examples": [
-        "business_case_001"
-      ],
-      "title": "Business Case Id"
-    },
     "business_model_summary": {
       "description": "A concise summary of the business model being pitched.",
       "examples": [
         "Our platform leverages AI to provide personalized recommendations to users."
       ],
       "title": "Business Model Summary",
-      "type": "string"
-    },
-    "canvas_id": {
-      "description": "Identifier of the canvas this pitch is associated with.",
-      "examples": [
-        "canvas_001"
-      ],
-      "title": "Canvas Id",
       "type": "string"
     },
     "competitive_advantages": {
@@ -73,22 +49,6 @@
       "title": "Hook",
       "type": "string"
     },
-    "id": {
-      "description": "Unique identifier for the pitch.",
-      "examples": [
-        "pitch_001"
-      ],
-      "title": "Id",
-      "type": "string"
-    },
-    "project_id": {
-      "description": "Identifier of the project this pitch is associated with.",
-      "examples": [
-        "project_001"
-      ],
-      "title": "Project Id",
-      "type": "string"
-    },
     "risk_analysis": {
       "description": "A list of potential risks associated with the business and strategies to mitigate them.",
       "examples": [
@@ -102,38 +62,6 @@
       "minItems": 1,
       "title": "Risk Analysis",
       "type": "array"
-    },
-    "storytelling_id": {
-      "description": "Identifier of the storytelling this pitch is associated with.",
-      "examples": [
-        "storytelling_001"
-      ],
-      "title": "Storytelling Id",
-      "type": "string"
-    },
-    "swot_id": {
-      "description": "Identifier of the SWOT analysis this pitch is associated with.",
-      "examples": [
-        "swot_001"
-      ],
-      "title": "Swot Id",
-      "type": "string"
-    },
-    "team_info_id": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Identifier of the team information this pitch is associated with, if applicable.",
-      "examples": [
-        "team_info_001"
-      ],
-      "title": "Team Info Id"
     },
     "team_section": {
       "anyOf": [
@@ -156,13 +84,8 @@
     "hook",
     "business_model_summary",
     "competitive_advantages",
-    "risk_analysis",
-    "id",
-    "project_id",
-    "storytelling_id",
-    "canvas_id",
-    "swot_id"
+    "risk_analysis"
   ],
-  "title": "Pitch",
+  "title": "PitchGenerated",
   "type": "object"
 }

@@ -27,8 +27,8 @@ from .consistency import (
     RuleInput,
     StageArity,
 )
-from .customer_scenario import CustomerScenario
-from .empathy_map import EmpathyMap
+from .customer_scenario import CustomerScenario, CustomerScenarioGenerated
+from .empathy_map import EmpathyMap, EmpathyMapGenerated
 from .enums import (
     SWOT_CLUSTER_SECTIONS,
     THREAT_QUESTIONS_BY_CLUSTER,
@@ -51,24 +51,38 @@ from .enums import (
     SwotCluster,
     ThreatQuestion,
 )
-from .errc import Errc, ErrcMove
-from .fields import SanitizedModel, strip_control_chars
-from .future_scenario import AdaptationQuestion, FutureScenario, FutureScenarioVariant
-from .ideation import EpicenterClassification, Ideation
+from .errc import Errc, ErrcGenerated, ErrcMove
+from .fields import FromGeneratedMixin, SanitizedModel, strip_control_chars
+from .generation import GENERATION_CONTRACTS
+from .future_scenario import AdaptationQuestion, FutureScenario, FutureScenarioGenerated, FutureScenarioVariant
+from .ideation import EpicenterClassification, Ideation, IdeationGenerated
 from .optional_inputs import (
     BusinessCase,
+    BusinessCaseGenerated,
     EnvironmentScan,
+    EnvironmentScanGenerated,
     SalesScenario,
     Source,
     TeamInfo,
     TeamMember,
 )
-from .pattern import CanvasGroup, PairwiseSegmentScore, PatternTag, Patterns, SegmentPair
-from .pitch import Pitch
+from .pattern import (
+    CanvasGroup,
+    CanvasGroupGenerated,
+    PairwiseSegmentScore,
+    PairwiseSegmentScoreGenerated,
+    PatternsGenerated,
+    PatternTag,
+    Patterns,
+    SegmentPair,
+    SegmentPairGenerated,
+    patterns_from_generated,
+)
+from .pitch import Pitch, PitchGenerated
 from .stage_definition import StageDefinition
 from .stage_registry import StageRegistry
-from .storytelling import CanvasReference, Storytelling
-from .swot import Swot, SwotAxisStatement, SwotClusterResult, SwotOpportunity, SwotThreat
+from .storytelling import CanvasReference, Storytelling, StorytellingGenerated
+from .swot import Swot, SwotAxisStatement, SwotClusterResult, SwotGenerated, SwotOpportunity, SwotThreat
 from .validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
@@ -130,7 +144,25 @@ __all__ = [
     "SalesScenario",
     "EnvironmentScan",
     "Source",
-    # generation-time contract
+    # generation contracts: what the LLM writes (see generation.py)
+    "GENERATION_CONTRACTS",
+    "EmpathyMapGenerated",
+    "CustomerScenarioGenerated",
+    "IdeationGenerated",
+    "PatternsGenerated",
+    "SegmentPairGenerated",
+    "PairwiseSegmentScoreGenerated",
+    "CanvasGroupGenerated",
+    "patterns_from_generated",
+    "SwotGenerated",
+    "ErrcGenerated",
+    "StorytellingGenerated",
+    "FutureScenarioGenerated",
+    "PitchGenerated",
+    "BusinessCaseGenerated",
+    "EnvironmentScanGenerated",
+    "FromGeneratedMixin",
+    # canvas generation contract
     "CanvasGenerated",
     "CanvasCardDraft",
     "CanvasSectionsGenerated",

@@ -51,27 +51,11 @@
       "type": "object"
     }
   },
-  "description": "Represents an ideation instance in a business context.",
+  "description": "Generation contract of Ideation: only what the LLM writes. The system\nfields (empathy_map_id, id) are added by Ideation, which extends this model.",
   "properties": {
-    "empathy_map_id": {
-      "description": "Identifier of the empathy map this ideation instance is associated with.",
-      "examples": [
-        "empathy_map_001"
-      ],
-      "title": "Empathy Map Id",
-      "type": "string"
-    },
     "epicenter": {
       "$ref": "#/$defs/EpicenterClassification",
       "description": "The classification of the epicenter for this ideation instance."
-    },
-    "id": {
-      "description": "Unique identifier for the ideation instance.",
-      "examples": [
-        "ideation_001"
-      ],
-      "title": "Id",
-      "type": "string"
     },
     "what_if_questions": {
       "description": "'What if' questions that explore potential scenarios or ideas: between 1 and 10.",
@@ -92,10 +76,8 @@
   },
   "required": [
     "epicenter",
-    "what_if_questions",
-    "id",
-    "empathy_map_id"
+    "what_if_questions"
   ],
-  "title": "Ideation",
+  "title": "IdeationGenerated",
   "type": "object"
 }

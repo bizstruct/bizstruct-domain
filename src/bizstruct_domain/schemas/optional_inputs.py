@@ -1,7 +1,7 @@
 from datetime import date
 
 from pydantic import Field
-from .fields import SanitizedModel
+from .fields import FromGeneratedMixin, SanitizedModel
 
 
 class TeamMember(SanitizedModel):
@@ -122,20 +122,11 @@ class SalesScenario(SanitizedModel):
     )
 
 
-class BusinessCase(SanitizedModel):
+class BusinessCaseGenerated(SanitizedModel):
     """
-        Represents a business case in a business context.
+        Generation contract of BusinessCase: only what the LLM writes. The system
+        fields (id, project_id, sources) are added by BusinessCase, which extends this model.
     """
-    id: str = Field(
-        ...,
-        description="Unique identifier for the business case.",
-        examples=["business_case_001"],
-    )
-    project_id: str = Field(
-        ...,
-        description="Identifier of the project this business case is associated with.",
-        examples=["project_001"],
-    )
     market_benchmarks: str = Field(
         ...,
         description="A brief description of the market benchmarks relevant to the business case.",
@@ -143,20 +134,6 @@ class BusinessCase(SanitizedModel):
             "The market benchmarks indicate a growing demand for eco-friendly products, with a projected annual growth rate of 10% over the next five years.",
             "The market benchmarks suggest a declining trend in consumer interest for traditional products, with a projected annual decrease of 5% in sales over the next three years.",
         ],
-    )
-    sources: list[Source] = Field(
-        ...,
-        min_length=1,
-        description="External sources backing the market benchmarks. A generation with no "
-                     "sources is treated as a failed generation, not as a valid empty result.",
-        examples=[[
-            Source(
-                title="Statista: SaaS Market Size 2026",
-                url="https://www.statista.com/...",
-                retrieved_at="2026-09-30",
-                note="Basis for the projected 10% annual growth rate figure.",
-            ),
-        ]],
     )
     breakeven_formula: str = Field(
         ...,
@@ -209,7 +186,68 @@ class BusinessCase(SanitizedModel):
     )
 
 
-class EnvironmentScan(SanitizedModel):
+class BusinessCase(BusinessCaseGenerated, FromGeneratedMixin):
+    """
+        Represents a business case in a business context.
+    """
+    id: str = Field(
+        ...,
+        description="Unique identifier for the business case.",
+        examples=["business_case_001"],
+    )
+    project_id: str = Field(
+        ...,
+        description="Identifier of the project this business case is associated with.",
+        examples=["project_001"],
+    )
+    sources: list[Source] = Field(
+        ...,
+        min_length=1,
+        description="External sources backing the market benchmarks. A generation with no "
+                     "sources is treated as a failed generation, not as a valid empty result.",
+        examples=[[
+            Source(
+                title="Statista: SaaS Market Size 2026",
+                url="https://www.statista.com/...",
+                retrieved_at="2026-09-30",
+                note="Basis for the projected 10% annual growth rate figure.",
+            ),
+        ]],
+    )
+
+
+class EnvironmentScanGenerated(SanitizedModel):
+    """
+        Generation contract of EnvironmentScan: only what the LLM writes. The system
+        fields (id, project_id, sources) are added by EnvironmentScan, which extends this model.
+    """
+    market_forces: list[str] = Field(
+        ...,
+        min_length=1,
+        description="A list of market forces relevant to the environment scan.",
+        examples=[["Market volatility", "Regulatory changes"]],
+    )
+    industry_forces: list[str] = Field(
+        ...,
+        min_length=1,
+        description="A list of industry forces relevant to the environment scan.",
+        examples=[["Competitive rivalry", "Supplier power"]],
+    )
+    key_trends: list[str] = Field(
+        ...,
+        min_length=1,
+        description="A list of key trends relevant to the environment scan.",
+        examples=[["Digital transformation", "Sustainability initiatives"]],
+    )
+    macroeconomic_forces: list[str] = Field(
+        ...,
+        min_length=1,
+        description="A list of macroeconomic forces relevant to the environment scan.",
+        examples=[["Interest rate fluctuations", "Inflation trends"]],
+    )
+
+
+class EnvironmentScan(EnvironmentScanGenerated, FromGeneratedMixin):
     """
         Represents an environment scan in a business context.
     """
@@ -237,28 +275,4 @@ class EnvironmentScan(SanitizedModel):
                 note="Basis for the industry_forces and key_trends entries.",
             ),
         ]],
-    )
-    market_forces: list[str] = Field(
-        ...,
-        min_length=1,
-        description="A list of market forces relevant to the environment scan.",
-        examples=[["Market volatility", "Regulatory changes"]],
-    )
-    industry_forces: list[str] = Field(
-        ...,
-        min_length=1,
-        description="A list of industry forces relevant to the environment scan.",
-        examples=[["Competitive rivalry", "Supplier power"]],
-    )
-    key_trends: list[str] = Field(
-        ...,
-        min_length=1,
-        description="A list of key trends relevant to the environment scan.",
-        examples=[["Digital transformation", "Sustainability initiatives"]],
-    )
-    macroeconomic_forces: list[str] = Field(
-        ...,
-        min_length=1,
-        description="A list of macroeconomic forces relevant to the environment scan.",
-        examples=[["Interest rate fluctuations", "Inflation trends"]],
     )

@@ -22,7 +22,7 @@ for enum-keyed dicts.
 """
 
 import re
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, field_validator
 
@@ -70,3 +70,21 @@ class SanitizedModel(BaseModel):
     @classmethod
     def _strip_control_characters(cls, value: Any) -> Any:
         return _sanitize_value(value)
+
+
+_M = TypeVar("_M", bound=BaseModel)
+
+
+class FromGeneratedMixin:
+    """Adds `from_generated` to a persisted model that extends its generation model.
+
+    Pure conversion, no I/O: the caller passes the system fields (ids, foreign
+    keys, versions, sources). The result is built with `model_validate`, so
+    every validator of the persisted model runs; a `ValidationError` is the
+    signal that the generated content does not fit the system fields (e.g. a
+    Pitch section without the matching input id).
+    """
+
+    @classmethod
+    def from_generated(cls: type[_M], generated: BaseModel, **system_fields: Any) -> _M:
+        return cls.model_validate({**generated.model_dump(), **system_fields})

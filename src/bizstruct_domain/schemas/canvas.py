@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from pydantic import Field
 from .fields import SanitizedModel
 
@@ -286,6 +288,38 @@ class Canvas(SanitizedModel):
 
     def get_section(self, section: CanvasSection) -> list[CanvasCard]:
         return getattr(self.sections, section.value)
+
+    @classmethod
+    def from_generated(
+        cls,
+        generated: "CanvasGenerated",
+        *,
+        id: str,
+        group_id: str,
+        empathy_map_ids: list[str],
+        version: int = 1,
+        previous_version_id: str | None = None,
+        new_card_id: Callable[[], str],
+    ) -> "Canvas":
+        """Build the persisted Canvas from its generation contract (pure, no I/O).
+
+        The generator writes text-only cards; the caller supplies the canvas
+        ids and `new_card_id`, called once per card in section order. Cards get
+        no ERRC marker, and `is_generated` stays True (this is exactly what the
+        generator produced).
+        """
+        sections = {
+            name: [CanvasCard(id=new_card_id(), text=draft.text) for draft in getattr(generated.sections, name)]
+            for name in CanvasSections.model_fields
+        }
+        return cls(
+            id=id,
+            group_id=group_id,
+            empathy_map_ids=empathy_map_ids,
+            version=version,
+            previous_version_id=previous_version_id,
+            sections=CanvasSections(**sections),
+        )
 
 
 class CanvasCardDraft(SanitizedModel):

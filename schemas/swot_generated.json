@@ -281,26 +281,8 @@
       "type": "string"
     }
   },
-  "description": "Represents a SWOT analysis for a business model, organized by clusters.",
+  "description": "Generation contract of Swot: only what the LLM writes. The system\nfields (canvas_id, canvas_version, environment_scan_id, id) are added by Swot, which extends this model.",
   "properties": {
-    "canvas_id": {
-      "description": "Identifier of the canvas this SWOT analysis is associated with.",
-      "examples": [
-        "canvas_001"
-      ],
-      "title": "Canvas Id",
-      "type": "string"
-    },
-    "canvas_version": {
-      "description": "Version of the canvas this SWOT analysis is associated with.",
-      "examples": [
-        1
-      ],
-      "maximum": 5,
-      "minimum": 1,
-      "title": "Canvas Version",
-      "type": "integer"
-    },
     "clusters": {
       "description": "A list of SWOT cluster results, one for each cluster.",
       "examples": [
@@ -527,38 +509,11 @@
       "minItems": 4,
       "title": "Clusters",
       "type": "array"
-    },
-    "environment_scan_id": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Identifier of the EnvironmentScan used to inform Opportunities/Threats for this cluster set, if any. Strengths/Weaknesses are always derived solely from the canvas.",
-      "examples": [
-        "environment_scan_001"
-      ],
-      "title": "Environment Scan Id"
-    },
-    "id": {
-      "description": "Unique identifier for the SWOT analysis.",
-      "examples": [
-        "swot_001"
-      ],
-      "title": "Id",
-      "type": "string"
     }
   },
   "required": [
-    "clusters",
-    "id",
-    "canvas_id",
-    "canvas_version"
+    "clusters"
   ],
-  "title": "Swot",
+  "title": "SwotGenerated",
   "type": "object"
 }
