@@ -141,7 +141,7 @@
       "type": "string"
     },
     "moves": {
-      "description": "A list of moves in the ERRC analysis.",
+      "description": "The moves of the ERRC analysis: between 1 and 6.",
       "examples": [
         [
           {
@@ -165,6 +165,7 @@
       "items": {
         "$ref": "#/$defs/ErrcMove"
       },
+      "maxItems": 6,
       "minItems": 1,
       "title": "Moves",
       "type": "array"

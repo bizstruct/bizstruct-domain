@@ -82,7 +82,7 @@
       "description": "Represents the result of a SWOT analysis for a specific cluster.",
       "properties": {
         "axis_statements": {
-          "description": "A list of statements for the SWOT axis within the specified cluster.",
+          "description": "Statements for the SWOT axis within the specified cluster: between 2 and 5.",
           "examples": [
             [
               {
@@ -104,7 +104,8 @@
           "items": {
             "$ref": "#/$defs/SwotAxisStatement"
           },
-          "minItems": 1,
+          "maxItems": 5,
+          "minItems": 2,
           "title": "Axis Statements",
           "type": "array"
         },
@@ -116,7 +117,7 @@
           ]
         },
         "opportunities": {
-          "description": "A list of identified opportunities for the specified cluster, each scored 1-5.",
+          "description": "Identified opportunities for the specified cluster, each scored 1-5: between 1 and 7.",
           "examples": [
             [
               {
@@ -132,11 +133,13 @@
           "items": {
             "$ref": "#/$defs/SwotOpportunityThreat"
           },
+          "maxItems": 7,
+          "minItems": 1,
           "title": "Opportunities",
           "type": "array"
         },
         "threats": {
-          "description": "A list of identified threats for the specified cluster, each scored 1-5.",
+          "description": "Identified threats for the specified cluster, each scored 1-5: between 1 and 7.",
           "examples": [
             [
               {
@@ -152,6 +155,8 @@
           "items": {
             "$ref": "#/$defs/SwotOpportunityThreat"
           },
+          "maxItems": 7,
+          "minItems": 1,
           "title": "Threats",
           "type": "array"
         }
@@ -229,6 +234,13 @@
                 "negative_statement": "Our production costs are higher than the industry average.",
                 "positive_statement": "Our product has a unique feature that competitors lack.",
                 "score": 4
+              },
+              {
+                "certainty": 6,
+                "importance": 5,
+                "negative_statement": "The core offer is easy to copy.",
+                "positive_statement": "Customers value the core offer.",
+                "score": 2
               }
             ],
             "cluster": "value_proposition",
@@ -253,6 +265,13 @@
                 "negative_statement": "Our customer support response time is slower than desired.",
                 "positive_statement": "We have a strong brand reputation in the market.",
                 "score": 3
+              },
+              {
+                "certainty": 6,
+                "importance": 5,
+                "negative_statement": "The core offer is easy to copy.",
+                "positive_statement": "Customers value the core offer.",
+                "score": 2
               }
             ],
             "cluster": "cost_revenue",
@@ -276,6 +295,13 @@
                 "importance": 7,
                 "negative_statement": "We have limited scalability in our current infrastructure.",
                 "positive_statement": "Our supply chain is highly efficient and reliable.",
+                "score": 2
+              },
+              {
+                "certainty": 6,
+                "importance": 5,
+                "negative_statement": "The core offer is easy to copy.",
+                "positive_statement": "Customers value the core offer.",
                 "score": 2
               }
             ],
@@ -301,6 +327,13 @@
                 "negative_statement": "Our user interface is not as intuitive as competitors'.",
                 "positive_statement": "We have a loyal customer base with high retention rates.",
                 "score": 1
+              },
+              {
+                "certainty": 6,
+                "importance": 5,
+                "negative_statement": "The core offer is easy to copy.",
+                "positive_statement": "Customers value the core offer.",
+                "score": 2
               }
             ],
             "cluster": "customer_interface",

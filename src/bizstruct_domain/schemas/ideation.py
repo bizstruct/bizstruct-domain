@@ -77,7 +77,9 @@ class Ideation(SanitizedModel):
     )
     what_if_questions: list[str] = Field(
         ...,
-        description="A list of 'what if' questions that explore potential scenarios or ideas.",
+        min_length=1,
+        max_length=10,
+        description="'What if' questions that explore potential scenarios or ideas: between 1 and 10.",
         examples=[[
             "What if we could deliver our product in half the time?",
             "What if we could offer a subscription model for our service?",

@@ -74,7 +74,7 @@
       "type": "string"
     },
     "what_if_questions": {
-      "description": "A list of 'what if' questions that explore potential scenarios or ideas.",
+      "description": "'What if' questions that explore potential scenarios or ideas: between 1 and 10.",
       "examples": [
         [
           "What if we could deliver our product in half the time?",
@@ -84,6 +84,8 @@
       "items": {
         "type": "string"
       },
+      "maxItems": 10,
+      "minItems": 1,
       "title": "What If Questions",
       "type": "array"
     }

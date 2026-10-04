@@ -123,7 +123,8 @@ class Errc(SanitizedModel):
     moves: list[ErrcMove] = Field(
         ...,
         min_length=1,
-        description="A list of moves in the ERRC analysis.",
+        max_length=6,
+        description="The moves of the ERRC analysis: between 1 and 6.",
         examples=[
             [
                 ErrcMove(
