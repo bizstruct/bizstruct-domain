@@ -115,11 +115,12 @@ def cluster(
     threats: list[SwotOpportunityThreat] | None = None,
     opportunities: list[SwotOpportunityThreat] | None = None,
 ) -> SwotClusterResult:
+    """A valid cluster (>= 2 axis statements, >= 1 opportunity, >= 1 threat) by default."""
     return SwotClusterResult(
         cluster=kind,
-        axis_statements=axes if axes is not None else [axis(1)],
-        opportunities=opportunities or [],
-        threats=threats or [],
+        axis_statements=axes if axes is not None else [axis(1), axis(2)],
+        opportunities=opportunities if opportunities is not None else [opportunity(3)],
+        threats=threats if threats is not None else [threat(1)],
     )
 
 
@@ -158,7 +159,7 @@ def errc(moves: list[ErrcMove] | None = None, **overrides: Any) -> Errc:
         from_version=1,
         to_version=2,
         result_canvas_id="canvas_002",
-        moves=moves or [move(ERRCActionType.CREATE, new_text="new")],
+        moves=moves if moves is not None else [move(ERRCActionType.CREATE, new_text="new")],
     )
     data.update(overrides)
     return Errc(**data)

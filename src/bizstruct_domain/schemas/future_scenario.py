@@ -80,7 +80,8 @@ class FutureScenario(SanitizedModel):
     uncertainty_drivers: list[str] = Field(
         ...,
         min_length=2,
-        description="A list of uncertainty drivers that may impact the future scenario.",
+        max_length=4,
+        description="Uncertainty drivers that may impact the future scenario: between 2 and 4.",
         examples=[["Market volatility", "Regulatory changes"]],
     )
     variants: list[FutureScenarioVariant] = Field(

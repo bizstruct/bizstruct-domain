@@ -97,8 +97,9 @@ class SwotClusterResult(SanitizedModel):
     )
     axis_statements: list[SwotAxisStatement] = Field(
         ...,
-        min_length=1,
-        description="A list of statements for the SWOT axis within the specified cluster.",
+        min_length=2,
+        max_length=5,
+        description="Statements for the SWOT axis within the specified cluster: between 2 and 5.",
         examples=[
             [
                 SwotAxisStatement(
@@ -120,7 +121,9 @@ class SwotClusterResult(SanitizedModel):
     )
     opportunities: list[SwotOpportunityThreat] = Field(
         ...,
-        description="A list of identified opportunities for the specified cluster, each scored 1-5.",
+        min_length=1,
+        max_length=7,
+        description="Identified opportunities for the specified cluster, each scored 1-5: between 1 and 7.",
         examples=[[
             SwotOpportunityThreat(text="Expand into new geographic markets.", score=4),
             SwotOpportunityThreat(text="Develop strategic partnerships with complementary businesses.", score=3),
@@ -128,7 +131,9 @@ class SwotClusterResult(SanitizedModel):
     )
     threats: list[SwotOpportunityThreat] = Field(
         ...,
-        description="A list of identified threats for the specified cluster, each scored 1-5.",
+        min_length=1,
+        max_length=7,
+        description="Identified threats for the specified cluster, each scored 1-5: between 1 and 7.",
         examples=[[
             SwotOpportunityThreat(text="Emerging competitors with lower-priced alternatives.", score=4),
             SwotOpportunityThreat(text="Changes in regulations that could impact our operations.", score=2),
@@ -181,6 +186,13 @@ class Swot(SanitizedModel):
                             importance=8,
                             certainty=7,
                         ),
+                        SwotAxisStatement(
+                            positive_statement="Customers value the core offer.",
+                            negative_statement="The core offer is easy to copy.",
+                            score=2,
+                            importance=5,
+                            certainty=6,
+                        ),
                     ],
                     opportunities=[
                         SwotOpportunityThreat(text="Expand into new geographic markets.", score=4),
@@ -198,6 +210,13 @@ class Swot(SanitizedModel):
                             score=3,
                             importance=6,
                             certainty=8,
+                        ),
+                        SwotAxisStatement(
+                            positive_statement="Customers value the core offer.",
+                            negative_statement="The core offer is easy to copy.",
+                            score=2,
+                            importance=5,
+                            certainty=6,
                         ),
                     ],
                     opportunities=[
@@ -217,6 +236,13 @@ class Swot(SanitizedModel):
                             importance=7,
                             certainty=6,
                         ),
+                        SwotAxisStatement(
+                            positive_statement="Customers value the core offer.",
+                            negative_statement="The core offer is easy to copy.",
+                            score=2,
+                            importance=5,
+                            certainty=6,
+                        ),
                     ],
                     opportunities=[
                         SwotOpportunityThreat(text="Invest in scalable infrastructure solutions.", score=3),
@@ -234,6 +260,13 @@ class Swot(SanitizedModel):
                             score=1,
                             importance=5,
                             certainty=7,
+                        ),
+                        SwotAxisStatement(
+                            positive_statement="Customers value the core offer.",
+                            negative_statement="The core offer is easy to copy.",
+                            score=2,
+                            importance=5,
+                            certainty=6,
                         ),
                     ],
                     opportunities=[

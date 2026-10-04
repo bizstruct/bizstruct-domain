@@ -116,7 +116,7 @@
       "type": "string"
     },
     "uncertainty_drivers": {
-      "description": "A list of uncertainty drivers that may impact the future scenario.",
+      "description": "Uncertainty drivers that may impact the future scenario: between 2 and 4.",
       "examples": [
         [
           "Market volatility",
@@ -126,6 +126,7 @@
       "items": {
         "type": "string"
       },
+      "maxItems": 4,
       "minItems": 2,
       "title": "Uncertainty Drivers",
       "type": "array"

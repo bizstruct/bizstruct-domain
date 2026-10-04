@@ -31,12 +31,13 @@ from bizstruct_domain.schemas.enums import (
     SwotCluster,
 )
 from bizstruct_domain.schemas.errc import Errc
+from bizstruct_domain.schemas.swot import SwotClusterResult
 from bizstruct_domain.schemas.future_scenario import (
     AdaptationQuestion,
     FutureScenario,
     FutureScenarioVariant,
 )
-from bizstruct_domain.schemas.ideation import EpicenterClassification
+from bizstruct_domain.schemas.ideation import EpicenterClassification, Ideation
 from bizstruct_domain.schemas.optional_inputs import (
     BusinessCase,
     EnvironmentScan,
@@ -320,29 +321,104 @@ class TestSwot:
                 threats=[b.threat(2), b.threat(3)],
                 opportunities=[b.opportunity(5)],
             ),
-            b.cluster(  # 1*10 = 10
-                SwotCluster.COST_REVENUE, axes=[b.axis(-1, 10)]
+            b.cluster(  # 1*10 + 0 + 1 = 11
+                SwotCluster.COST_REVENUE, axes=[b.axis(-1, 10), b.axis(1, 3)], threats=[b.threat(1)]
             ),
-            b.cluster(  # 0 + 5 = 5
-                SwotCluster.INFRASTRUCTURE, axes=[b.axis(2, 7)], threats=[b.threat(5)]
+            b.cluster(  # 0 + 0 + 5 = 5
+                SwotCluster.INFRASTRUCTURE, axes=[b.axis(2, 7), b.axis(1, 7)], threats=[b.threat(5)]
             ),
-            b.cluster(  # 5*2 + (1 + 1) = 12
+            b.cluster(  # 5*2 + 2*4 + (1 + 1) = 20
                 SwotCluster.CUSTOMER_INTERFACE,
-                axes=[b.axis(-5, 2)],
+                axes=[b.axis(-5, 2), b.axis(-2, 4)],
                 threats=[b.threat(1), b.threat(1)],
             ),
         ]
-        assert b.swot(clusters).weighted_weakness_threat_score == 29 + 10 + 5 + 12
+        assert b.swot(clusters).weighted_weakness_threat_score == 29 + 11 + 5 + 20
 
-    def test_weighted_score_is_zero_without_weaknesses_or_threats(self):
-        s = b.swot([b.cluster(k, axes=[b.axis(3)]) for k in SwotCluster])
-        assert s.weighted_weakness_threat_score == 0
+    def test_weighted_score_without_weaknesses_is_the_sum_of_threat_scores(self):
+        s = b.swot([b.cluster(k, axes=[b.axis(3), b.axis(4)], threats=[b.threat(1)]) for k in SwotCluster])
+        assert s.weighted_weakness_threat_score == 4
 
     def test_threat_contributes_its_own_score_not_a_flat_count(self):
         low = b.swot([b.cluster(k, threats=[b.threat(1)]) for k in SwotCluster])
         high = b.swot([b.cluster(k, threats=[b.threat(5)]) for k in SwotCluster])
         assert low.weighted_weakness_threat_score == 4
         assert high.weighted_weakness_threat_score == 20
+
+
+# --------------------------------------------------------------------------- list bounds
+
+
+def _ideation(n: int) -> Ideation:
+    return Ideation(
+        id="i",
+        empathy_map_id="e",
+        epicenter=EpicenterClassification(tags=[Epicenter.FINANCE_DRIVEN], rationale="r"),
+        what_if_questions=[f"What if {i}?" for i in range(n)],
+    )
+
+
+def _errc_moves(n: int) -> Errc:
+    return b.errc([b.move(ERRCActionType.CREATE, new_text=f"new {i}") for i in range(n)])
+
+
+def _cluster_with(field: str, n: int):
+    kwargs = {
+        "axis_statements": [b.axis(1) for _ in range(2)],
+        "opportunities": [b.opportunity(2)],
+        "threats": [b.threat(2)],
+    }
+    kwargs[field] = [b.axis(1) if field == "axis_statements" else b.threat(2) for _ in range(n)]
+    return SwotClusterResult(cluster=SwotCluster.VALUE_PROPOSITION, **kwargs)
+
+
+# name -> (builder taking a count, min, max, model class, field name)
+BOUNDED_LISTS = {
+    "Ideation.what_if_questions": (_ideation, 1, 10, Ideation, "what_if_questions"),
+    "FutureScenario.uncertainty_drivers": (
+        lambda n: _future_scenario([f"d{i}" for i in range(n)], 2), 2, 4, FutureScenario, "uncertainty_drivers"
+    ),
+    "Errc.moves": (_errc_moves, 1, 6, Errc, "moves"),
+    "SwotClusterResult.axis_statements": (
+        lambda n: _cluster_with("axis_statements", n), 2, 5, SwotClusterResult, "axis_statements"
+    ),
+    "SwotClusterResult.threats": (lambda n: _cluster_with("threats", n), 1, 7, SwotClusterResult, "threats"),
+    "SwotClusterResult.opportunities": (
+        lambda n: SwotClusterResult(
+            cluster=SwotCluster.VALUE_PROPOSITION,
+            axis_statements=[b.axis(1), b.axis(2)],
+            opportunities=[b.opportunity(2) for _ in range(n)],
+            threats=[b.threat(2)],
+        ),
+        1, 7, SwotClusterResult, "opportunities",
+    ),
+}
+
+
+@pytest.mark.parametrize("name", BOUNDED_LISTS)
+class TestListBounds:
+    def test_below_min_rejected(self, name):
+        build, lo, _, _, _ = BOUNDED_LISTS[name]
+        with pytest.raises(ValidationError):
+            build(lo - 1)
+
+    def test_at_min_accepted(self, name):
+        build, lo, _, _, _ = BOUNDED_LISTS[name]
+        build(lo)
+
+    def test_at_max_accepted(self, name):
+        build, _, hi, _, _ = BOUNDED_LISTS[name]
+        build(hi)
+
+    def test_above_max_rejected(self, name):
+        build, _, hi, _, _ = BOUNDED_LISTS[name]
+        with pytest.raises(ValidationError):
+            build(hi + 1)
+
+    def test_bounds_are_in_the_json_schema_the_generator_sees(self, name):
+        _, lo, hi, model, field = BOUNDED_LISTS[name]
+        prop = model.model_json_schema()["properties"][field]
+        assert (prop["minItems"], prop["maxItems"]) == (lo, hi)
 
 
 # --------------------------------------------------------------------------- errc
