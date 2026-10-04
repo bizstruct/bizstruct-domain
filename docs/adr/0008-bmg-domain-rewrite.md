@@ -1,6 +1,6 @@
 # ADR-0008: Перепис доменної моделі під методологію BMG
 
-- **Status:** Accepted (відкриті питання 1–2 — див. нижче, рішення відкладене явно)
+- **Status:** Superseded by [ADR-0009](0009-stage-graph-and-schemas.md)
 - **Date:** 2026-09-26
 - **Supersedes:** ADR-0001 (склад і порядок етапів); ADR-0005 §2 у частині `StageMode.PRO_ONLY`
 - **Related:** ADR-0005 (агентний режим)
