@@ -77,12 +77,14 @@ be створює рядки **поступово**, коли відомі кі�
 | `swot_errc_cycle` (по канві) | `{canvas: [рядок канви]}`; якщо `environment_scan` увімкнено — ще `{environment_scan: [рядок]}` |
 | `storytelling`, `future_scenario` (по канві) | `{swot_errc_cycle: [рядок циклу тієї самої канви]}` |
 | `pitch` (по канві) | `{storytelling: [рядок тієї самої канви], swot_errc_cycle: [рядок тієї самої канви]}`; для увімкнених — ще `{team_info: [спільний рядок], business_case: [спільний рядок]}` |
-| `team_info` | `{}` |
+| `team_info` | `{}` (користувацький ввід: be створює рядок одразу в `DONE`, див. нижче) |
 | `business_case`, `environment_scan` | `{brief: [brief]}` |
 
 Домен перевіряє `refs` чистою `validate_row_refs(stage, refs)`: ключі ⊆ `depends_on ∪ optional_depends_on`; кожна **тверда** залежність має непорожній список. Рядки канв будуються з `Patterns`: `canvas_rows_for(patterns) -> list[CanvasRowSpec]` (`CanvasRowSpec`: `group_id`, `empathy_map_ids`); відповідність id артефакту → рядок дає `row_of_artifact(rows, artifact_id)`.
 
-**`ready_rows(rows, enabled_optional)`** — точно: рядок готовий, якщо (1) його статус `PENDING`; (2) його `refs` проходять `validate_row_refs`; (3) для кожної твердої залежності всі рядки з `refs[dep]` існують у `rows` і мають статус `DONE`; (4) для кожної опційної залежності, що **увімкнена**, `refs[dep]` непорожній і всі ці рядки `DONE` — увімкнена опційна залежність, що не `DONE` (або рядка для якої ще немає), блокує споживача; (5) рядок опційного етапу, що не входить до `enabled_optional`, не готовий; **вимкнений** опційний етап не має рядка й ігнорується (навіть якщо `refs` його згадують). Результат — id рядків у порядку графа, далі в порядку входу. `ready_stages` лишається для сумісності. `dependent_rows(row_id, rows)` — транзитивні залежні рядки за `refs` (тверді й опційні ребра) для позначення застарілих.
+**`ready_rows(rows, enabled_optional)`** — точно: рядок готовий, якщо (1) його статус `PENDING`; (2) його `refs` проходять `validate_row_refs`; (3) для кожної твердої залежності всі рядки з `refs[dep]` існують у `rows` і мають статус `DONE`; (4) для кожної опційної залежності, що **увімкнена**, `refs[dep]` непорожній і всі ці рядки `DONE` — увімкнена опційна залежність, що не `DONE` (або рядка для якої ще немає), блокує споживача; (5) рядок опційного етапу, що не входить до `enabled_optional`, не готовий; (5b) `PENDING`-рядок етапу, якого немає в `GENERATION_CONTRACTS` (тобто `team_info`), **ніколи не готовий** — його ніхто не генерує; **вимкнений** опційний етап не має рядка й ігнорується (навіть якщо `refs` його згадують). Результат — id рядків у порядку графа, далі в порядку входу. `ready_stages` лишається для сумісності. `dependent_rows(row_id, rows)` — транзитивні залежні рядки за `refs` (тверді й опційні ребра) для позначення застарілих.
+
+**`team_info` — ввід користувача.** Контракту генерації немає (ADR-0010), а стейт-машина забороняє `PENDING → DONE`. Тому be створює рядок `team_info` **одразу в `DONE`** (з артефактом `TeamInfo`), коли користувач надсилає дані; до цього моменту рядка немає. Якщо `team_info` увімкнено, але користувач ще нічого не надіслав, рядка немає, і за правилом (4) споживач (`pitch`) заблоковано. Правило (5b) страхує від помилки: якщо рядок `team_info` все ж створено в `PENDING`, він не потрапить до черги.
 
 **`project_status(rows, enabled_optional)`** повертає `completed | failed | running`:
 - `failed` — є хоча б один рядок `ERROR`. Обґрунтування: за стейт-машиною `error` лишають лише через дію користувача (`error → pending`), тож без втручання проєкт не просунеться, а рядок без нащадків (наприклад, `future_scenario`) також не дозволяє досягти `completed`.
@@ -136,7 +138,7 @@ be видає новий `attempt_id` при кожній **своїй** спр�
 3. `StageRow` — `id`, `stage: Stage`, `instance_index: int`, `status: StageStatus`, `attempt_id: str | None`, `refs: dict[Stage, list[str]]`, `artifacts: list[ArtifactRecord]`, `consistency: ConsistencyReport | None`, `retry_count: int`, `error_code: StageErrorCode | None`, `error: str | None`, `started_at`, `finished_at`.
 4. `ProjectSnapshot` — `project_id`, `idea`, `language`, `enabled_optional: list[Stage]`, `rows: list[StageRow]`.
 5. `RowTarget` — `stage_row_id`, `stage`, `attempt_id`.
-6. `QueueMessage` — `project_id`, `language`, `targets: list[RowTarget]` (≥ 1), `params: QueueParams` (`enabled_optional`).
+6. `QueueMessage` — `project_id`, `language`, `targets: list[RowTarget]` (≥ 1). `enabled_optional` живе лише в `ProjectSnapshot` (ml і так читає знімок); окремих параметрів повідомлення немає.
 7. `StageFailure` — `code: StageErrorCode`, `message`.
 8. `StageResult` — `project_id`, `stage_row_id`, `attempt_id`, `status: Literal["success","failed"]`, `artifacts`, `error: StageFailure | None`, `consistency: ConsistencyReport | None`; узгодженість: `failed` вимагає `error`, `success` вимагає непорожніх `artifacts`.
 9. `StageEvent` (pubsub, публікує be після застосування переходу) — `type`, `project_id`, `stage_row_id`, `stage`, `status`.
@@ -154,6 +156,7 @@ be видає новий `attempt_id` при кожній **своїй** спр�
 2. **Фаза агента:** `StageProgress`, повідомлення з кількома цілями, подальший порядок результатів — окремий ADR.
 3. **Звинувачення вищого етапу** при порушеннях (відповідність артефакт → рядок уже є, але правило звинувачення відкладено).
 4. **Єдиний пітч компанії** (не по канві) — можливий пізніший етап, не зараз.
+5. **Які знахідки judge мають рівень `error`** (блокують `DONE` і запускають повтор усередині ml). Доки не вирішено, знахідки judge **дорадчі**, а повтори запускають лише детерміновані помилки. Вирішити на першому зрізі ml.
 
 ## Ризики
 
