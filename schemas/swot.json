@@ -141,7 +141,7 @@
             ]
           ],
           "items": {
-            "$ref": "#/$defs/SwotOpportunityThreat"
+            "$ref": "#/$defs/SwotOpportunity"
           },
           "maxItems": 7,
           "minItems": 1,
@@ -149,24 +149,26 @@
           "type": "array"
         },
         "threats": {
-          "description": "Identified threats for the specified cluster, each scored 1-5: between 1 and 7.",
+          "description": "One rating per threat question of this cluster's catalog (2, 5, 7 or 7 questions depending on the cluster), each scored 1-5. Exactly the cluster's catalog, each question once, in any order.",
           "examples": [
             [
               {
-                "score": 4,
-                "text": "Emerging competitors with lower-priced alternatives."
+                "question": "substitutes_available",
+                "score": 3,
+                "text": "Example assessment of the 'substitutes_available' threat."
               },
               {
-                "score": 2,
-                "text": "Changes in regulations that could impact our operations."
+                "question": "competitor_price_or_value_pressure",
+                "score": 3,
+                "text": "Example assessment of the 'competitor_price_or_value_pressure' threat."
               }
             ]
           ],
           "items": {
-            "$ref": "#/$defs/SwotOpportunityThreat"
+            "$ref": "#/$defs/SwotThreat"
           },
           "maxItems": 7,
-          "minItems": 1,
+          "minItems": 2,
           "title": "Threats",
           "type": "array"
         }
@@ -180,8 +182,8 @@
       "title": "SwotClusterResult",
       "type": "object"
     },
-    "SwotOpportunityThreat": {
-      "description": "Represents a single Opportunity or Threat item, per the BMG document's\nEvaluating Business Models format (pp. 220-223): each generative\nquestion is paired with a 1-5 scale. The book gives no caption for\nthis scale; the working interpretation used here is \"how strongly\nthis applies to this model\" (1 = barely, 5 = very strongly).",
+    "SwotOpportunity": {
+      "description": "Represents a single Opportunity, per the BMG document's Evaluating\nBusiness Models format (pp. 220-223): each generative question is\npaired with a 1-5 scale. The book gives no caption for this scale; the\nworking interpretation used here is \"how strongly this applies to this\nmodel\" (1 = barely, 5 = very strongly).",
       "properties": {
         "score": {
           "description": "How strongly this applies to this model: 1 (barely) to 5 (very strongly). Interpretation is a project decision; the book's pages give the scale with no caption.",
@@ -196,7 +198,7 @@
           "type": "integer"
         },
         "text": {
-          "description": "The opportunity or threat statement (typically phrased as, or derived from, one of the book's generative questions).",
+          "description": "The opportunity statement (typically phrased as, or derived from, one of the book's generative questions).",
           "examples": [
             "Could we generate recurring revenues by converting products into services?"
           ],
@@ -208,8 +210,75 @@
         "text",
         "score"
       ],
-      "title": "SwotOpportunityThreat",
+      "title": "SwotOpportunity",
       "type": "object"
+    },
+    "SwotThreat": {
+      "description": "Represents the rating of ONE question of the fixed threat catalog\n(`ThreatQuestion`). Every SWOT iteration rates the same 21 questions, so\nthe sum of the scores is comparable between iterations. Same 1-5 scale\nand working interpretation as `SwotOpportunity`.",
+      "properties": {
+        "question": {
+          "$ref": "#/$defs/ThreatQuestion",
+          "description": "Which catalog threat this rates. Each cluster must rate exactly the questions of its own catalog, once each.",
+          "examples": [
+            "substitutes_available"
+          ]
+        },
+        "score": {
+          "description": "How strongly this threat applies to this model: 1 (barely) to 5 (very strongly). Interpretation is a project decision; the book's pages give the scale with no caption.",
+          "examples": [
+            2,
+            3,
+            5
+          ],
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Score",
+          "type": "integer"
+        },
+        "text": {
+          "description": "How this threat applies to this business model, in one or two sentences.",
+          "examples": [
+            "Customers can switch to a cheaper app that covers the same basic need."
+          ],
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "question",
+        "text",
+        "score"
+      ],
+      "title": "SwotThreat",
+      "type": "object"
+    },
+    "ThreatQuestion": {
+      "description": "The fixed catalog of 21 threats rated in every SWOT iteration, so the\nthreat part of `weighted_weakness_threat_score` always sums over the\nsame questions (range 21..105) and is comparable between iterations.\nThe values are stable contract ids. The comments are paraphrases, one\nper question, of the threat the id stands for.",
+      "enum": [
+        "substitutes_available",
+        "competitor_price_or_value_pressure",
+        "margin_pressure",
+        "revenue_concentration",
+        "revenue_stream_decline",
+        "cost_unpredictability",
+        "cost_outgrowing_revenue",
+        "resource_supply_disruption",
+        "resource_quality_risk",
+        "key_activity_disruption",
+        "activity_quality_risk",
+        "partner_loss",
+        "partner_defection_to_competitors",
+        "partner_over_dependence",
+        "market_saturation",
+        "market_share_pressure",
+        "customer_defection",
+        "competition_intensifying",
+        "channel_threat_from_competitors",
+        "channel_irrelevance",
+        "relationship_deterioration"
+      ],
+      "title": "ThreatQuestion",
+      "type": "string"
     }
   },
   "description": "Represents a SWOT analysis for a business model, organized by clusters.",
@@ -262,8 +331,14 @@
             ],
             "threats": [
               {
-                "score": 4,
-                "text": "Emerging competitors with lower-priced alternatives."
+                "question": "substitutes_available",
+                "score": 3,
+                "text": "Example assessment of the 'substitutes_available' threat."
+              },
+              {
+                "question": "competitor_price_or_value_pressure",
+                "score": 3,
+                "text": "Example assessment of the 'competitor_price_or_value_pressure' threat."
               }
             ]
           },
@@ -293,8 +368,29 @@
             ],
             "threats": [
               {
-                "score": 2,
-                "text": "Changes in regulations that could impact our operations."
+                "question": "margin_pressure",
+                "score": 3,
+                "text": "Example assessment of the 'margin_pressure' threat."
+              },
+              {
+                "question": "revenue_concentration",
+                "score": 3,
+                "text": "Example assessment of the 'revenue_concentration' threat."
+              },
+              {
+                "question": "revenue_stream_decline",
+                "score": 3,
+                "text": "Example assessment of the 'revenue_stream_decline' threat."
+              },
+              {
+                "question": "cost_unpredictability",
+                "score": 3,
+                "text": "Example assessment of the 'cost_unpredictability' threat."
+              },
+              {
+                "question": "cost_outgrowing_revenue",
+                "score": 3,
+                "text": "Example assessment of the 'cost_outgrowing_revenue' threat."
               }
             ]
           },
@@ -324,8 +420,39 @@
             ],
             "threats": [
               {
+                "question": "resource_supply_disruption",
                 "score": 3,
-                "text": "Supply chain disruptions due to global events."
+                "text": "Example assessment of the 'resource_supply_disruption' threat."
+              },
+              {
+                "question": "resource_quality_risk",
+                "score": 3,
+                "text": "Example assessment of the 'resource_quality_risk' threat."
+              },
+              {
+                "question": "key_activity_disruption",
+                "score": 3,
+                "text": "Example assessment of the 'key_activity_disruption' threat."
+              },
+              {
+                "question": "activity_quality_risk",
+                "score": 3,
+                "text": "Example assessment of the 'activity_quality_risk' threat."
+              },
+              {
+                "question": "partner_loss",
+                "score": 3,
+                "text": "Example assessment of the 'partner_loss' threat."
+              },
+              {
+                "question": "partner_defection_to_competitors",
+                "score": 3,
+                "text": "Example assessment of the 'partner_defection_to_competitors' threat."
+              },
+              {
+                "question": "partner_over_dependence",
+                "score": 3,
+                "text": "Example assessment of the 'partner_over_dependence' threat."
               }
             ]
           },
@@ -355,8 +482,39 @@
             ],
             "threats": [
               {
+                "question": "market_saturation",
                 "score": 3,
-                "text": "Negative reviews and feedback impacting brand perception."
+                "text": "Example assessment of the 'market_saturation' threat."
+              },
+              {
+                "question": "market_share_pressure",
+                "score": 3,
+                "text": "Example assessment of the 'market_share_pressure' threat."
+              },
+              {
+                "question": "customer_defection",
+                "score": 3,
+                "text": "Example assessment of the 'customer_defection' threat."
+              },
+              {
+                "question": "competition_intensifying",
+                "score": 3,
+                "text": "Example assessment of the 'competition_intensifying' threat."
+              },
+              {
+                "question": "channel_threat_from_competitors",
+                "score": 3,
+                "text": "Example assessment of the 'channel_threat_from_competitors' threat."
+              },
+              {
+                "question": "channel_irrelevance",
+                "score": 3,
+                "text": "Example assessment of the 'channel_irrelevance' threat."
+              },
+              {
+                "question": "relationship_deterioration",
+                "score": 3,
+                "text": "Example assessment of the 'relationship_deterioration' threat."
               }
             ]
           }

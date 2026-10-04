@@ -88,6 +88,76 @@ class SwotCluster(StrEnum):
     CUSTOMER_INTERFACE = "customer_interface"  # CS + CH + CR
 
 
+class ThreatQuestion(StrEnum):
+    """
+        The fixed catalog of 21 threats rated in every SWOT iteration, so the
+        threat part of `weighted_weakness_threat_score` always sums over the
+        same questions (range 21..105) and is comparable between iterations.
+        The values are stable contract ids. The comments are paraphrases, one
+        per question, of the threat the id stands for.
+    """
+    # value_proposition
+    SUBSTITUTES_AVAILABLE = "substitutes_available"  # customers can get the same job done with a different product
+    COMPETITOR_PRICE_OR_VALUE_PRESSURE = "competitor_price_or_value_pressure"  # rivals undercut our price or beat our value
+    # cost_revenue
+    MARGIN_PRESSURE = "margin_pressure"  # our margins are being squeezed
+    REVENUE_CONCENTRATION = "revenue_concentration"  # too much income rests on too few payers or sources
+    REVENUE_STREAM_DECLINE = "revenue_stream_decline"  # a stream we rely on is shrinking
+    COST_UNPREDICTABILITY = "cost_unpredictability"  # key costs are hard to forecast or control
+    COST_OUTGROWING_REVENUE = "cost_outgrowing_revenue"  # costs may rise faster than income
+    # infrastructure
+    RESOURCE_SUPPLY_DISRUPTION = "resource_supply_disruption"  # a key resource may become unavailable
+    RESOURCE_QUALITY_RISK = "resource_quality_risk"  # a key resource may degrade in quality
+    KEY_ACTIVITY_DISRUPTION = "key_activity_disruption"  # a core activity may be interrupted
+    ACTIVITY_QUALITY_RISK = "activity_quality_risk"  # a core activity may be carried out worse than needed
+    PARTNER_LOSS = "partner_loss"  # a key partner may leave
+    PARTNER_DEFECTION_TO_COMPETITORS = "partner_defection_to_competitors"  # a partner may start serving rivals
+    PARTNER_OVER_DEPENDENCE = "partner_over_dependence"  # we lean too heavily on one partner
+    # customer_interface
+    MARKET_SATURATION = "market_saturation"  # the market may have no room left to grow into
+    MARKET_SHARE_PRESSURE = "market_share_pressure"  # our share of the market may be eroding
+    CUSTOMER_DEFECTION = "customer_defection"  # customers may leave us
+    COMPETITION_INTENSIFYING = "competition_intensifying"  # the competitive field may get harsher
+    CHANNEL_THREAT_FROM_COMPETITORS = "channel_threat_from_competitors"  # rivals may take over the routes to our customers
+    CHANNEL_IRRELEVANCE = "channel_irrelevance"  # our channels may stop being where customers are
+    RELATIONSHIP_DETERIORATION = "relationship_deterioration"  # customer relationships may weaken
+
+
+# The catalog per SWOT cluster: 2, 5, 7 and 7 questions. Each question belongs
+# to exactly one cluster; together they are all 21.
+THREAT_QUESTIONS_BY_CLUSTER: dict[SwotCluster, tuple[ThreatQuestion, ...]] = {
+    SwotCluster.VALUE_PROPOSITION: (
+        ThreatQuestion.SUBSTITUTES_AVAILABLE,
+        ThreatQuestion.COMPETITOR_PRICE_OR_VALUE_PRESSURE,
+    ),
+    SwotCluster.COST_REVENUE: (
+        ThreatQuestion.MARGIN_PRESSURE,
+        ThreatQuestion.REVENUE_CONCENTRATION,
+        ThreatQuestion.REVENUE_STREAM_DECLINE,
+        ThreatQuestion.COST_UNPREDICTABILITY,
+        ThreatQuestion.COST_OUTGROWING_REVENUE,
+    ),
+    SwotCluster.INFRASTRUCTURE: (
+        ThreatQuestion.RESOURCE_SUPPLY_DISRUPTION,
+        ThreatQuestion.RESOURCE_QUALITY_RISK,
+        ThreatQuestion.KEY_ACTIVITY_DISRUPTION,
+        ThreatQuestion.ACTIVITY_QUALITY_RISK,
+        ThreatQuestion.PARTNER_LOSS,
+        ThreatQuestion.PARTNER_DEFECTION_TO_COMPETITORS,
+        ThreatQuestion.PARTNER_OVER_DEPENDENCE,
+    ),
+    SwotCluster.CUSTOMER_INTERFACE: (
+        ThreatQuestion.MARKET_SATURATION,
+        ThreatQuestion.MARKET_SHARE_PRESSURE,
+        ThreatQuestion.CUSTOMER_DEFECTION,
+        ThreatQuestion.COMPETITION_INTENSIFYING,
+        ThreatQuestion.CHANNEL_THREAT_FROM_COMPETITORS,
+        ThreatQuestion.CHANNEL_IRRELEVANCE,
+        ThreatQuestion.RELATIONSHIP_DETERIORATION,
+    ),
+}
+
+
 # Which canvas sections each SWOT cluster covers (see the comments on
 # SwotCluster). Disjoint, and together exactly the nine sections.
 SWOT_CLUSTER_SECTIONS: dict[SwotCluster, frozenset[CanvasSection]] = {

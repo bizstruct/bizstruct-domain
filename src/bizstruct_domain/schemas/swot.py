@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 from .fields import SanitizedModel
 
-from .enums import SwotCluster
+from .enums import THREAT_QUESTIONS_BY_CLUSTER, SwotCluster, ThreatQuestion
 
 
 class SwotAxisStatement(SanitizedModel):
@@ -51,17 +51,17 @@ class SwotAxisStatement(SanitizedModel):
     )
 
 
-class SwotOpportunityThreat(SanitizedModel):
+class SwotOpportunity(SanitizedModel):
     """
-        Represents a single Opportunity or Threat item, per the BMG document's
-        Evaluating Business Models format (pp. 220-223): each generative
-        question is paired with a 1-5 scale. The book gives no caption for
-        this scale; the working interpretation used here is "how strongly
-        this applies to this model" (1 = barely, 5 = very strongly).
+        Represents a single Opportunity, per the BMG document's Evaluating
+        Business Models format (pp. 220-223): each generative question is
+        paired with a 1-5 scale. The book gives no caption for this scale; the
+        working interpretation used here is "how strongly this applies to this
+        model" (1 = barely, 5 = very strongly).
     """
     text: str = Field(
         ...,
-        description="The opportunity or threat statement (typically phrased as, "
+        description="The opportunity statement (typically phrased as, "
                      "or derived from, one of the book's generative questions).",
         examples=["Could we generate recurring revenues by converting products into services?"],
     )
@@ -74,6 +74,47 @@ class SwotOpportunityThreat(SanitizedModel):
                      "with no caption.",
         examples=[2, 3, 5],
     )
+
+
+class SwotThreat(SanitizedModel):
+    """
+        Represents the rating of ONE question of the fixed threat catalog
+        (`ThreatQuestion`). Every SWOT iteration rates the same 21 questions, so
+        the sum of the scores is comparable between iterations. Same 1-5 scale
+        and working interpretation as `SwotOpportunity`.
+    """
+    question: ThreatQuestion = Field(
+        ...,
+        description="Which catalog threat this rates. Each cluster must rate exactly the "
+                     "questions of its own catalog, once each.",
+        examples=[ThreatQuestion.SUBSTITUTES_AVAILABLE],
+    )
+    text: str = Field(
+        ...,
+        description="How this threat applies to this business model, in one or two sentences.",
+        examples=["Customers can switch to a cheaper app that covers the same basic need."],
+    )
+    score: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        description="How strongly this threat applies to this model: 1 (barely) to 5 (very strongly). "
+                     "Interpretation is a project decision; the book's pages give the scale "
+                     "with no caption.",
+        examples=[2, 3, 5],
+    )
+
+
+def _example_threats(cluster: SwotCluster, score: int = 3) -> list[SwotThreat]:
+    """The exact catalog of `cluster`, rated `score` each (for field examples)."""
+    return [
+        SwotThreat(
+            question=question,
+            text=f"Example assessment of the '{question.value}' threat.",
+            score=score,
+        )
+        for question in THREAT_QUESTIONS_BY_CLUSTER[cluster]
+    ]
 
 
 class SwotClusterResult(SanitizedModel):
@@ -112,26 +153,47 @@ class SwotClusterResult(SanitizedModel):
             ],
         ],
     )
-    opportunities: list[SwotOpportunityThreat] = Field(
+    opportunities: list[SwotOpportunity] = Field(
         ...,
         min_length=1,
         max_length=7,
         description="Identified opportunities for the specified cluster, each scored 1-5: between 1 and 7.",
         examples=[[
-            SwotOpportunityThreat(text="Expand into new geographic markets.", score=4),
-            SwotOpportunityThreat(text="Develop strategic partnerships with complementary businesses.", score=3),
+            SwotOpportunity(text="Expand into new geographic markets.", score=4),
+            SwotOpportunity(text="Develop strategic partnerships with complementary businesses.", score=3),
         ]],
     )
-    threats: list[SwotOpportunityThreat] = Field(
+    threats: list[SwotThreat] = Field(
         ...,
-        min_length=1,
+        min_length=2,
         max_length=7,
-        description="Identified threats for the specified cluster, each scored 1-5: between 1 and 7.",
-        examples=[[
-            SwotOpportunityThreat(text="Emerging competitors with lower-priced alternatives.", score=4),
-            SwotOpportunityThreat(text="Changes in regulations that could impact our operations.", score=2),
-        ]],
+        description="One rating per threat question of this cluster's catalog (2, 5, 7 or 7 questions "
+                     "depending on the cluster), each scored 1-5. Exactly the cluster's catalog, "
+                     "each question once, in any order.",
+        examples=[_example_threats(SwotCluster.VALUE_PROPOSITION)],
     )
+
+    @model_validator(mode="after")
+    def threats_are_exactly_the_cluster_catalog(self) -> "SwotClusterResult":
+        """
+            Validates that the threats rate exactly the catalog of this cluster:
+            every question once, none missing, none from another cluster.
+            Order is free.
+        """
+        expected = set(THREAT_QUESTIONS_BY_CLUSTER[self.cluster])
+        questions = [t.question for t in self.threats]
+        duplicated = sorted({q.value for q in questions if questions.count(q) > 1})
+        if duplicated:
+            raise ValueError(f"Each threat question may be rated only once. Repeated: {', '.join(duplicated)}.")
+        present = set(questions)
+        foreign = sorted(q.value for q in present - expected)
+        missing = sorted(q.value for q in expected - present)
+        if foreign or missing:
+            raise ValueError(
+                f"Threats of cluster {self.cluster.value} must be exactly its catalog. "
+                f"Missing: {', '.join(missing) or '-'}. Not in this cluster: {', '.join(foreign) or '-'}."
+            )
+        return self
 
 
 class Swot(SanitizedModel):
@@ -188,11 +250,9 @@ class Swot(SanitizedModel):
                         ),
                     ],
                     opportunities=[
-                        SwotOpportunityThreat(text="Expand into new geographic markets.", score=4),
+                        SwotOpportunity(text="Expand into new geographic markets.", score=4),
                     ],
-                    threats=[
-                        SwotOpportunityThreat(text="Emerging competitors with lower-priced alternatives.", score=4),
-                    ],
+                    threats=_example_threats(SwotCluster.VALUE_PROPOSITION),
                 ),
                 SwotClusterResult(
                     cluster=SwotCluster.COST_REVENUE,
@@ -213,11 +273,9 @@ class Swot(SanitizedModel):
                         ),
                     ],
                     opportunities=[
-                        SwotOpportunityThreat(text="Develop strategic partnerships with complementary businesses.", score=3),
+                        SwotOpportunity(text="Develop strategic partnerships with complementary businesses.", score=3),
                     ],
-                    threats=[
-                        SwotOpportunityThreat(text="Changes in regulations that could impact our operations.", score=2),
-                    ],
+                    threats=_example_threats(SwotCluster.COST_REVENUE),
                 ),
                 SwotClusterResult(
                     cluster=SwotCluster.INFRASTRUCTURE,
@@ -238,11 +296,9 @@ class Swot(SanitizedModel):
                         ),
                     ],
                     opportunities=[
-                        SwotOpportunityThreat(text="Invest in scalable infrastructure solutions.", score=3),
+                        SwotOpportunity(text="Invest in scalable infrastructure solutions.", score=3),
                     ],
-                    threats=[
-                        SwotOpportunityThreat(text="Supply chain disruptions due to global events.", score=3),
-                    ],
+                    threats=_example_threats(SwotCluster.INFRASTRUCTURE),
                 ),
                 SwotClusterResult(
                     cluster=SwotCluster.CUSTOMER_INTERFACE,
@@ -263,11 +319,9 @@ class Swot(SanitizedModel):
                         ),
                     ],
                     opportunities=[
-                        SwotOpportunityThreat(text="Enhance the user experience through design improvements.", score=2),
+                        SwotOpportunity(text="Enhance the user experience through design improvements.", score=2),
                     ],
-                    threats=[
-                        SwotOpportunityThreat(text="Negative reviews and feedback impacting brand perception.", score=3),
-                    ],
+                    threats=_example_threats(SwotCluster.CUSTOMER_INTERFACE),
                 ),
             ],
         ],
@@ -276,10 +330,15 @@ class Swot(SanitizedModel):
     @property
     def weighted_weakness_threat_score(self) -> float:
         """
-            Calculates the weighted score for weaknesses and threats across all clusters.
-            The score is the sum of the absolute values of negative axis scores
-            multiplied by their importance, plus the sum of each threat's own
-            1-5 score (not a flat count per item).
+            Weighted score for weaknesses and threats across all clusters: the sum
+            of |score| * importance over the negative axis statements, plus the sum
+            of the scores of the rated threats.
+
+            The threat part is comparable between iterations: every cluster rates
+            exactly its fixed catalog, so it always sums over the same 21 threat
+            questions (21..105). The weakness part is NOT yet comparable: it
+            depends on how many axis statements the model writes (2-5 per cluster)
+            and only negative ones count.
         """
         total = 0.0
         for c in self.clusters:

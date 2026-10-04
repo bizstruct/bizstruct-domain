@@ -17,6 +17,8 @@ from bizstruct_domain.schemas.canvas import (
     CanvasSections,
 )
 from bizstruct_domain.schemas.enums import (
+    THREAT_QUESTIONS_BY_CLUSTER,
+    ThreatQuestion,
     CanvasBranch,
     CanvasSection,
     Epicenter,
@@ -305,9 +307,11 @@ class TestSwot:
         assert "score_not_zero" not in SwotAxisStatement.__pydantic_decorators__.field_validators
 
     @pytest.mark.parametrize("score", [0, 6])
-    def test_opportunity_threat_score_must_be_1_to_5(self, score):
+    def test_opportunity_and_threat_score_must_be_1_to_5(self, score):
         with pytest.raises(ValidationError):
-            b.threat(score)
+            b.opportunity(score)
+        with pytest.raises(ValidationError):
+            b.threat(ThreatQuestion.PARTNER_LOSS, score)
 
     def test_duplicate_cluster_type_rejected(self):
         clusters = [b.cluster(k) for k in SwotCluster]
@@ -320,39 +324,119 @@ class TestSwot:
             b.swot([b.cluster(k) for k in list(SwotCluster)[:3]])
 
     def test_weighted_weakness_threat_score_by_hand(self):
-        # Only negative axis statements count (|score| * importance); every
-        # threat contributes its own 1-5 score; positives and opportunities
-        # contribute nothing.
+        # Weakness part: |score| * importance over the negative axis statements.
+        # Threat part: the sum of the scores over the cluster's fixed catalog.
+        # Positive statements and opportunities contribute nothing.
         clusters = [
-            b.cluster(  # 3*8 + 0 (positive) + (2 + 3) = 29
+            b.cluster(  # weakness 3*8 = 24; threats (2 questions) 2 + 3 = 5
                 SwotCluster.VALUE_PROPOSITION,
                 axes=[b.axis(-3, 8), b.axis(4, 9)],
-                threats=[b.threat(2), b.threat(3)],
+                threats=b.catalog(SwotCluster.VALUE_PROPOSITION, [2, 3]),
                 opportunities=[b.opportunity(5)],
             ),
-            b.cluster(  # 1*10 + 0 + 1 = 11
-                SwotCluster.COST_REVENUE, axes=[b.axis(-1, 10), b.axis(1, 3)], threats=[b.threat(1)]
+            b.cluster(  # weakness 1*10 = 10; threats (5 questions) 1+1+1+1+1 = 5
+                SwotCluster.COST_REVENUE,
+                axes=[b.axis(-1, 10), b.axis(1, 3)],
+                threats=b.catalog(SwotCluster.COST_REVENUE, 1),
             ),
-            b.cluster(  # 0 + 0 + 5 = 5
-                SwotCluster.INFRASTRUCTURE, axes=[b.axis(2, 7), b.axis(1, 7)], threats=[b.threat(5)]
+            b.cluster(  # weakness 0; threats (7 questions) 5+4+3+2+1+1+1 = 17
+                SwotCluster.INFRASTRUCTURE,
+                axes=[b.axis(2, 7), b.axis(1, 7)],
+                threats=b.catalog(SwotCluster.INFRASTRUCTURE, [5, 4, 3, 2, 1, 1, 1]),
             ),
-            b.cluster(  # 5*2 + 2*4 + (1 + 1) = 20
+            b.cluster(  # weakness 5*2 + 2*4 = 18; threats (7 questions) 7 * 1 = 7
                 SwotCluster.CUSTOMER_INTERFACE,
                 axes=[b.axis(-5, 2), b.axis(-2, 4)],
-                threats=[b.threat(1), b.threat(1)],
+                threats=b.catalog(SwotCluster.CUSTOMER_INTERFACE, 1),
             ),
         ]
-        assert b.swot(clusters).weighted_weakness_threat_score == 29 + 11 + 5 + 20
+        weakness_part = 24 + 10 + 0 + 18
+        threat_part = 5 + 5 + 17 + 7
+        assert (weakness_part, threat_part) == (52, 34)
+        assert b.swot(clusters).weighted_weakness_threat_score == 86
 
-    def test_weighted_score_without_weaknesses_is_the_sum_of_threat_scores(self):
-        s = b.swot([b.cluster(k, axes=[b.axis(3), b.axis(4)], threats=[b.threat(1)]) for k in SwotCluster])
-        assert s.weighted_weakness_threat_score == 4
+    def test_without_weaknesses_the_score_is_the_threat_sum_over_the_catalog(self):
+        s = b.swot([b.cluster(k, axes=[b.axis(3), b.axis(4)], threats=b.catalog(k, 1)) for k in SwotCluster])
+        assert s.weighted_weakness_threat_score == 21
 
-    def test_threat_contributes_its_own_score_not_a_flat_count(self):
-        low = b.swot([b.cluster(k, threats=[b.threat(1)]) for k in SwotCluster])
-        high = b.swot([b.cluster(k, threats=[b.threat(5)]) for k in SwotCluster])
-        assert low.weighted_weakness_threat_score == 4
-        assert high.weighted_weakness_threat_score == 20
+    def test_threat_part_ranges_from_21_to_105(self):
+        low = b.swot([b.cluster(k, threats=b.catalog(k, 1)) for k in SwotCluster])
+        high = b.swot([b.cluster(k, threats=b.catalog(k, 5)) for k in SwotCluster])
+        # default axis statements are positive (+1, +2): no weakness part
+        assert low.weighted_weakness_threat_score == 21
+        assert high.weighted_weakness_threat_score == 105
+
+    def test_threat_part_is_independent_of_how_many_threats_the_model_lists(self):
+        # The catalog fixes the number of rated questions, so the threat part
+        # cannot drift with list length (the weakness part still can).
+        for kind in SwotCluster:
+            assert len(b.cluster(kind).threats) == len(THREAT_QUESTIONS_BY_CLUSTER[kind])
+
+
+class TestThreatCatalog:
+    @pytest.mark.parametrize("kind", list(SwotCluster))
+    def test_exact_catalog_accepted(self, kind):
+        assert len(b.cluster(kind, threats=b.catalog(kind, 3)).threats) == len(THREAT_QUESTIONS_BY_CLUSTER[kind])
+
+    @pytest.mark.parametrize("kind", list(SwotCluster))
+    def test_order_is_free(self, kind):
+        b.cluster(kind, threats=list(reversed(b.catalog(kind))))
+
+    def test_catalog_sizes_are_2_5_7_7(self):
+        sizes = [len(THREAT_QUESTIONS_BY_CLUSTER[k]) for k in SwotCluster]
+        assert sizes == [2, 5, 7, 7]
+        assert sum(sizes) == 21 == len(ThreatQuestion)
+
+    @pytest.mark.parametrize("kind", [SwotCluster.COST_REVENUE, SwotCluster.INFRASTRUCTURE, SwotCluster.CUSTOMER_INTERFACE])
+    def test_missing_question_rejected(self, kind):
+        with pytest.raises(ValidationError, match="Missing"):
+            b.cluster(kind, threats=b.catalog(kind)[:-1])
+
+    @pytest.mark.parametrize("kind", [SwotCluster.COST_REVENUE, SwotCluster.INFRASTRUCTURE])
+    def test_duplicate_question_rejected(self, kind):
+        threats = b.catalog(kind)
+        threats[-1] = threats[0]  # same length, one question twice and one missing
+        with pytest.raises(ValidationError, match="only once"):
+            b.cluster(kind, threats=threats)
+
+    def test_extra_duplicate_beyond_the_catalog_rejected(self):
+        kind = SwotCluster.VALUE_PROPOSITION
+        with pytest.raises(ValidationError, match="only once"):
+            b.cluster(kind, threats=[*b.catalog(kind), b.threat(THREAT_QUESTIONS_BY_CLUSTER[kind][0])])
+
+    def test_question_from_another_cluster_rejected(self):
+        kind = SwotCluster.VALUE_PROPOSITION
+        threats = [b.threat(ThreatQuestion.SUBSTITUTES_AVAILABLE), b.threat(ThreatQuestion.PARTNER_LOSS)]
+        with pytest.raises(ValidationError, match="Not in this cluster: partner_loss"):
+            b.cluster(kind, threats=threats)
+
+    def test_full_catalog_plus_a_foreign_question_rejected(self):
+        # Nothing is missing and nothing repeats: only the foreign question is wrong.
+        kind = SwotCluster.COST_REVENUE
+        threats = [*b.catalog(kind), b.threat(ThreatQuestion.PARTNER_LOSS)]
+        with pytest.raises(ValidationError, match="Not in this cluster: partner_loss"):
+            b.cluster(kind, threats=threats)
+
+    def test_catalog_of_another_cluster_rejected(self):
+        with pytest.raises(ValidationError, match="exactly its catalog"):
+            b.cluster(SwotCluster.INFRASTRUCTURE, threats=b.catalog(SwotCluster.CUSTOMER_INTERFACE))
+
+    def test_swot_with_each_cluster_on_its_own_catalog(self):
+        assert b.swot()  # builders give every cluster its own exact catalog
+
+    def test_json_schema_has_the_21_value_enum_and_the_envelope(self):
+        schema = SwotClusterResult.model_json_schema()
+        defs = schema["$defs"]
+        assert sorted(defs["ThreatQuestion"]["enum"]) == sorted(q.value for q in ThreatQuestion)
+        assert len(defs["ThreatQuestion"]["enum"]) == 21
+        assert defs["SwotThreat"]["properties"]["question"]["$ref"].endswith("/ThreatQuestion")
+        threats = schema["properties"]["threats"]
+        assert (threats["minItems"], threats["maxItems"]) == (2, 7)
+
+    def test_catalog_partition_is_disjoint_and_complete(self):
+        questions = [q for qs in THREAT_QUESTIONS_BY_CLUSTER.values() for q in qs]
+        assert len(questions) == len(set(questions))
+        assert set(questions) == set(ThreatQuestion)
 
 
 # --------------------------------------------------------------------------- list bounds
@@ -371,14 +455,25 @@ def _errc_moves(n: int) -> Errc:
     return b.errc([b.move(ERRCActionType.CREATE, new_text=f"new {i}") for i in range(n)])
 
 
-def _cluster_with(field: str, n: int):
-    kwargs = {
-        "axis_statements": [b.axis(1) for _ in range(2)],
-        "opportunities": [b.opportunity(2)],
-        "threats": [b.threat(2)],
-    }
-    kwargs[field] = [b.axis(1) if field == "axis_statements" else b.threat(2) for _ in range(n)]
-    return SwotClusterResult(cluster=SwotCluster.VALUE_PROPOSITION, **kwargs)
+def _axis_cluster(n: int) -> SwotClusterResult:
+    return b.cluster(SwotCluster.VALUE_PROPOSITION, axes=[b.axis(1) for _ in range(n)])
+
+
+def _opportunity_cluster(n: int) -> SwotClusterResult:
+    return b.cluster(SwotCluster.VALUE_PROPOSITION, opportunities=[b.opportunity(2) for _ in range(n)])
+
+
+def _threat_cluster(n: int) -> SwotClusterResult:
+    """n threats: 2 and 7 are exact catalogs (value_proposition / infrastructure);
+    1 and 8 are outside the 2..7 envelope."""
+    if n == 2:
+        return b.cluster(SwotCluster.VALUE_PROPOSITION)
+    infra = b.catalog(SwotCluster.INFRASTRUCTURE)
+    if n == 7:
+        return b.cluster(SwotCluster.INFRASTRUCTURE)
+    if n == 8:
+        return b.cluster(SwotCluster.INFRASTRUCTURE, threats=[*infra, infra[0]])
+    return b.cluster(SwotCluster.INFRASTRUCTURE, threats=infra[:n])
 
 
 # name -> (builder taking a count, min, max, model class, field name)
@@ -388,19 +483,9 @@ BOUNDED_LISTS = {
         lambda n: _future_scenario([f"d{i}" for i in range(n)], 2), 2, 4, FutureScenario, "uncertainty_drivers"
     ),
     "Errc.moves": (_errc_moves, 1, 6, Errc, "moves"),
-    "SwotClusterResult.axis_statements": (
-        lambda n: _cluster_with("axis_statements", n), 2, 5, SwotClusterResult, "axis_statements"
-    ),
-    "SwotClusterResult.threats": (lambda n: _cluster_with("threats", n), 1, 7, SwotClusterResult, "threats"),
-    "SwotClusterResult.opportunities": (
-        lambda n: SwotClusterResult(
-            cluster=SwotCluster.VALUE_PROPOSITION,
-            axis_statements=[b.axis(1), b.axis(2)],
-            opportunities=[b.opportunity(2) for _ in range(n)],
-            threats=[b.threat(2)],
-        ),
-        1, 7, SwotClusterResult, "opportunities",
-    ),
+    "SwotClusterResult.axis_statements": (_axis_cluster, 2, 5, SwotClusterResult, "axis_statements"),
+    "SwotClusterResult.threats": (_threat_cluster, 2, 7, SwotClusterResult, "threats"),
+    "SwotClusterResult.opportunities": (_opportunity_cluster, 1, 7, SwotClusterResult, "opportunities"),
 }
 
 

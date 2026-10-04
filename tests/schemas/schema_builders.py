@@ -9,12 +9,14 @@ from typing import Any
 from bizstruct_domain.schemas.canvas import Canvas, CanvasCard, CanvasSections
 from bizstruct_domain.schemas.customer_scenario import CustomerScenario
 from bizstruct_domain.schemas.enums import (
+    THREAT_QUESTIONS_BY_CLUSTER,
     CanvasBranch,
     CanvasSection,
     ERRCActionType,
     Pattern,
     SegmentRelationType,
     SwotCluster,
+    ThreatQuestion,
 )
 from bizstruct_domain.schemas.errc import Errc, ErrcMove
 from bizstruct_domain.schemas.optional_inputs import EnvironmentScan, Source
@@ -24,7 +26,8 @@ from bizstruct_domain.schemas.swot import (
     Swot,
     SwotAxisStatement,
     SwotClusterResult,
-    SwotOpportunityThreat,
+    SwotOpportunity,
+    SwotThreat,
 )
 
 SECTION_NAMES = [s.value for s in CanvasSection]
@@ -101,26 +104,33 @@ def axis(score: int, importance: int = 5) -> SwotAxisStatement:
     )
 
 
-def threat(score: int) -> SwotOpportunityThreat:
-    return SwotOpportunityThreat(text="threat", score=score)
+def threat(question: ThreatQuestion, score: int = 1) -> SwotThreat:
+    return SwotThreat(question=question, text="threat", score=score)
 
 
-def opportunity(score: int) -> SwotOpportunityThreat:
-    return SwotOpportunityThreat(text="opportunity", score=score)
+def opportunity(score: int) -> SwotOpportunity:
+    return SwotOpportunity(text="opportunity", score=score)
+
+
+def catalog(kind: SwotCluster, scores: list[int] | int = 1) -> list[SwotThreat]:
+    """The exact threat catalog of `kind`; `scores` is one int for all or one per question."""
+    questions = THREAT_QUESTIONS_BY_CLUSTER[kind]
+    per_question = scores if isinstance(scores, list) else [scores] * len(questions)
+    return [threat(q, sc) for q, sc in zip(questions, per_question, strict=True)]
 
 
 def cluster(
     kind: SwotCluster,
     axes: list[SwotAxisStatement] | None = None,
-    threats: list[SwotOpportunityThreat] | None = None,
-    opportunities: list[SwotOpportunityThreat] | None = None,
+    threats: list[SwotThreat] | None = None,
+    opportunities: list[SwotOpportunity] | None = None,
 ) -> SwotClusterResult:
-    """A valid cluster (>= 2 axis statements, >= 1 opportunity, >= 1 threat) by default."""
+    """A valid cluster by default: 2 axis statements, 1 opportunity, the exact threat catalog rated 1."""
     return SwotClusterResult(
         cluster=kind,
         axis_statements=axes if axes is not None else [axis(1), axis(2)],
         opportunities=opportunities if opportunities is not None else [opportunity(3)],
-        threats=threats if threats is not None else [threat(1)],
+        threats=threats if threats is not None else catalog(kind),
     )
 
 
