@@ -296,6 +296,20 @@ class TestIsCheckableWithOptionalInputs:
         assert check.is_checkable({Stage.BRIEF, Stage.BUSINESS_CASE})
 
 
+def test_pitch_risk_check_states_the_threat_thresholds():
+    # Project rules: grounded if it traces to a negative axis statement or a
+    # threat with score >= 3; a severe omission is a threat with score 5 or a
+    # negative axis statement with importance >= 8. The fixed catalog puts all
+    # 21 threats in every Swot, so "a threat" alone would mean nothing.
+    text = _judge("pitch_risk_analysis_grounded_in_swot").instruction
+    assert "a threat with score >= 3" in text
+    assert "a threat with score 5" in text
+    assert "negative axis_statement with importance >= 8" in text
+    assert "fixed catalog" in text
+    assert "Minor omissions are expected" in text
+    assert "or a threat in the Swot" not in text
+
+
 def _judge(id: str) -> JudgeCheck:
     return next(c for c in JUDGE_CHECKS if c.id == id)
 
