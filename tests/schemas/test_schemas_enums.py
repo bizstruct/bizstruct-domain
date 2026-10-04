@@ -68,6 +68,29 @@ EXPECTED: dict[str, dict[str, str]] = {
         "COMIC_STRIP": "comic_strip",
     },
     "PricingTier": {"PREMIUM": "premium", "MID_MARKET": "mid_market", "LOW_COST": "low_cost"},
+    "ThreatQuestion": {
+        "SUBSTITUTES_AVAILABLE": "substitutes_available",
+        "COMPETITOR_PRICE_OR_VALUE_PRESSURE": "competitor_price_or_value_pressure",
+        "MARGIN_PRESSURE": "margin_pressure",
+        "REVENUE_CONCENTRATION": "revenue_concentration",
+        "REVENUE_STREAM_DECLINE": "revenue_stream_decline",
+        "COST_UNPREDICTABILITY": "cost_unpredictability",
+        "COST_OUTGROWING_REVENUE": "cost_outgrowing_revenue",
+        "RESOURCE_SUPPLY_DISRUPTION": "resource_supply_disruption",
+        "RESOURCE_QUALITY_RISK": "resource_quality_risk",
+        "KEY_ACTIVITY_DISRUPTION": "key_activity_disruption",
+        "ACTIVITY_QUALITY_RISK": "activity_quality_risk",
+        "PARTNER_LOSS": "partner_loss",
+        "PARTNER_DEFECTION_TO_COMPETITORS": "partner_defection_to_competitors",
+        "PARTNER_OVER_DEPENDENCE": "partner_over_dependence",
+        "MARKET_SATURATION": "market_saturation",
+        "MARKET_SHARE_PRESSURE": "market_share_pressure",
+        "CUSTOMER_DEFECTION": "customer_defection",
+        "COMPETITION_INTENSIFYING": "competition_intensifying",
+        "CHANNEL_THREAT_FROM_COMPETITORS": "channel_threat_from_competitors",
+        "CHANNEL_IRRELEVANCE": "channel_irrelevance",
+        "RELATIONSHIP_DETERIORATION": "relationship_deterioration",
+    },
     "Stage": {
         "BRIEF": "brief",
         "EMPATHY_MAP": "empathy_map",
@@ -161,3 +184,31 @@ def test_swot_cluster_sections_are_the_contract():
 
 def test_swot_cluster_sections_values_are_immutable():
     assert all(isinstance(v, frozenset) for v in enums_module.SWOT_CLUSTER_SECTIONS.values())
+
+
+def test_threat_questions_by_cluster_is_the_contract():
+    S, T = enums_module.SwotCluster, enums_module.ThreatQuestion
+    assert enums_module.THREAT_QUESTIONS_BY_CLUSTER == {
+        S.VALUE_PROPOSITION: (T.SUBSTITUTES_AVAILABLE, T.COMPETITOR_PRICE_OR_VALUE_PRESSURE),
+        S.COST_REVENUE: (
+            T.MARGIN_PRESSURE, T.REVENUE_CONCENTRATION, T.REVENUE_STREAM_DECLINE,
+            T.COST_UNPREDICTABILITY, T.COST_OUTGROWING_REVENUE,
+        ),
+        S.INFRASTRUCTURE: (
+            T.RESOURCE_SUPPLY_DISRUPTION, T.RESOURCE_QUALITY_RISK, T.KEY_ACTIVITY_DISRUPTION,
+            T.ACTIVITY_QUALITY_RISK, T.PARTNER_LOSS, T.PARTNER_DEFECTION_TO_COMPETITORS,
+            T.PARTNER_OVER_DEPENDENCE,
+        ),
+        S.CUSTOMER_INTERFACE: (
+            T.MARKET_SATURATION, T.MARKET_SHARE_PRESSURE, T.CUSTOMER_DEFECTION,
+            T.COMPETITION_INTENSIFYING, T.CHANNEL_THREAT_FROM_COMPETITORS, T.CHANNEL_IRRELEVANCE,
+            T.RELATIONSHIP_DETERIORATION,
+        ),
+    }
+    assert [len(v) for v in enums_module.THREAT_QUESTIONS_BY_CLUSTER.values()] == [2, 5, 7, 7]
+
+
+def test_threat_questions_partition_into_the_clusters():
+    questions = [q for qs in enums_module.THREAT_QUESTIONS_BY_CLUSTER.values() for q in qs]
+    assert len(questions) == len(set(questions)) == 21
+    assert set(questions) == set(enums_module.ThreatQuestion)

@@ -31,6 +31,7 @@ from .customer_scenario import CustomerScenario
 from .empathy_map import EmpathyMap
 from .enums import (
     SWOT_CLUSTER_SECTIONS,
+    THREAT_QUESTIONS_BY_CLUSTER,
     CanvasBranch,
     CanvasSection,
     Epicenter,
@@ -48,6 +49,7 @@ from .enums import (
     StorytellingGoal,
     StorytellingPerspective,
     SwotCluster,
+    ThreatQuestion,
 )
 from .errc import Errc, ErrcMove
 from .fields import SanitizedModel, strip_control_chars
@@ -66,11 +68,13 @@ from .pitch import Pitch
 from .stage_definition import StageDefinition
 from .stage_registry import StageRegistry
 from .storytelling import CanvasReference, Storytelling
-from .swot import Swot, SwotAxisStatement, SwotClusterResult, SwotOpportunityThreat
+from .swot import Swot, SwotAxisStatement, SwotClusterResult, SwotOpportunity, SwotThreat
 from .validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
     "SWOT_CLUSTER_SECTIONS",
+    "THREAT_QUESTIONS_BY_CLUSTER",
+    "ThreatQuestion",
     # enums
     "CanvasBranch",
     "CanvasSection",
@@ -110,7 +114,8 @@ __all__ = [
     "Swot",
     "SwotAxisStatement",
     "SwotClusterResult",
-    "SwotOpportunityThreat",
+    "SwotOpportunity",
+    "SwotThreat",
     "Errc",
     "ErrcMove",
     "Storytelling",
