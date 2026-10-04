@@ -139,3 +139,25 @@ def test_removed_values_stay_removed():
     assert "competitor_driven" not in values  # not part of the methodology
     assert "paid" not in {p.value for p in enums_module.Pattern}
     assert "key_partners" not in {s.value for s in enums_module.CanvasSection}
+
+
+def test_swot_clusters_partition_the_nine_canvas_sections():
+    mapping = enums_module.SWOT_CLUSTER_SECTIONS
+    assert set(mapping) == set(enums_module.SwotCluster)
+    covered = [section for sections in mapping.values() for section in sections]
+    assert len(covered) == len(set(covered)), "a section belongs to two clusters"
+    assert set(covered) == set(enums_module.CanvasSection)
+
+
+def test_swot_cluster_sections_are_the_contract():
+    S, C = enums_module.SwotCluster, enums_module.CanvasSection
+    assert enums_module.SWOT_CLUSTER_SECTIONS == {
+        S.VALUE_PROPOSITION: {C.VALUE_PROPOSITIONS},
+        S.COST_REVENUE: {C.REVENUE_STREAMS, C.COST_STRUCTURE},
+        S.INFRASTRUCTURE: {C.KEY_RESOURCES, C.KEY_ACTIVITIES, C.KEY_PARTNERSHIPS},
+        S.CUSTOMER_INTERFACE: {C.CUSTOMER_SEGMENTS, C.CHANNELS, C.CUSTOMER_RELATIONSHIPS},
+    }
+
+
+def test_swot_cluster_sections_values_are_immutable():
+    assert all(isinstance(v, frozenset) for v in enums_module.SWOT_CLUSTER_SECTIONS.values())

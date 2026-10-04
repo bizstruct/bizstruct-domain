@@ -1,5 +1,6 @@
 import importlib.util
 import sys
+from datetime import date
 from enum import StrEnum
 
 import pytest
@@ -40,6 +41,7 @@ from bizstruct_domain.schemas.optional_inputs import (
     BusinessCase,
     EnvironmentScan,
     SalesScenario,
+    Source,
     TeamInfo,
     TeamMember,
 )
@@ -111,6 +113,23 @@ class TestPatternsMultiSided:
 
     def test_no_constraint_without_the_tag(self):
         b.patterns(groups=[b.group("g1", 1, MULTI)], pattern_tags=[])
+
+
+class TestPatternsUniqueTags:
+    def test_distinct_patterns_accepted(self):
+        b.patterns(pattern_tags=[b.tag(Pattern.UNBUNDLING), b.tag(Pattern.LONG_TAIL)])
+
+    def test_repeated_pattern_rejected(self):
+        with pytest.raises(ValidationError, match="only once"):
+            b.patterns(pattern_tags=[b.tag(Pattern.UNBUNDLING), b.tag(Pattern.UNBUNDLING)])
+
+    def test_repeated_pattern_with_different_subtypes_still_rejected(self):
+        tags = [
+            b.tag(Pattern.FREE, FreePatternSubtype.FREEMIUM),
+            b.tag(Pattern.FREE, FreePatternSubtype.AD_SUPPORTED),
+        ]
+        with pytest.raises(ValidationError, match="free"):
+            b.patterns(pattern_tags=tags)
 
 
 class TestPatternTagSubtype:
@@ -186,24 +205,69 @@ class TestSegmentPairAndScore:
 
 
 class TestEpicenterClassification:
+    F, O, R, C, M = (
+        Epicenter.FINANCE_DRIVEN,
+        Epicenter.OFFER_DRIVEN,
+        Epicenter.RESOURCE_DRIVEN,
+        Epicenter.CUSTOMER_DRIVEN,
+        Epicenter.MULTIPLE_EPICENTER,
+    )
+
     @staticmethod
     def _make(tags: list[Epicenter]) -> EpicenterClassification:
         return EpicenterClassification(tags=tags, rationale="r")
 
-    def test_single_tag_needs_no_marker(self):
-        self._make([Epicenter.FINANCE_DRIVEN])
+    @pytest.mark.parametrize("tag", [Epicenter.FINANCE_DRIVEN, Epicenter.OFFER_DRIVEN,
+                                     Epicenter.RESOURCE_DRIVEN, Epicenter.CUSTOMER_DRIVEN])
+    def test_single_concrete_tag_accepted(self, tag):
+        assert self._make([tag]).tags == [tag]
 
-    def test_multiple_epicenter_alone_is_allowed(self):
-        self._make([Epicenter.MULTIPLE_EPICENTER])
+    def test_two_concrete_tags_with_marker_accepted(self):
+        self._make([self.F, self.O, self.M])
 
-    def test_multiple_tags_without_marker_rejected(self):
+    def test_marker_position_does_not_matter(self):
+        self._make([self.M, self.F, self.O])
+
+    def test_all_four_concrete_tags_with_marker_accepted(self):
+        self._make([self.R, self.O, self.C, self.F, self.M])
+
+    def test_multiple_epicenter_alone_rejected(self):
+        with pytest.raises(ValidationError, match="At least one concrete"):
+            self._make([self.M])
+
+    def test_one_concrete_tag_with_marker_rejected(self):
+        with pytest.raises(ValidationError, match="at least two concrete"):
+            self._make([self.F, self.M])
+
+    def test_two_concrete_tags_without_marker_rejected(self):
         with pytest.raises(ValidationError, match="MULTIPLE_EPICENTER"):
-            self._make([Epicenter.FINANCE_DRIVEN, Epicenter.OFFER_DRIVEN])
+            self._make([self.F, self.O])
 
-    def test_multiple_tags_with_marker_accepted(self):
-        self._make(
-            [Epicenter.FINANCE_DRIVEN, Epicenter.OFFER_DRIVEN, Epicenter.MULTIPLE_EPICENTER]
-        )
+    def test_all_four_concrete_tags_without_marker_rejected(self):
+        with pytest.raises(ValidationError, match="MULTIPLE_EPICENTER"):
+            self._make([self.R, self.O, self.C, self.F])
+
+    @pytest.mark.parametrize(
+        "tags",
+        [
+            [Epicenter.FINANCE_DRIVEN, Epicenter.FINANCE_DRIVEN],
+            [Epicenter.FINANCE_DRIVEN, Epicenter.FINANCE_DRIVEN, Epicenter.MULTIPLE_EPICENTER],
+            [Epicenter.FINANCE_DRIVEN, Epicenter.OFFER_DRIVEN, Epicenter.MULTIPLE_EPICENTER,
+             Epicenter.MULTIPLE_EPICENTER],
+        ],
+    )
+    def test_duplicate_tags_rejected(self, tags):
+        with pytest.raises(ValidationError, match="duplicates"):
+            self._make(tags)
+
+    def test_five_concrete_values_together_rejected(self):
+        # Only four concrete epicenters exist, so five tags always repeat one
+        # (or are all four plus the marker, which is valid: see above).
+        with pytest.raises(ValidationError):
+            self._make([self.R, self.O, self.C, self.F, self.F, self.M])
+
+    def test_five_values_together_with_marker_and_four_concrete_is_the_maximum(self):
+        assert len(self._make([self.R, self.O, self.C, self.F, self.M]).tags) == 5
 
     def test_empty_tags_rejected(self):
         with pytest.raises(ValidationError):
@@ -623,6 +687,20 @@ class TestOptionalInputs:
         data = b.environment_scan().model_dump() | {field: []}
         with pytest.raises(ValidationError):
             EnvironmentScan(**data)
+
+    def test_source_requires_retrieved_at(self):
+        with pytest.raises(ValidationError, match="retrieved_at"):
+            Source(title="Report", note="n")
+
+    def test_source_parses_an_iso_date_and_rejects_garbage(self):
+        assert Source(title="R", retrieved_at="2026-09-30", note="n").retrieved_at == date(2026, 9, 30)
+        with pytest.raises(ValidationError):
+            Source(title="R", retrieved_at="yesterday", note="n")
+
+    def test_source_date_is_a_date_in_the_json_schema(self):
+        prop = Source.model_json_schema()["properties"]["retrieved_at"]
+        assert prop["format"] == "date"
+        assert "retrieved_at" in Source.model_json_schema()["required"]
 
     def test_team_info_requires_a_member(self):
         member = TeamMember(

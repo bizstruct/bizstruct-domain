@@ -264,3 +264,14 @@ class Patterns(SanitizedModel):
                 "A multi-sided platform pattern requires at least one group with two or more empathy maps."
             )
         return self
+
+    @model_validator(mode="after")
+    def pattern_tags_are_unique(self) -> "Patterns":
+        """
+            Validates that each business model pattern is tagged at most once.
+        """
+        seen = [t.pattern for t in self.pattern_tags]
+        repeated = sorted({p.value for p in seen if seen.count(p) > 1})
+        if repeated:
+            raise ValueError(f"Each pattern may be tagged only once. Repeated: {', '.join(repeated)}.")
+        return self

@@ -11,7 +11,9 @@ class EpicenterClassification(SanitizedModel):
     tags: list[Epicenter] = Field(
         ...,
         min_length=1,
-        description="A list of tags associated with the epicenter classification.",
+        description="The epicenter tags: one or more distinct concrete epicenters. When there are two "
+                     "or more, MULTIPLE_EPICENTER must also be listed; with a single concrete tag it "
+                     "must not be.",
         examples=[
             [Epicenter.FINANCE_DRIVEN],
             [
@@ -28,13 +30,29 @@ class EpicenterClassification(SanitizedModel):
     )
     
     @model_validator(mode="after")
-    def multiple_tags_require_marker(self) -> "EpicenterClassification":
+    def tags_follow_the_multiple_epicenter_rule(self) -> "EpicenterClassification":
         """
-            Validates that if multiple tags are provided, the 'MULTIPLE_EPICENTER' tag must be included.
+            Validates the two-way MULTIPLE_EPICENTER rule. The concrete tags
+            are the ones other than MULTIPLE_EPICENTER: they must be unique,
+            and there must be 1 to 4 of them. MULTIPLE_EPICENTER is present
+            if and only if there are at least two concrete tags.
         """
-        if len(self.tags) > 1 and Epicenter.MULTIPLE_EPICENTER not in self.tags:
+        if len(set(self.tags)) != len(self.tags):
+            raise ValueError("tags must not contain duplicates.")
+        concrete = [t for t in self.tags if t != Epicenter.MULTIPLE_EPICENTER]
+        has_marker = Epicenter.MULTIPLE_EPICENTER in self.tags
+        if not concrete:
             raise ValueError(
-                "If multiple tags are provided, the 'MULTIPLE_EPICENTER' tag must be included."
+                "At least one concrete epicenter tag is required; "
+                "'MULTIPLE_EPICENTER' alone is not a classification."
+            )
+        if len(concrete) >= 2 and not has_marker:
+            raise ValueError(
+                "If multiple concrete tags are provided, the 'MULTIPLE_EPICENTER' tag must be included."
+            )
+        if len(concrete) == 1 and has_marker:
+            raise ValueError(
+                "'MULTIPLE_EPICENTER' requires at least two concrete tags."
             )
         return self
 

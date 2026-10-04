@@ -30,6 +30,7 @@ from .consistency import (
 from .customer_scenario import CustomerScenario
 from .empathy_map import EmpathyMap
 from .enums import (
+    SWOT_CLUSTER_SECTIONS,
     CanvasBranch,
     CanvasSection,
     Epicenter,
@@ -69,6 +70,7 @@ from .swot import Swot, SwotAxisStatement, SwotClusterResult, SwotOpportunityThr
 from .validate_model import FieldFeedback, ValidateModelResult
 
 __all__ = [
+    "SWOT_CLUSTER_SECTIONS",
     # enums
     "CanvasBranch",
     "CanvasSection",

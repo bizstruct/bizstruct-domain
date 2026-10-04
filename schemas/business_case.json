@@ -40,6 +40,15 @@
           "title": "Note",
           "type": "string"
         },
+        "retrieved_at": {
+          "description": "The date the figure or claim was retrieved from the source (ISO date). Required next to every external quantitative claim (ADR-0005): market figures go stale and the source alone does not say how old they are.",
+          "examples": [
+            "2026-09-30"
+          ],
+          "format": "date",
+          "title": "Retrieved At",
+          "type": "string"
+        },
         "title": {
           "description": "Short label for the source (publication, report, or site name).",
           "examples": [
@@ -68,6 +77,7 @@
       },
       "required": [
         "title",
+        "retrieved_at",
         "note"
       ],
       "title": "Source",
@@ -164,6 +174,7 @@
         [
           {
             "note": "Basis for the projected 10% annual growth rate figure.",
+            "retrieved_at": "2026-09-30",
             "title": "Statista: SaaS Market Size 2026",
             "url": "https://www.statista.com/..."
           }
