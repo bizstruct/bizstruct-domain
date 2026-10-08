@@ -1,11 +1,21 @@
 # ADR-0012: Входи правил і перевірок адресують тип артефакту, а не етап
 
-- **Status:** Proposed
+- **Status:** Accepted (2026-10-08, with the decisions below)
 - **Date:** 2026-10-08
 - **Supersedes:** —
 - **Related:** ADR-0009 (D1: `swot_errc_cycle` — один вузол; модуль узгодженості), ADR-0010 (D6: перевірки виконує ml), ADR-0011 (Q1, Q3, Q6: id артефактів, замикання `refs`, версії канви в рядку циклу), `bizstruct-ml` ADR-0001 (правило `gather_inputs`)
 
-> Це нотатка з дизайну. Код, версія й схеми **не змінюються**. Після рішення мейнтейнера її приймає окремий PR.
+## Decisions made at acceptance (2026-10-08)
+
+Мейнтейнер прийняв ADR з такими рішеннями; вони мають перевагу над текстом нижче там, де той їм суперечить (текст нижче уже приведено у відповідність).
+
+1. **Фінальність виводиться, а не зберігається.** Поле `Canvas.is_final` **видаляється** з моделі, прикладів, експортів і документації (його ніхто не читає ні в be, ні в fe, ні в домені). Фінальну версію визначають чисті функції нового модуля `schemas/cycle.py` за оцінками `Swot.weighted_weakness_threat_score` у порядку версій:
+   - `loop_should_continue(scores) -> bool`: `False`, коли існує 5 версій або остання оцінка не зменшилась порівняно з попередньою; `True` для однієї оцінки. Рівність означає «не зменшилась».
+   - `select_final_version(scores) -> int`: остання версія перед першим кроком, на якому оцінка не зменшилась; остання версія, якщо такого кроку немає (методологія: «остання краща версія»).
+   Вхід `FINAL` розв'язується через `select_final_version` над `Swot` рядка циклу. Питання «хто виставляє `is_final`» знято.
+2. **D5 прийнято:** `multi_sided_requires_signal` перевіряє **кожну** групу з `relation_type == MULTI_SIDED` за сценаріями її власних сегментів (через `empathy_map_id`), незалежно від тегу `Patterns` (варіант A відхилено).
+3. **Версія 0.16.0** несе і ламаючу зміну `RuleInput`, і виправлення правила №1.
+4. **`canvas_group_id_is_known` виконується для кожної версії канви** (`EACH`).
 
 ---
 
@@ -59,13 +69,15 @@ class RuleInput(SanitizedModel):
 - `EACH` — відповідь на повторювані екземпляри одного типу в рядку (`Errc` ×4, `Swot` ×5): виконавець викликає `check` по одному разу на кожний екземпляр цього входу, решта входів збирається один раз. `ONE` лишається суворим (неоднозначність — `ContextError`).
 - `FINAL` визначає домен чистою функцією (D2).
 
-### D2. Що таке «фінальний»
+### D2. Що таке «фінальний» (виводиться, рішення 1)
 
-- **Canvas:** `is_final == True`. Рівно одна фінальна версія в родині канви (v1..vN однієї групи), інакше `ContextError`.
-- **Swot:** `Swot` із `canvas_id`, що збігається з id фінальної канви. Фінальний `Swot` не обов'язково з найбільшою версією: критерій зупинки (BMG-методологія) лишає «останню кращу», а не щойно згенеровану.
+Нічого не зберігається. Версії циклу — це `Swot` у порядку `canvas_version` 1..n, оцінки — `weighted_weakness_threat_score`:
+
+- `select_final_version(scores)` повертає номер фінальної версії: остання версія перед першим кроком, де оцінка **не зменшилась** (рівність теж «не зменшилась»); якщо таких кроків немає, остання версія. Одна оцінка дає 1.
+- `loop_should_continue(scores)` — те саме правило з боку оркестратора: `False` при п'яти версіях або коли остання оцінка не менша за попередню; `True` для однієї оцінки. Так оркестрація (ml) і перевірки (домен) спираються на **одну** функцію.
+- Для `canvas` фінальна — канва з `version == select_final_version(...)`, для `swot` — `Swot` із `canvas_version == select_final_version(...)`. Домен дає `final_swot(swots)` і `final_canvas(canvases, swots)`; канву знаходять за `Swot.canvas_id`, а не лише за номером. Версії `Swot` мають бути рівно 1..n без пропусків і дублів, інакше `ValueError`.
+- Фінальна не обов'язково остання: критерій зупинки лишає «останню кращу», а не щойно згенеровану.
 - `Errc` не має `FINAL` (допустимі `ONE`, `MANY`, `EACH`).
-
-Домен дає чисті функції `final_canvas(canvases)` і `final_swot(swots, canvases)`; збирач не повторює логіку. **Хто виставляє `is_final`**, ADR-0010 каже лише «система» (be або оркестратор): це відкрите питання нижче, і `FINAL` не працює, доки воно не вирішене.
 
 ### D3. Звідки читається артефакт: «власники» типу
 
@@ -84,7 +96,7 @@ ARTIFACT_HOLDERS: dict[ArtifactType, tuple[Stage, ...]] = {
    - якщо `refs` свіжого рядка називають етап `H`: артефакти типу `T` із рядків, названих під `H`; кожен має існувати, бути `DONE` і мати артефакти, інакше `ContextError`;
    - інакше: артефакти типу `T` із `DONE`-рядків етапу `H` у замиканні (свіжий рядок виключено).
 2. Тип відбирається **за типом артефакту**, не за етапом рядка. Анотації параметрів `check` більше не потрібні (`expected_types_of` зникає).
-3. Кратність застосовується до кандидатів: `ONE` — рівно один (0 → `ContextError`, якщо вхід не `optional`; ≥ 2 → неоднозначність); `MANY` — усі; `EACH` — усі, з розгортанням у цикл; `FINAL` — `final_canvas` / `final_swot` над кандидатами (для `Swot` кандидати канв збираються тим самим правилом).
+3. Кратність застосовується до кандидатів: `ONE` — рівно один (0 → `ContextError`, якщо вхід не `optional`; ≥ 2 → неоднозначність); `MANY` — усі; `EACH` — усі, з розгортанням у цикл; `FINAL` — `final_swot` / `final_canvas` (D2) над кандидатами (канви збираються тим самим правилом).
 4. Для `ONE` лишається чинним прямий збирач ADR-0001 (свіже + прямі `refs`, без замикання); замикання потрібне лише для `MANY`/`FINAL`/`EACH` там, де власник не названий у `refs`.
 
 Для випадку «канва v1 є фінальною» правило 1 бере v1 із замикання (власник `canvas` не названий у `refs` рядка `storytelling`), а v2..5 — з прямих `refs` (власник `swot_errc_cycle` названий). Один вхід `FINAL` покриває обидва.
@@ -130,13 +142,13 @@ def multi_sided_requires_signal(customer_scenarios, patterns):
 |---|---|---|---|---|---|
 | 1 | `multi_sided_requires_signal` | `customer_scenario MANY`, `patterns ONE` | ті самі (`customer_scenario MANY`, `patterns ONE`) | **тіло** за D5 | так |
 | 2 | `canvas_group_id_is_known` | `patterns ONE`, `canvas ONE` | `patterns ONE`, `canvas EACH` | перевіряє `group_id` кожної версії, не лише v1 | так (`ONE` теж коректне й лишає v1) |
-| 3 | `future_scenario_references_nonempty_sections` | `canvas ONE`, `future_scenario ONE` | `canvas FINAL`, `future_scenario ONE` | неоднозначна → фінальна | так, потребує `is_final` |
+| 3 | `future_scenario_references_nonempty_sections` | `canvas ONE`, `future_scenario ONE` | `canvas FINAL`, `future_scenario ONE` | неоднозначна → фінальна | так, потребує завершеного циклу |
 | 4 | `errc_move_targets_correct_canvas_version` | `canvas MANY`, `swot_errc_cycle ONE` | `canvas MANY`, `errc EACH` | тип явний; по одному виклику на `Errc` | так |
 | 5 | `swot_environment_scan_reference_is_known` | `swot_errc_cycle ONE`, `environment_scan ONE` | `swot EACH`, `environment_scan ONE` | тип явний; перевіряється кожен `Swot` | так |
-| 6 | `storytelling_references_nonempty_sections` | `canvas ONE`, `storytelling ONE` | `canvas FINAL`, `storytelling ONE` | неоднозначна → фінальна | так, потребує `is_final` |
+| 6 | `storytelling_references_nonempty_sections` | `canvas ONE`, `storytelling ONE` | `canvas FINAL`, `storytelling ONE` | неоднозначна → фінальна | так, потребує завершеного циклу |
 | 7 | `empathy_map_customer_scenario_persona_consistency` | `empathy_map ONE`, `customer_scenario ONE` | без змін | — | так |
 | 8 | `canvas_grounded_in_customer_insights` | `empathy_map MANY`, `customer_scenario MANY`, `canvas ONE` | без змін | група = `refs` рядка канви (D3), `canvas ONE` = v1 свіжого рядка | так |
-| 9 | `pitch_risk_analysis_grounded_in_swot` | `swot_errc_cycle ONE`, `pitch ONE` | `swot FINAL`, `pitch ONE` | усуває неоднозначність Swot/Errc і версій | так, потребує `is_final` |
+| 9 | `pitch_risk_analysis_grounded_in_swot` | `swot_errc_cycle ONE`, `pitch ONE` | `swot FINAL`, `pitch ONE` | усуває неоднозначність Swot/Errc і версій | так, потребує завершеного циклу |
 | 10 | `ideation_grounds_pattern_tags` | `ideation MANY`, `patterns ONE` | без змін | усі ideation (прямі `refs` рядка patterns) | так |
 | 11 | `pitch_optional_sections_grounded_in_sources` | `pitch ONE`, `team_info ONE?`, `business_case ONE?` | без змін | — | так |
 | 12 | `business_case_environment_scan_relevant_to_brief` | `brief ONE`, `business_case ONE?`, `environment_scan ONE?` | без змін | — | так |
@@ -149,14 +161,13 @@ def multi_sided_requires_signal(customer_scenarios, patterns):
 
 - **Порівняння сусідніх версій** (наприклад, що `Errc.result_canvas_id` справді вказує на v(n+1) і що ходи застосовано): потрібен вхід «канва за id із поля іншого входу». Адресація за посиланням не підтримується; сьогодні правило #4 вирішує це тілом, отримавши `canvas MANY` і шукаючи за `canvas_id`. Нового правила цього виду зараз немає; якщо з'явиться, воно повторить схему #4.
 - **Звуження `MANY` до групи, коли `refs` рядка не називають етап**: наприклад, правило на рядку `patterns`, що хоче лише карти однієї групи. Виражається лише тілом (як D5). Усі поточні випадки мають групу, визначену `refs` (канва) або всім проєктом (patterns).
-- **`FINAL` до вирішення, хто виставляє `is_final`** (відкрите питання 1): входи #3, #6, #9 не можна виконати.
 - Перевірки на **завершених нижчих етапах під час регенерації вищого** (звинувачення вищого етапу, ADR-0011 відкрите питання 3) лишаються поза обсягом.
 
 ## Consequences
 
-- **Ламаюча зміна домену** (кандидат на 0.16.0): зникає `StageArity` і `RuleInput(stage=…)`, з'являються `Arity`, `RuleInput(artifact=…)`, `ARTIFACT_HOLDERS`, `final_canvas`, `final_swot`. Єдиний споживач реєстру — `bizstruct-ml`; `bizstruct-be` не використовує `RuleInput`.
+- **Ламаюча зміна домену** (кандидат на 0.16.0): зникає `StageArity` і `RuleInput(stage=…)`, з'являються `Arity`, `RuleInput(artifact=…)`, `ARTIFACT_HOLDERS`, `final_canvas`, `final_swot`, `loop_should_continue`, `select_final_version`; видаляється `Canvas.is_final`. Єдиний споживач реєстру — `bizstruct-ml`; `bizstruct-be` не використовує `RuleInput`.
 - **ml:** `gather_inputs` переписується за D3 (по власниках, за типом артефакту); `expected_types_of` та анотаційна звірка видаляються; `EACH` розгортається у `run_deterministic` (і в судді, якщо така перевірка з'явиться); `completed_stages`/`applicable_*` читають `applies_to` за D4. Правило ml ADR-0001 про `MANY` («прямі `refs`, інакше замикання») стає окремим випадком D3.
-- **be:** без змін контракту; але має виставляти `is_final` (питання 1) і зберігати `Canvas` v2..5 у рядку циклу, як у ADR-0011 Q1.
+- **be:** без змін контракту, окрім того, що поле `Canvas.is_final` зникає з моделі (будь-які збережені дані з ним слід відкинути; БД і так скидається, ADR-0011); `Canvas` v2..5 лишаються в рядку циклу, як у ADR-0011 Q1.
 - **Тести:** уся реєстрова частина (таблиця вище) покривається тестами домену на форму входів; перевірки по групі (D5) — на чисту функцію; `FINAL` — на `final_canvas`/`final_swot` (нуль, одна, кілька фінальних; фінальна не остання версія).
 
 ## Alternatives considered
@@ -166,6 +177,7 @@ def multi_sided_requires_signal(customer_scenarios, patterns):
 - **Лишити розрізнення типу в ml (анотації `check`):** працює для правил, не для декларативних `JudgeCheck`; не прибирає неоднозначності версій. Відхилено.
 - **Додати рядок канви до `refs` рядків `storytelling`/`future_scenario`/`pitch`** (щоб v1 була серед прямих `refs`): простіший збирач, але змінює ADR-0011 Q2, граф залежностей і be. Відхилено на користь D3.
 - **`FINAL` як «найбільша `version`»:** хибне, бо критерій зупинки лишає останню *кращу* версію, а не останню.
+- **Зберігати `is_final` (будь-хто його виставляє):** відхилено: поле дублює виведене з оцінок, ніхто його не читає, а розбіжність між ним і оцінками стала б новим видом помилок.
 
 ## Deferred, and why it must be decided before the experiments
 
@@ -179,7 +191,4 @@ def multi_sided_requires_signal(customer_scenarios, patterns):
 
 ## Відкриті питання
 
-1. **Хто виставляє `Canvas.is_final`** (be після `StageResult` циклу чи ml у результаті)? ADR-0010 каже лише «система». Без відповіді `FINAL` не виконується.
-2. Чи приймати розширення D5 (перевіряти кожну MULTI_SIDED-групу незалежно від тегу), чи залишити варіант A?
-3. Номер версії: `0.16.0` (ламаюча зміна реєстру) разом зі зміною тіла правила #1 чи окремими версіями?
-4. `canvas_group_id_is_known` на `EACH` (рядок #2): чи потрібна перевірка v2..5, чи достатньо v1?
+Питання, поставлені в Proposed (1: хто виставляє `is_final`; 2: D5; 3: номер версії; 4: `EACH` для `canvas_group_id_is_known`), закрито рішеннями 1–4 вище. Лишається одне: порядок `Swot` без пропусків версій у рядку циклу гарантує ml (оркестрація циклу); якщо цикл перерваний помилкою посередині, `final_swot` кидає `ValueError`, і перевірки з `FINAL` не виконуються, доки цикл не добудовано.
