@@ -31,7 +31,8 @@ class ErrcMove(SanitizedModel):
     )
     target_card_text: str | None = Field(
         None,
-        description="The text of the card that the action targets, if applicable.",
+        description="The exact current text of the existing card the action targets. "
+                     "Required for eliminate, reduce and raise; must be omitted for create.",
         examples=[
             "Improve customer onboarding process",
             "Reduce production costs",
@@ -39,10 +40,12 @@ class ErrcMove(SanitizedModel):
     )
     new_text: str | None = Field(
         None,
-        description="The new text to be used for the card after the action is applied, if applicable.",
+        description="The text of the card after the action is applied. Required for "
+                     "reduce, raise and create (for reduce and raise it replaces the "
+                     "target card's text); must be omitted for eliminate.",
         examples=[
-            "Implement a new customer onboarding process",
-            "Reduce production costs by 15%",
+            "Self-serve customer onboarding in under 10 minutes",
+            "Production costs reduced by 15% through batch purchasing",
         ],
     )
     opposite_side_impact: str = Field(
@@ -67,16 +70,17 @@ class ErrcMove(SanitizedModel):
         """
             Ensures that the action and its associated fields are consistent.
         """
-        if self.action == ERRCActionType.CREATE:
-            if not self.new_text:
-                raise ValueError("new_text must be provided when action is CREATE.")
-            if self.target_card_text:
-                raise ValueError("target_card_text must be None when action is CREATE.")
-        else:
-            if not self.target_card_text:
-                raise ValueError("target_card_text must be provided when action is not CREATE.")
-            if self.new_text:
-                raise ValueError("new_text must be None when action is not CREATE.")
+        needs_target = self.action != ERRCActionType.CREATE
+        needs_new = self.action != ERRCActionType.ELIMINATE
+        name = self.action.name
+        if needs_target and not self.target_card_text:
+            raise ValueError(f"target_card_text must be provided when action is {name}.")
+        if not needs_target and self.target_card_text is not None:
+            raise ValueError(f"target_card_text must be None when action is {name}.")
+        if needs_new and not self.new_text:
+            raise ValueError(f"new_text must be provided when action is {name}.")
+        if not needs_new and self.new_text is not None:
+            raise ValueError(f"new_text must be None when action is {name}.")
         return self
 
 
@@ -99,6 +103,22 @@ class ErrcGenerated(SanitizedModel):
                     new_text=None,
                     opposite_side_impact="Eliminating this segment may reduce revenue.",
                     rationale="This segment is no longer profitable.",
+                ),
+                ErrcMove(
+                    action=ERRCActionType.REDUCE,
+                    target_section=CanvasSection.CHANNELS,
+                    target_card_text="Field sales team",
+                    new_text="Field sales team limited to key accounts",
+                    opposite_side_impact="Fewer visits may slow acquisition of small customers.",
+                    rationale="Field sales cost is out of proportion to small-account revenue.",
+                ),
+                ErrcMove(
+                    action=ERRCActionType.RAISE,
+                    target_section=CanvasSection.VALUE_PROPOSITIONS,
+                    target_card_text="Fast delivery",
+                    new_text="Same-day delivery",
+                    opposite_side_impact="Same-day delivery raises logistics cost.",
+                    rationale="Delivery speed is the main reason customers switch to us.",
                 ),
                 ErrcMove(
                     action=ERRCActionType.CREATE,

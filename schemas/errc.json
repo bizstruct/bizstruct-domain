@@ -50,10 +50,10 @@
             }
           ],
           "default": null,
-          "description": "The new text to be used for the card after the action is applied, if applicable.",
+          "description": "The text of the card after the action is applied. Required for reduce, raise and create (for reduce and raise it replaces the target card's text); must be omitted for eliminate.",
           "examples": [
-            "Implement a new customer onboarding process",
-            "Reduce production costs by 15%"
+            "Self-serve customer onboarding in under 10 minutes",
+            "Production costs reduced by 15% through batch purchasing"
           ],
           "title": "New Text"
         },
@@ -85,7 +85,7 @@
             }
           ],
           "default": null,
-          "description": "The text of the card that the action targets, if applicable.",
+          "description": "The exact current text of the existing card the action targets. Required for eliminate, reduce and raise; must be omitted for create.",
           "examples": [
             "Improve customer onboarding process",
             "Reduce production costs"
@@ -151,6 +151,22 @@
             "rationale": "This segment is no longer profitable.",
             "target_card_text": "Old customer segment",
             "target_section": "customer_segments"
+          },
+          {
+            "action": "reduce",
+            "new_text": "Field sales team limited to key accounts",
+            "opposite_side_impact": "Fewer visits may slow acquisition of small customers.",
+            "rationale": "Field sales cost is out of proportion to small-account revenue.",
+            "target_card_text": "Field sales team",
+            "target_section": "channels"
+          },
+          {
+            "action": "raise",
+            "new_text": "Same-day delivery",
+            "opposite_side_impact": "Same-day delivery raises logistics cost.",
+            "rationale": "Delivery speed is the main reason customers switch to us.",
+            "target_card_text": "Fast delivery",
+            "target_section": "value_propositions"
           },
           {
             "action": "create",

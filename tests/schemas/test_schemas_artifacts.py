@@ -587,40 +587,64 @@ class TestErrcVersions:
             b.errc(from_version=5, to_version=6)
 
 
+# action -> (target_card_text required, new_text required); the other must be absent.
+ERRC_MATRIX = {
+    ERRCActionType.ELIMINATE: (True, False),
+    ERRCActionType.REDUCE: (True, True),
+    ERRCActionType.RAISE: (True, True),
+    ERRCActionType.CREATE: (False, True),
+}
+
+
 class TestErrcMove:
-    def test_create_with_new_text_only(self):
-        b.move(CREATE, new_text="x")
+    def test_matrix_covers_every_action(self):
+        assert set(ERRC_MATRIX) == set(ERRCActionType)
 
-    def test_create_without_new_text_rejected(self):
-        with pytest.raises(ValidationError, match="new_text must be provided"):
-            b.move(CREATE)
+    @pytest.mark.parametrize("action", list(ERRCActionType))
+    @pytest.mark.parametrize("has_target", [False, True])
+    @pytest.mark.parametrize("has_new", [False, True])
+    def test_every_field_combination(self, action, has_target, has_new):
+        needs_target, needs_new = ERRC_MATRIX[action]
+        kwargs = dict(
+            target_card_text="old" if has_target else None,
+            new_text="new" if has_new else None,
+        )
+        if (has_target, has_new) == (needs_target, needs_new):
+            move = b.move(action, **kwargs)
+            assert (move.target_card_text, move.new_text) == (kwargs["target_card_text"], kwargs["new_text"])
+        else:
+            with pytest.raises(ValidationError):
+                b.move(action, **kwargs)
 
-    def test_create_with_target_card_text_rejected(self):
-        with pytest.raises(ValidationError, match="target_card_text must be None"):
-            b.move(CREATE, target_card_text="old", new_text="x")
+    @pytest.mark.parametrize("action", list(ERRCActionType))
+    def test_each_violation_names_its_field(self, action):
+        needs_target, needs_new = ERRC_MATRIX[action]
+        valid = dict(
+            target_card_text="old" if needs_target else None,
+            new_text="new" if needs_new else None,
+        )
+        for field, needed in (("target_card_text", needs_target), ("new_text", needs_new)):
+            broken = {**valid, field: None if needed else "x"}
+            verb = "provided" if needed else "None"
+            with pytest.raises(ValidationError, match=rf"{field} must be {verb} when action is {action.name}"):
+                b.move(action, **broken)
 
-    def test_create_with_only_target_card_text_rejected(self):
-        with pytest.raises(ValidationError, match="new_text must be provided"):
-            b.move(CREATE, target_card_text="old")
+    @pytest.mark.parametrize("action", [ERRCActionType.REDUCE, ERRCActionType.RAISE])
+    def test_reduce_and_raise_carry_the_rewritten_text(self, action):
+        move = b.move(action, target_card_text="Fast delivery", new_text="Same-day delivery")
+        assert move.new_text == "Same-day delivery"
 
-    @pytest.mark.parametrize("action", NON_CREATE)
-    def test_other_actions_with_target_only(self, action):
-        b.move(action, target_card_text="old")
-
-    @pytest.mark.parametrize("action", NON_CREATE)
-    def test_other_actions_without_target_rejected(self, action):
-        with pytest.raises(ValidationError, match="target_card_text must be provided"):
-            b.move(action)
-
-    @pytest.mark.parametrize("action", NON_CREATE)
-    def test_other_actions_with_new_text_rejected(self, action):
-        with pytest.raises(ValidationError, match="new_text must be None"):
-            b.move(action, target_card_text="old", new_text="x")
-
-    @pytest.mark.parametrize("action", NON_CREATE)
-    def test_other_actions_with_only_new_text_rejected(self, action):
-        with pytest.raises(ValidationError, match="target_card_text must be provided"):
-            b.move(action, new_text="x")
+    @pytest.mark.parametrize("action", list(ERRCActionType))
+    @pytest.mark.parametrize("field", ["target_card_text", "new_text"])
+    def test_empty_string_is_rejected_whether_required_or_forbidden(self, action, field):
+        needs_target, needs_new = ERRC_MATRIX[action]
+        kwargs = {
+            "target_card_text": "old" if needs_target else None,
+            "new_text": "new" if needs_new else None,
+        }
+        kwargs[field] = ""
+        with pytest.raises(ValidationError):
+            b.move(action, **kwargs)
 
     def test_errc_requires_at_least_one_move(self):
         data = b.errc().model_dump() | {"moves": []}

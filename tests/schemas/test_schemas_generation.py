@@ -579,3 +579,46 @@ class TestPatternsFromGenerated:
             self._generated(), id="pa", project_id="pr", segment_ids=self.SEGMENTS, group_ids=["g_1"]
         )
         assert Patterns.model_validate(patterns.model_dump()) == patterns
+
+
+class TestErrcGeneratedContract:
+    """ErrcGenerated is the content-only view of Errc; the move matrix lives in ErrcMove."""
+
+    def _move_schema(self) -> dict[str, Any]:
+        return ErrcGenerated.model_json_schema()["$defs"]["ErrcMove"]
+
+    def test_schema_is_moves_only_with_bounds(self):
+        schema = ErrcGenerated.model_json_schema()
+        assert set(schema["properties"]) == {"moves"}
+        moves = schema["properties"]["moves"]
+        assert (moves["minItems"], moves["maxItems"]) == (1, 6)
+        assert moves["items"] == {"$ref": "#/$defs/ErrcMove"}
+
+    def test_move_schema_keeps_both_text_fields_optional_and_documents_the_matrix(self):
+        move = self._move_schema()
+        # The per-action matrix is validator-only (not expressible in the schema), so the
+        # descriptions are what the generator sees.
+        assert set(move["required"]) == {"action", "target_section", "opposite_side_impact", "rationale"}
+        target = move["properties"]["target_card_text"]["description"]
+        new = move["properties"]["new_text"]["description"]
+        assert "eliminate, reduce and raise" in target and "omitted for create" in target
+        assert "reduce, raise and create" in new and "omitted for eliminate" in new
+
+    def test_move_schema_examples_are_valid_moves(self):
+        examples = ErrcGenerated.model_json_schema()["properties"]["moves"]["examples"][0]
+        assert {m["action"] for m in examples} == {a.value for a in ERRCActionType}
+        ErrcGenerated.model_validate({"moves": examples})
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            {"action": "reduce", "target_card_text": "old"},
+            {"action": "raise", "new_text": "new"},
+            {"action": "eliminate", "target_card_text": "old", "new_text": "new"},
+            {"action": "create", "target_card_text": "old", "new_text": "new"},
+        ],
+    )
+    def test_generated_output_violating_the_matrix_is_rejected(self, bad):
+        move = {"target_section": "channels", "opposite_side_impact": "i", "rationale": "r", **bad}
+        with pytest.raises(ValidationError):
+            ErrcGenerated.model_validate({"moves": [move]})
