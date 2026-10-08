@@ -16,6 +16,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from .artifact_types import ARTIFACT_HOLDERS, ARTIFACT_STAGE, ArtifactType  # noqa: F401 (re-exported)
 from .brief import Brief
 from .canvas import Canvas
 from .chain import STAGE_REGISTRY
@@ -34,42 +35,6 @@ from .pitch import Pitch
 from .storytelling import Storytelling
 from .swot import Swot
 
-
-class ArtifactType(StrEnum):
-    """The 14 persisted artifact models. `swot` and `errc` both belong to the
-    `swot_errc_cycle` stage."""
-    BRIEF = "brief"
-    EMPATHY_MAP = "empathy_map"
-    CUSTOMER_SCENARIO = "customer_scenario"
-    IDEATION = "ideation"
-    PATTERNS = "patterns"
-    CANVAS = "canvas"
-    SWOT = "swot"
-    ERRC = "errc"
-    STORYTELLING = "storytelling"
-    FUTURE_SCENARIO = "future_scenario"
-    PITCH = "pitch"
-    TEAM_INFO = "team_info"
-    BUSINESS_CASE = "business_case"
-    ENVIRONMENT_SCAN = "environment_scan"
-
-
-ARTIFACT_STAGE: dict[ArtifactType, Stage] = {
-    ArtifactType.BRIEF: Stage.BRIEF,
-    ArtifactType.EMPATHY_MAP: Stage.EMPATHY_MAP,
-    ArtifactType.CUSTOMER_SCENARIO: Stage.CUSTOMER_SCENARIO,
-    ArtifactType.IDEATION: Stage.IDEATION,
-    ArtifactType.PATTERNS: Stage.PATTERNS,
-    ArtifactType.CANVAS: Stage.CANVAS,
-    ArtifactType.SWOT: Stage.SWOT_ERRC_CYCLE,
-    ArtifactType.ERRC: Stage.SWOT_ERRC_CYCLE,
-    ArtifactType.STORYTELLING: Stage.STORYTELLING,
-    ArtifactType.FUTURE_SCENARIO: Stage.FUTURE_SCENARIO,
-    ArtifactType.PITCH: Stage.PITCH,
-    ArtifactType.TEAM_INFO: Stage.TEAM_INFO,
-    ArtifactType.BUSINESS_CASE: Stage.BUSINESS_CASE,
-    ArtifactType.ENVIRONMENT_SCAN: Stage.ENVIRONMENT_SCAN,
-}
 
 ARTIFACT_MODELS: dict[ArtifactType, type[BaseModel]] = {
     ArtifactType.BRIEF: Brief,

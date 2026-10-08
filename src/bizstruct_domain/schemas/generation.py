@@ -1,7 +1,7 @@
 """Generation contracts: what the LLM writes, per stage.
 
 A generation contract contains ONLY what the LLM writes. System fields are
-excluded: ids, foreign keys, versions, `is_final`/`is_generated`, and any value
+excluded: ids, foreign keys, versions, `is_generated`, and any value
 that must come from a real source (`sources` with their `retrieved_at`).
 The persisted model extends its generation model and adds the system fields;
 `X.from_generated(generated, **system_fields)` (or `Canvas.from_generated`,

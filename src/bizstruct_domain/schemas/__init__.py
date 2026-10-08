@@ -24,10 +24,13 @@ from .consistency import (
     ConsistencyRule,
     ConsistencyViolation,
     JudgeCheck,
+    Arity,
+    InputBindingError,
     RuleInput,
-    StageArity,
+    bind_inputs,
 )
 from .customer_scenario import CustomerScenario, CustomerScenarioGenerated
+from .cycle import MAX_CANVAS_VERSIONS, final_canvas, final_swot, loop_should_continue, select_final_version
 from .empathy_map import EmpathyMap, EmpathyMapGenerated
 from .enums import (
     SWOT_CLUSTER_SECTIONS,
@@ -87,6 +90,7 @@ from .validate_model import FieldFeedback, ValidateModelResult
 from .wire import (
     ARTIFACT_ID_NAMESPACE,
     ARTIFACT_MODELS,
+    ARTIFACT_HOLDERS,
     ARTIFACT_STAGE,
     ArtifactRecord,
     ArtifactType,
@@ -197,7 +201,13 @@ __all__ = [
     "ValidateModelResult",
     # wire contract between bizstruct-be and bizstruct-ml (ADR-0011, see wire.py)
     "ArtifactType",
+    "ARTIFACT_HOLDERS",
     "ARTIFACT_STAGE",
+    "MAX_CANVAS_VERSIONS",
+    "final_canvas",
+    "final_swot",
+    "loop_should_continue",
+    "select_final_version",
     "ARTIFACT_MODELS",
     "ARTIFACT_ID_NAMESPACE",
     "ArtifactRecord",
@@ -225,8 +235,10 @@ __all__ = [
     "ConsistencyViolation",
     "ConsistencyRule",
     "JudgeCheck",
+    "Arity",
+    "InputBindingError",
+    "bind_inputs",
     "RuleInput",
-    "StageArity",
     "CONSISTENCY_RULES",
     "JUDGE_CHECKS",
 ]

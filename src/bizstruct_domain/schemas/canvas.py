@@ -201,11 +201,6 @@ class Canvas(SanitizedModel):
         description="Identifier of the previous version of this canvas, if applicable.",
         examples=["canvas_000"],
     )
-    is_final: bool = Field(
-        default=False,
-        description="Indicates whether this canvas is the final version.",
-        examples=[True, False],
-    )
     sections: CanvasSections = Field(
         ...,
         description="The sections of the canvas, each containing a list of canvas cards.",

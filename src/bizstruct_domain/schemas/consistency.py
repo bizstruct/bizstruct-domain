@@ -30,11 +30,13 @@ and how many instances of each stage type to gather -- the same
 `next_available`, applied to rules instead of stages.
 """
 
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
-from typing import Callable, Literal
+from typing import Any, Callable, Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field, model_validator
 
+from .artifact_types import ARTIFACT_HOLDERS, ARTIFACT_STAGE, ArtifactType
 from .enums import Stage
 from .fields import SanitizedModel
 
@@ -95,53 +97,158 @@ class ConsistencyReport(SanitizedModel):
         return any(v.severity == "error" for v in self.violations)
 
 
-class StageArity(StrEnum):
-    """How many instances of a stage a rule needs as one input."""
+class Arity(StrEnum):
+    """How many instances of an artifact type a rule input takes (ADR-0012)."""
 
     ONE = "one"
+    """Exactly one instance; several candidates are an ambiguity error."""
     MANY = "many"
+    """Every instance of the group, as one list."""
+    EACH = "each"
+    """The check runs once per instance; the other inputs are gathered once."""
+    FINAL = "final"
+    """The final version of a versioned artifact (`canvas`, `swot`), derived by
+    `cycle.select_final_version` over the Swots of the cycle row."""
 
 
 class RuleInput(SanitizedModel):
-    """One of a rule's inputs: which stage, and how many instances of it.
+    """One of a rule's inputs: which artifact TYPE, and how many instances.
 
-    `ONE`: the rule's check function takes a single artifact instance for
-    this stage. `MANY`: it takes a list of every instance of this stage
-    that shares whatever grouping the caller used to decide these
-    instances belong together (e.g. all CustomerScenario/Ideation
-    instances for one segment for a Tier-1 check, or every instance of
-    a multi-instance stage for a Tier-2 check). The domain does not
-    resolve that grouping -- gathering the right instances from storage
-    is the caller's job (see module docstring).
+    The stage is derived: `stage` is the type's home stage. A stage is not
+    enough to name an input because `swot_errc_cycle` holds Swot and Errc (several
+    of each) and Canvas v2..v5 (ADR-0012). The check function takes, per
+    input and in order: a single instance (`ONE`, `EACH`, `FINAL`) or a list
+    (`MANY`). Where the instances come from is the caller's job: for each holding
+    stage of the type (`ARTIFACT_HOLDERS`) the instances of the rows the fresh
+    row's `refs` name under that stage, else of the DONE rows of that stage in
+    the closure, plus the fresh row's own artifacts of the type.
     """
 
-    stage: Stage
-    arity: StageArity
+    artifact: ArtifactType
+    arity: Arity
     optional: bool = Field(
         default=False,
         description="True for an input that only exists in some projects "
                      "(chain.py's is_optional stages: team_info, "
                      "business_case, environment_scan). An optional "
                      "input never blocks discovery on its own; if it is "
-                     "absent the caller passes None (ONE) or an empty "
-                     "list (MANY) in its position.",
+                     "absent the caller passes None (ONE/FINAL) or an empty "
+                     "list (MANY) in its position, and EACH has nothing to run.",
     )
+
+    @model_validator(mode="after")
+    def final_is_for_versioned_artifacts(self) -> "RuleInput":
+        if self.arity is Arity.FINAL and self.artifact not in (ArtifactType.CANVAS, ArtifactType.SWOT):
+            raise ValueError(f"FINAL applies to canvas and swot only, not {self.artifact.value}.")
+        return self
+
+    @property
+    def stage(self) -> Stage:
+        """The home stage of the artifact type."""
+        return ARTIFACT_STAGE[self.artifact]
+
+    @property
+    def required_stages(self) -> frozenset[Stage]:
+        """Stages that must be completed for this input to exist: the home stage, and for `FINAL`
+        the cycle (the final version is known only when the loop has run)."""
+        if self.arity is Arity.FINAL:
+            return frozenset({Stage.SWOT_ERRC_CYCLE})
+        return frozenset({self.stage})
+
+    @property
+    def read_stages(self) -> tuple[Stage, ...]:
+        """Stages whose fresh row can trigger a check on this input: the home stage, and for the
+        multi-instance kinds (`MANY`, `EACH`, `FINAL`) every stage holding the type."""
+        if self.arity in (Arity.MANY, Arity.EACH, Arity.FINAL):
+            return tuple(dict.fromkeys((self.stage, *ARTIFACT_HOLDERS[self.artifact])))
+        return (self.stage,)
 
 
 def _is_checkable(inputs: tuple[RuleInput, ...], completed: set[Stage]) -> bool:
     """Shared discovery rule for ConsistencyRule and JudgeCheck.
 
-    Every non-optional input's stage must be completed. If the rule
-    declares optional inputs at all, at least one of them must be
+    Every non-optional input's required stages must be completed. If the
+    rule declares optional inputs at all, at least one of them must be
     completed too -- otherwise the rule has nothing optional to check
     (e.g. a pitch-vs-sources check with neither TeamInfo nor
     BusinessCase present).
     """
-    required = {i.stage for i in inputs if not i.optional}
-    optional = {i.stage for i in inputs if i.optional}
+    required = set().union(*(i.required_stages for i in inputs if not i.optional))
+    optional = set().union(*(i.required_stages for i in inputs if i.optional))
     if not required <= completed:
         return False
     return not optional or bool(optional & completed)
+
+
+def _applies_to(inputs: tuple[RuleInput, ...]) -> tuple[Stage, ...]:
+    return tuple(dict.fromkeys(stage for i in inputs for stage in i.read_stages))
+
+
+def _check_single_each(inputs: Sequence[RuleInput]) -> None:
+    if sum(i.arity is Arity.EACH for i in inputs) > 1:
+        raise ValueError("At most one input may be EACH: two would mean a cross product of instances.")
+
+
+class InputBindingError(ValueError):
+    """The candidates do not fit the inputs: a required one is missing, or a `ONE` is ambiguous."""
+
+
+def bind_inputs(inputs: Sequence[RuleInput], candidates: Mapping[ArtifactType, Sequence[BaseModel]]) -> list[tuple[Any, ...]]:
+    """Apply the arity of each input to the instances the caller gathered, giving the argument
+    tuples for `rule.check(*args)` / the judge payload (pure, no I/O).
+
+    `candidates[type]` holds EVERY instance of the type in scope (for a Canvas: all versions of
+    the group's lineage, so the caller gathers v1 from the `canvas` row and v2..v5 from the cycle
+    row, see `ARTIFACT_HOLDERS`). Per input:
+
+    - `ONE`: exactly one candidate, else `InputBindingError` (several is the ambiguity error);
+      an absent optional input is `None`.
+    - `MANY`: the list of candidates; empty is an error unless the input is optional.
+    - `EACH`: one argument tuple per candidate (the other inputs are bound once); an absent
+      optional input yields no tuples, a missing required one is an error.
+    - `FINAL`: the final version (`cycle.final_swot` / `cycle.final_canvas`, which use
+      `select_final_version` over the Swots in `candidates[SWOT]`); absent optional -> `None`.
+    """
+    from .cycle import final_canvas, final_swot  # local: cycle imports models that import this module's neighbours
+
+    _check_single_each(inputs)
+    fixed: list[Any] = []
+    each_index: int | None = None
+    each_items: list[Any] = []
+    for position, spec in enumerate(inputs):
+        pool = list(candidates.get(spec.artifact, ()))
+        name = spec.artifact.value
+        if not pool:
+            if spec.arity is Arity.MANY and spec.optional:
+                fixed.append([])
+            elif spec.arity is Arity.EACH and spec.optional:
+                each_index = position
+                fixed.append(None)
+            elif spec.optional:
+                fixed.append(None)
+            else:
+                raise InputBindingError(f"no {name} instance among the candidates")
+            continue
+        if spec.arity is Arity.ONE:
+            if len(pool) > 1:
+                raise InputBindingError(f"ambiguous input: {len(pool)} {name} instances, expected one")
+            fixed.append(pool[0])
+        elif spec.arity is Arity.MANY:
+            fixed.append(pool)
+        elif spec.arity is Arity.EACH:
+            each_index, each_items = position, pool
+            fixed.append(None)
+        else:  # FINAL
+            swots = list(candidates.get(ArtifactType.SWOT, ()))
+            if not swots:
+                raise InputBindingError("no swot instance among the candidates: the final version is undefined")
+            try:
+                fixed.append(final_swot(swots) if spec.artifact is ArtifactType.SWOT else final_canvas(pool, swots))
+            except ValueError as e:
+                raise InputBindingError(str(e)) from e
+    if each_index is None:
+        return [tuple(fixed)]
+    return [tuple(item if i == each_index else value for i, value in enumerate(fixed)) for item in each_items]
 
 
 class ConsistencyRule:
@@ -162,16 +269,17 @@ class ConsistencyRule:
         inputs: tuple[RuleInput, ...],
         check: Callable[..., list[ConsistencyViolation]],
     ) -> None:
+        _check_single_each(inputs)
         self.id = id
         self.inputs = inputs
         self.check = check
 
     @property
     def applies_to(self) -> tuple[Stage, ...]:
-        """All stages this rule reads, optional ones included. For
-        deciding whether the rule can run now, use `is_checkable`, not
-        a subset test against this."""
-        return tuple(i.stage for i in self.inputs)
+        """All stages this rule reads, optional ones included (the cycle
+        too for versioned canvases). For deciding whether the rule can run
+        now, use `is_checkable`, not a subset test against this."""
+        return _applies_to(self.inputs)
 
     def is_checkable(self, completed: set[Stage]) -> bool:
         return _is_checkable(self.inputs, completed)
@@ -209,9 +317,14 @@ class JudgeCheck(SanitizedModel):
                      "check isn't about.",
     )
 
+    @model_validator(mode="after")
+    def at_most_one_each(self) -> "JudgeCheck":
+        _check_single_each(self.inputs)
+        return self
+
     @property
     def applies_to(self) -> tuple[Stage, ...]:
-        return tuple(i.stage for i in self.inputs)
+        return _applies_to(self.inputs)
 
     def is_checkable(self, completed: set[Stage]) -> bool:
         return _is_checkable(self.inputs, completed)
@@ -221,8 +334,8 @@ JUDGE_CHECKS: list[JudgeCheck] = [
     JudgeCheck(
         id="empathy_map_customer_scenario_persona_consistency",
         inputs=(
-            RuleInput(stage=Stage.EMPATHY_MAP, arity=StageArity.ONE),
-            RuleInput(stage=Stage.CUSTOMER_SCENARIO, arity=StageArity.ONE),
+            RuleInput(artifact=ArtifactType.EMPATHY_MAP, arity=Arity.ONE),
+            RuleInput(artifact=ArtifactType.CUSTOMER_SCENARIO, arity=Arity.ONE),
         ),
         instruction=(
             "You will see one EmpathyMap (pains, gains, thinks_and_feels, "
@@ -250,9 +363,9 @@ JUDGE_CHECKS: list[JudgeCheck] = [
     JudgeCheck(
         id="canvas_grounded_in_customer_insights",
         inputs=(
-            RuleInput(stage=Stage.EMPATHY_MAP, arity=StageArity.MANY),
-            RuleInput(stage=Stage.CUSTOMER_SCENARIO, arity=StageArity.MANY),
-            RuleInput(stage=Stage.CANVAS, arity=StageArity.ONE),
+            RuleInput(artifact=ArtifactType.EMPATHY_MAP, arity=Arity.MANY),
+            RuleInput(artifact=ArtifactType.CUSTOMER_SCENARIO, arity=Arity.MANY),
+            RuleInput(artifact=ArtifactType.CANVAS, arity=Arity.ONE),
         ),
         instruction=(
             "You will see one or more EmpathyMap instances (each with "
@@ -284,8 +397,8 @@ JUDGE_CHECKS: list[JudgeCheck] = [
     JudgeCheck(
         id="pitch_risk_analysis_grounded_in_swot",
         inputs=(
-            RuleInput(stage=Stage.SWOT_ERRC_CYCLE, arity=StageArity.ONE),
-            RuleInput(stage=Stage.PITCH, arity=StageArity.ONE),
+            RuleInput(artifact=ArtifactType.SWOT, arity=Arity.FINAL),
+            RuleInput(artifact=ArtifactType.PITCH, arity=Arity.ONE),
         ),
         instruction=(
             "You will see one Swot (four clusters, each with "
@@ -313,8 +426,8 @@ JUDGE_CHECKS: list[JudgeCheck] = [
     JudgeCheck(
         id="ideation_grounds_pattern_tags",
         inputs=(
-            RuleInput(stage=Stage.IDEATION, arity=StageArity.MANY),
-            RuleInput(stage=Stage.PATTERNS, arity=StageArity.ONE),
+            RuleInput(artifact=ArtifactType.IDEATION, arity=Arity.MANY),
+            RuleInput(artifact=ArtifactType.PATTERNS, arity=Arity.ONE),
         ),
         instruction=(
             "You will see one or more Ideation instances (each with an "
@@ -335,9 +448,9 @@ JUDGE_CHECKS: list[JudgeCheck] = [
     JudgeCheck(
         id="pitch_optional_sections_grounded_in_sources",
         inputs=(
-            RuleInput(stage=Stage.PITCH, arity=StageArity.ONE),
-            RuleInput(stage=Stage.TEAM_INFO, arity=StageArity.ONE, optional=True),
-            RuleInput(stage=Stage.BUSINESS_CASE, arity=StageArity.ONE, optional=True),
+            RuleInput(artifact=ArtifactType.PITCH, arity=Arity.ONE),
+            RuleInput(artifact=ArtifactType.TEAM_INFO, arity=Arity.ONE, optional=True),
+            RuleInput(artifact=ArtifactType.BUSINESS_CASE, arity=Arity.ONE, optional=True),
         ),
         instruction=(
             "You will see one Pitch (with team_section and "
@@ -362,9 +475,9 @@ JUDGE_CHECKS: list[JudgeCheck] = [
     JudgeCheck(
         id="business_case_environment_scan_relevant_to_brief",
         inputs=(
-            RuleInput(stage=Stage.BRIEF, arity=StageArity.ONE),
-            RuleInput(stage=Stage.BUSINESS_CASE, arity=StageArity.ONE, optional=True),
-            RuleInput(stage=Stage.ENVIRONMENT_SCAN, arity=StageArity.ONE, optional=True),
+            RuleInput(artifact=ArtifactType.BRIEF, arity=Arity.ONE),
+            RuleInput(artifact=ArtifactType.BUSINESS_CASE, arity=Arity.ONE, optional=True),
+            RuleInput(artifact=ArtifactType.ENVIRONMENT_SCAN, arity=Arity.ONE, optional=True),
         ),
         instruction=(
             "You will see one Brief (industry, idea_summary) and, where "
@@ -411,47 +524,54 @@ def register(id: str, inputs: tuple[RuleInput, ...]):
 # See docs/adr open questions for the rest of the candidate list.
 
 from .customer_scenario import CustomerScenario
-from .pattern import Patterns, Pattern as PatternEnum
+from .enums import SegmentRelationType
+from .pattern import Patterns
 
 
 @register(
     "multi_sided_requires_signal",
     (
-        RuleInput(stage=Stage.CUSTOMER_SCENARIO, arity=StageArity.MANY),
-        RuleInput(stage=Stage.PATTERNS, arity=StageArity.ONE),
+        RuleInput(artifact=ArtifactType.CUSTOMER_SCENARIO, arity=Arity.MANY),
+        RuleInput(artifact=ArtifactType.PATTERNS, arity=Arity.ONE),
     ),
 )
 def multi_sided_requires_signal(
     customer_scenarios: list[CustomerScenario],
     patterns: Patterns,
 ) -> list[ConsistencyViolation]:
-    """Tier 2 (derivation): if Patterns tags MULTI_SIDED_PLATFORM, at
-    least one of the CustomerScenario instances it was derived from must
-    carry interdependence_signal=True. `Patterns.multi_sided_requires_two_maps`
-    checks the *group size* from Patterns' own fields; this rule checks
-    that the *signal it was supposedly grounded in* actually exists
-    upstream, which no validator on Patterns alone can see.
+    """Tier 2 (derivation): every group with relation_type MULTI_SIDED must be
+    grounded in an interdependence signal of ITS OWN segments: at least one
+    CustomerScenario whose `empathy_map_id` is in the group's
+    `empathy_map_ids` carries interdependence_signal=True. Checked per group,
+    whether or not Patterns carries the MULTI_SIDED_PLATFORM tag (ADR-0012 D5):
+    a signal in another group of a split project does not count.
+    `Patterns.multi_sided_requires_two_maps` checks the *group size* from
+    Patterns' own fields; this rule checks that the *signal it was supposedly
+    grounded in* actually exists upstream, which no validator on Patterns
+    alone can see. A group whose scenarios were not provided has no signal.
     """
-    has_tag = any(t.pattern == PatternEnum.MULTI_SIDED_PLATFORM for t in patterns.pattern_tags)
-    if not has_tag:
-        return []
-
-    has_signal = any(s.interdependence_signal for s in customer_scenarios)
-    if has_signal:
-        return []
-
-    return [
-        ConsistencyViolation(
-            rule_id="multi_sided_requires_signal",
-            severity="error",
-            message=(
-                "Patterns tags MULTI_SIDED_PLATFORM, but none of the "
-                "CustomerScenario instances for this project has "
-                "interdependence_signal=True."
-            ),
-            artifact_ids=[patterns.id, *[s.id for s in customer_scenarios]],
+    violations: list[ConsistencyViolation] = []
+    for group in patterns.groups:
+        if group.relation_type != SegmentRelationType.MULTI_SIDED:
+            continue
+        members = set(group.empathy_map_ids)
+        own = [s for s in customer_scenarios if s.empathy_map_id in members]
+        if any(s.interdependence_signal for s in own):
+            continue
+        violations.append(
+            ConsistencyViolation(
+                rule_id="multi_sided_requires_signal",
+                severity="error",
+                message=(
+                    f"Group {group.id} (empathy maps {', '.join(group.empathy_map_ids)}) has "
+                    "relation_type MULTI_SIDED, but none of the CustomerScenario instances of "
+                    "its own segments has interdependence_signal=True. Give the group another "
+                    "relation_type, or move into it the segments whose scenarios carry the signal."
+                ),
+                artifact_ids=[patterns.id, *[s.id for s in own]],
+            )
         )
-    ]
+    return violations
 
 
 from .canvas import Canvas
@@ -471,8 +591,8 @@ from .pattern import CanvasGroup
 @register(
     "canvas_group_id_is_known",
     (
-        RuleInput(stage=Stage.PATTERNS, arity=StageArity.ONE),
-        RuleInput(stage=Stage.CANVAS, arity=StageArity.ONE),
+        RuleInput(artifact=ArtifactType.PATTERNS, arity=Arity.ONE),
+        RuleInput(artifact=ArtifactType.CANVAS, arity=Arity.EACH),
     ),
 )
 def canvas_group_id_is_known(
@@ -506,8 +626,8 @@ def canvas_group_id_is_known(
 @register(
     "future_scenario_references_nonempty_sections",
     (
-        RuleInput(stage=Stage.CANVAS, arity=StageArity.ONE),
-        RuleInput(stage=Stage.FUTURE_SCENARIO, arity=StageArity.ONE),
+        RuleInput(artifact=ArtifactType.CANVAS, arity=Arity.FINAL),
+        RuleInput(artifact=ArtifactType.FUTURE_SCENARIO, arity=Arity.ONE),
     ),
 )
 def future_scenario_references_nonempty_sections(
@@ -543,8 +663,8 @@ def future_scenario_references_nonempty_sections(
 @register(
     "errc_move_targets_correct_canvas_version",
     (
-        RuleInput(stage=Stage.CANVAS, arity=StageArity.MANY),
-        RuleInput(stage=Stage.SWOT_ERRC_CYCLE, arity=StageArity.ONE),
+        RuleInput(artifact=ArtifactType.CANVAS, arity=Arity.MANY),
+        RuleInput(artifact=ArtifactType.ERRC, arity=Arity.EACH),
     ),
 )
 def errc_move_targets_correct_canvas_version(
@@ -598,8 +718,8 @@ from .optional_inputs import EnvironmentScan
 @register(
     "swot_environment_scan_reference_is_known",
     (
-        RuleInput(stage=Stage.SWOT_ERRC_CYCLE, arity=StageArity.ONE),
-        RuleInput(stage=Stage.ENVIRONMENT_SCAN, arity=StageArity.ONE),
+        RuleInput(artifact=ArtifactType.SWOT, arity=Arity.EACH),
+        RuleInput(artifact=ArtifactType.ENVIRONMENT_SCAN, arity=Arity.ONE),
     ),
 )
 def swot_environment_scan_reference_is_known(
@@ -636,8 +756,8 @@ def swot_environment_scan_reference_is_known(
 @register(
     "storytelling_references_nonempty_sections",
     (
-        RuleInput(stage=Stage.CANVAS, arity=StageArity.ONE),
-        RuleInput(stage=Stage.STORYTELLING, arity=StageArity.ONE),
+        RuleInput(artifact=ArtifactType.CANVAS, arity=Arity.FINAL),
+        RuleInput(artifact=ArtifactType.STORYTELLING, arity=Arity.ONE),
     ),
 )
 def storytelling_references_nonempty_sections(
