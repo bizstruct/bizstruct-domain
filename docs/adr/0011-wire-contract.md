@@ -67,6 +67,9 @@ derive_artifact_id(stage_row_id: str, artifact_type: ArtifactType, index: int = 
 
 be створює рядки **поступово**, коли відомі кількості (кількість груп відома лише після `patterns`). Рядки для **увімкнених опційних етапів** be створює одразу. Кожен рядок має `instance_index` (0-based порядок серед рядків того самого етапу під тим самим батьком): для `empathy_map` рядок k покриває кандидата `Brief.customer_segment_candidates[k]`.
 
+- Для етапів рівно з одним рядком на батька (`customer_scenario`, `ideation`, `swot_errc_cycle`, `storytelling`, `future_scenario`, `pitch`) `instance_index` завжди `0`; сегмент чи канву, до якої належить рядок, можна визначити **лише через `refs`**, але не через його власний індекс.
+- Для `canvas` `instance_index` — позиція групи в `Patterns.groups`; be створює рядки `canvas` у тому порядку, в якому їх повертає `canvas_rows_for`.
+
 | рядок | `refs` |
 |---|---|
 | `brief` | `{}` |
