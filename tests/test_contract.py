@@ -91,4 +91,4 @@ def test_version_matches_between_package_and_pyproject():
     from pathlib import Path
 
     pyproject = tomllib.loads((Path(__file__).resolve().parent.parent / "pyproject.toml").read_text())
-    assert bizstruct_domain.__version__ == pyproject["project"]["version"] == "0.15.0"
+    assert bizstruct_domain.__version__ == pyproject["project"]["version"] == "0.16.0"

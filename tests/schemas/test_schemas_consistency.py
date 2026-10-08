@@ -4,14 +4,15 @@ import typing
 import pytest
 
 import schema_builders as b
+from bizstruct_domain.schemas.artifact_types import ARTIFACT_HOLDERS, ArtifactType
 from bizstruct_domain.schemas.canvas import Canvas, CanvasCard
 from bizstruct_domain.schemas.consistency import (
     CONSISTENCY_RULES,
     JUDGE_CHECKS,
     ConsistencyRule,
     JudgeCheck,
+    Arity,
     RuleInput,
-    StageArity,
 )
 from bizstruct_domain.schemas.enums import (
     CanvasBranch,
@@ -78,31 +79,75 @@ def _storytelling(*sections: CanvasSection) -> Storytelling:
 # --------------------------------------------------------------------------- rules
 
 
+def _scenario_for(group, k: int = 0, signal: bool = False, id: str | None = None):
+    """A CustomerScenario of the k-th segment of `group` (linked through empathy_map_id)."""
+    return b.customer_scenario(id or f"cs_{group.id}_{k}", empathy_map_id=group.empathy_map_ids[k], interdependence_signal=signal)
+
+
+MULTI = SegmentRelationType.MULTI_SIDED
+SEGMENTED = SegmentRelationType.SEGMENTED
+
+
 class TestMultiSidedRequiresSignal:
     rule = RULES["multi_sided_requires_signal"]
-    multi = dict(
-        groups=[b.group("g1", 2, SegmentRelationType.MULTI_SIDED)], pattern_tags=MSP
-    )
+    g1 = b.group("g1", 2, MULTI)
 
-    def test_passes_when_a_scenario_carries_the_signal(self):
-        scenarios = [
-            b.customer_scenario("cs_1"),
-            b.customer_scenario("cs_2", interdependence_signal=True),
-        ]
-        assert self.rule.check(scenarios, b.patterns(**self.multi)) == []
+    def patterns(self, *groups, tags=MSP):
+        return b.patterns(
+            groups=list(groups),
+            branch_decision=CanvasBranch.UNIFIED_MODEL if len(groups) == 1 else CanvasBranch.SPLIT_MODEL,
+            pattern_tags=tags,
+        )
 
-    def test_violation_when_no_scenario_has_the_signal(self):
-        scenarios = [b.customer_scenario("cs_1"), b.customer_scenario("cs_2")]
-        (v,) = self.rule.check(scenarios, b.patterns(**self.multi))
+    def test_passes_when_a_scenario_of_the_group_carries_the_signal(self):
+        scenarios = [_scenario_for(self.g1, 0), _scenario_for(self.g1, 1, signal=True)]
+        assert self.rule.check(scenarios, self.patterns(self.g1)) == []
+
+    def test_violation_when_no_scenario_of_the_group_has_the_signal(self):
+        scenarios = [_scenario_for(self.g1, 0), _scenario_for(self.g1, 1)]
+        (v,) = self.rule.check(scenarios, self.patterns(self.g1))
         assert v.rule_id == self.rule.id
         assert v.severity == "error"
-        assert v.artifact_ids == ["patterns_001", "cs_1", "cs_2"]
+        assert v.artifact_ids == ["patterns_001", "cs_g1_0", "cs_g1_1"]
+        assert "Group g1" in v.message and "g1_map_0, g1_map_1" in v.message
 
     def test_violation_with_no_scenarios_at_all(self):
-        assert len(self.rule.check([], b.patterns(**self.multi))) == 1
+        assert len(self.rule.check([], self.patterns(self.g1))) == 1
 
-    def test_not_applicable_without_the_tag(self):
-        assert self.rule.check([b.customer_scenario()], b.patterns()) == []
+    def test_not_applicable_without_a_multi_sided_group(self):
+        seg = b.group("g1", 2, SEGMENTED)
+        assert self.rule.check([_scenario_for(seg, 0)], self.patterns(seg, tags=[])) == []
+
+    # --- the split project: the signal must come from the group's OWN segments (ADR-0012 D5)
+
+    def test_split_project_signal_in_group_a_does_not_cover_multi_sided_group_b(self):
+        a = b.group("ga", 2, SEGMENTED)
+        bb = b.group("gb", 2, MULTI)
+        scenarios = [_scenario_for(a, 0, signal=True), _scenario_for(a, 1), _scenario_for(bb, 0), _scenario_for(bb, 1)]
+        (v,) = self.rule.check(scenarios, self.patterns(a, bb))
+        assert "Group gb" in v.message
+        assert v.artifact_ids == ["patterns_001", "cs_gb_0", "cs_gb_1"]  # group A's scenarios are not blamed
+
+    def test_split_project_signal_in_group_b_passes(self):
+        a = b.group("ga", 2, SEGMENTED)
+        bb = b.group("gb", 2, MULTI)
+        scenarios = [_scenario_for(a, 0), _scenario_for(a, 1), _scenario_for(bb, 0, signal=True), _scenario_for(bb, 1)]
+        assert self.rule.check(scenarios, self.patterns(a, bb)) == []
+
+    def test_every_multi_sided_group_is_checked_independently(self):
+        g1, g2 = b.group("g1", 2, MULTI), b.group("g2", 2, MULTI)
+        scenarios = [_scenario_for(g1, 0, signal=True), _scenario_for(g1, 1), _scenario_for(g2, 0), _scenario_for(g2, 1)]
+        (v,) = self.rule.check(scenarios, self.patterns(g1, g2))
+        assert "Group g2" in v.message
+
+    def test_runs_regardless_of_the_patterns_tag(self):
+        # a MULTI_SIDED group with no multi_sided_platform tag is still checked (D5)
+        scenarios = [_scenario_for(self.g1, 0), _scenario_for(self.g1, 1)]
+        assert len(self.rule.check(scenarios, self.patterns(self.g1, tags=[]))) == 1
+
+    def test_scenarios_of_other_segments_do_not_count_even_with_a_signal(self):
+        stranger = b.customer_scenario("cs_x", empathy_map_id="somebody_else", interdependence_signal=True)
+        assert len(self.rule.check([stranger], self.patterns(self.g1))) == 1
 
 
 class TestCanvasGroupIdIsKnown:
@@ -229,8 +274,8 @@ def test_every_registered_rule_has_a_behaviour_test():
 # --------------------------------------------------------------------------- is_checkable
 
 
-def _inp(stage: Stage, optional: bool = False) -> RuleInput:
-    return RuleInput(stage=stage, arity=StageArity.ONE, optional=optional)
+def _inp(artifact: ArtifactType, optional: bool = False, arity: Arity = Arity.ONE) -> RuleInput:
+    return RuleInput(artifact=artifact, arity=arity, optional=optional)
 
 
 def _noop_rule(*inputs: RuleInput) -> ConsistencyRule:
@@ -238,7 +283,7 @@ def _noop_rule(*inputs: RuleInput) -> ConsistencyRule:
 
 
 class TestIsCheckableWithoutOptionalInputs:
-    rule = _noop_rule(_inp(Stage.CANVAS), _inp(Stage.PATTERNS))
+    rule = _noop_rule(_inp(ArtifactType.CANVAS), _inp(ArtifactType.PATTERNS))
 
     def test_needs_every_input_stage(self):
         assert self.rule.is_checkable({Stage.CANVAS, Stage.PATTERNS})
@@ -257,9 +302,9 @@ class TestIsCheckableWithoutOptionalInputs:
 
 class TestIsCheckableWithOptionalInputs:
     rule = _noop_rule(
-        _inp(Stage.PITCH),
-        _inp(Stage.TEAM_INFO, optional=True),
-        _inp(Stage.BUSINESS_CASE, optional=True),
+        _inp(ArtifactType.PITCH),
+        _inp(ArtifactType.TEAM_INFO, optional=True),
+        _inp(ArtifactType.BUSINESS_CASE, optional=True),
     )
 
     def test_required_input_still_mandatory(self):
@@ -277,7 +322,7 @@ class TestIsCheckableWithOptionalInputs:
         assert self.rule.is_checkable({Stage.PITCH, Stage.TEAM_INFO, Stage.BUSINESS_CASE})
 
     def test_only_optional_inputs_declared(self):
-        rule = _noop_rule(_inp(Stage.TEAM_INFO, True), _inp(Stage.BUSINESS_CASE, True))
+        rule = _noop_rule(_inp(ArtifactType.TEAM_INFO, True), _inp(ArtifactType.BUSINESS_CASE, True))
         assert not rule.is_checkable(set())
         assert rule.is_checkable({Stage.BUSINESS_CASE})
 
@@ -330,7 +375,7 @@ class TestDiscoveryOfOptionalInputRules:
         assert "business_case_environment_scan_relevant_to_brief" in found
 
     def test_optional_flag_defaults_to_false(self):
-        assert RuleInput(stage=Stage.BRIEF, arity=StageArity.ONE).optional is False
+        assert RuleInput(artifact=ArtifactType.BRIEF, arity=Arity.ONE).optional is False
 
     def test_optional_inputs_are_exactly_the_optional_stages(self):
         from bizstruct_domain.schemas.chain import STAGE_REGISTRY
@@ -350,10 +395,10 @@ class TestRegistryIntegrity:
         ids = [i.id for i in [*CONSISTENCY_RULES, *JUDGE_CHECKS]]
         assert len(ids) == len(set(ids)), sorted(i for i in ids if ids.count(i) > 1)
 
-    def test_no_duplicate_stage_within_one_item(self):
+    def test_no_duplicate_artifact_type_within_one_item(self):
         for item in [*CONSISTENCY_RULES, *JUDGE_CHECKS]:
-            stages = [i.stage for i in item.inputs]
-            assert len(stages) == len(set(stages)), item.id
+            types = [i.artifact for i in item.inputs]
+            assert len(types) == len(set(types)), item.id
 
     @pytest.mark.parametrize("rule", CONSISTENCY_RULES, ids=lambda r: r.id)
     def test_input_count_matches_check_parameters(self, rule):
@@ -366,7 +411,7 @@ class TestRegistryIntegrity:
         names = list(inspect.signature(rule.check).parameters)
         for name, inp in zip(names, rule.inputs, strict=True):
             is_list = typing.get_origin(hints[name]) is list
-            assert is_list == (inp.arity is StageArity.MANY), (rule.id, name)
+            assert is_list == (inp.arity is Arity.MANY), (rule.id, name)
 
     @pytest.mark.parametrize("rule", CONSISTENCY_RULES, ids=lambda r: r.id)
     def test_rule_returns_annotated_violation_list(self, rule):

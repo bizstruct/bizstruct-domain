@@ -81,7 +81,7 @@ CONTRACTS: dict[type[BaseModel], tuple[type[BaseModel], set[str]]] = {
     # Different structure (no inheritance); the system side is documented here.
     CanvasGenerated: (
         Canvas,
-        {"id", "group_id", "empathy_map_ids", "version", "previous_version_id", "is_final", "is_generated"},
+        {"id", "group_id", "empathy_map_ids", "version", "previous_version_id", "is_generated"},
     ),
     # `branch_decision` is derived; group ids and real segment ids are system-side
     # (aliases replace them inside the nested models).
@@ -467,7 +467,7 @@ class TestCanvasFromGenerated:
         )
         assert state["n"] == 27
         assert (canvas.id, canvas.group_id, canvas.empathy_map_ids) == ("cv_1", "g_1", ["em_1"])
-        assert (canvas.version, canvas.previous_version_id, canvas.is_final) == (1, None, False)
+        assert (canvas.version, canvas.previous_version_id) == (1, None)
         assert canvas.is_generated is True
         ids = [c.id for s in CanvasSection for c in canvas.get_section(s)]
         assert len(ids) == len(set(ids)) == 27
