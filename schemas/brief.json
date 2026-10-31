@@ -79,6 +79,23 @@
         "Subscription model for regular customers"
       ],
       "title": "Monetization Hint"
+    },
+    "project_title": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "A short name for the project that a person would give it, in the language of the idea: a noun phrase of a few words, not a sentence and without a trailing period.",
+      "examples": [
+        "Reminders for auto repair shops"
+      ],
+      "title": "Project Title"
     }
   },
   "required": [

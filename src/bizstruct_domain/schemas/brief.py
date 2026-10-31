@@ -6,11 +6,21 @@ from .fields import SanitizedModel
 # ideation per segment, so it caps the width of the whole graph.
 MAX_SEGMENTS = 3
 
+# Room for a short name: it is shown in a sidebar, so it is far below be's own limit on a title.
+PROJECT_TITLE_MAX_LENGTH = 80
+
 
 class Brief(SanitizedModel):
     """
         A brief description of a business structure.
     """
+    project_title: str | None = Field(
+        None,
+        max_length=PROJECT_TITLE_MAX_LENGTH,
+        description="A short name for the project that a person would give it, in the language of the idea: "
+                    "a noun phrase of a few words, not a sentence and without a trailing period.",
+        examples=["Reminders for auto repair shops"],
+    )
     idea_summary: str = Field(
         ...,
         description="A brief summary of the business idea.",

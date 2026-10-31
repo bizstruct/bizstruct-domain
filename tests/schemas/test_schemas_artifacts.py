@@ -7,7 +7,7 @@ import pytest
 from pydantic import BaseModel, ValidationError, create_model
 
 import bizstruct_domain.schemas.canvas as canvas_module
-from bizstruct_domain.schemas.brief import MAX_SEGMENTS, Brief
+from bizstruct_domain.schemas.brief import MAX_SEGMENTS, PROJECT_TITLE_MAX_LENGTH, Brief
 from bizstruct_domain.schemas.canvas import (
     GENERATED_CARDS_PER_SECTION_MAX,
     GENERATED_CARDS_PER_SECTION_MIN,
@@ -62,6 +62,22 @@ SEGMENTED = SegmentRelationType.SEGMENTED
 
 
 # --------------------------------------------------------------------------- brief
+
+
+class TestBriefProjectTitle:
+    @staticmethod
+    def _data(**extra) -> dict:
+        return dict(idea_summary="i", industry="x", customer_segment_candidates=["s"], existing_resources=[], gaps=[], **extra)
+
+    def test_optional_so_briefs_stored_before_it_existed_still_parse(self):
+        assert Brief(**self._data()).project_title is None
+
+    def test_a_short_title_is_kept(self):
+        assert Brief(**self._data(project_title="Reminders for auto repair shops")).project_title == "Reminders for auto repair shops"
+
+    def test_longer_than_the_cap_is_rejected(self):
+        with pytest.raises(ValidationError):
+            Brief(**self._data(project_title="x" * (PROJECT_TITLE_MAX_LENGTH + 1)))
 
 
 class TestBriefSegmentCap:
